@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import Hero from './pages/Hero';
+import Hero from './pages/HomePage';
 
 const App: React.FC = () => {
     return (
