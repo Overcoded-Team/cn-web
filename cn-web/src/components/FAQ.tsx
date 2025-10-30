@@ -28,7 +28,7 @@ const FAQ: React.FC = () => {
     };
 
     return (
-        <section className="features faq-section">
+        <section id="faqs" className="features faq-section">
             <h2 className="faq-title">Perguntas Frequentes</h2>
             <div className="faq-carousel-wrapper">
                 <button onClick={scrollLeft} className="carousel-nav-button carousel-nav-left">

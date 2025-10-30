@@ -5,7 +5,7 @@ import chefIcon from '../assets/iconecard.png';
 
 const Features: React.FC = () => {
     return (
-        <section className="features">
+        <section id="como-funciona" className="features">
             <div className="features-container">
                 <div className="feature-card">
                     <div className="feature-icon calendar">
