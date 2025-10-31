@@ -5,6 +5,7 @@ import Features from "../components/Features";
 import Footer from "../components/Footer";
 import FAQ from "../components/FAQ";
 import RegisterModal from "../components/RegisterModal";
+import Contacts from "../components/Contacts";
 
 const Hero: React.FC = () => {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
@@ -61,6 +62,7 @@ const Hero: React.FC = () => {
       </div>
 
       <FAQ />
+      <Contacts />
       <Footer />
       
       <RegisterModal 
