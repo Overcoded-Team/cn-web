@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
 
 * {
     margin: 0;
@@ -488,7 +489,7 @@ section[id] {
 .footer {
     background: #333;
     color: white;
-    padding: 2rem;
+    padding: .5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -498,6 +499,7 @@ section[id] {
     font-size: 1.5rem;
     color: #ff6b35;
     font-weight: bold;
+    font-family: 'Krub', sans-serif;
 }
 
 .footer-copyright {
@@ -522,9 +524,10 @@ section[id] {
 }
 
 .social-icon {
-    width: 35px;
+    width: 20px;
     height: 35px;
     display: flex;
+    margin: 3px;
     align-items: center;
     justify-content: center;
     text-decoration: none;
