@@ -26,7 +26,6 @@ const Hero: React.FC = () => {
     <>
       <Header />
       <HeroSection />
-      <Features />
 
       <div className="cta-about-container">
         <section className="cta-section">
@@ -61,12 +60,13 @@ const Hero: React.FC = () => {
         </section>
       </div>
 
+      <Features />
       <FAQ />
       <Contacts />
       <Footer />
-      
-      <RegisterModal 
-        isOpen={isRegisterModalOpen} 
+
+      <RegisterModal
+        isOpen={isRegisterModalOpen}
         onClose={handleCloseRegisterModal}
         onSwitchToLogin={handleSwitchToLogin}
       />
