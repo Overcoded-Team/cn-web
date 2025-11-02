@@ -50,9 +50,9 @@ const Header: React.FC = () => {
                     <nav className="nav-links">
                         <a href="#como-funciona" onClick={(e) => { e.preventDefault(); scrollToSection('como-funciona'); }}>Como Funciona</a>
                         <div className="nav-divider"></div>
-                        <a href="#planos" onClick={(e) => { e.preventDefault(); scrollToSection('planos'); }}>Planos</a>
-                        <div className="nav-divider"></div>
                         <a href="#faqs" onClick={(e) => { e.preventDefault(); scrollToSection('faqs'); }}>FAQs</a>
+                        <div className="nav-divider"></div>
+                        <a href="#contatos" onClick={(e) => { e.preventDefault(); scrollToSection('contacts'); }}>Contatos</a>
                     </nav>
                     <div className="header-buttons">
                         <button onClick={handleLoginClick} className="btn-entrar">Entrar</button>
