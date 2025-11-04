@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import logoIcon from '../assets/iconebranco.png';
-import './LoginModal.css';
+import React, { useState, useEffect } from "react";
+import logoIcon from "../assets/iconebranco.png";
+import "./LoginModal.css";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -8,32 +8,39 @@ interface LoginModalProps {
   onSwitchToRegister: () => void;
 }
 
-const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegister }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+const LoginModal: React.FC<LoginModalProps> = ({
+  isOpen,
+  onClose,
+  onSwitchToRegister,
+}) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
 
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login:', { email, password });
+    console.log("Login:", { email, password });
   };
 
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-container login-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="modal-container login-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-content">
           <div className="logo-container">
             <img src={logoIcon} alt="ChefNow Logo" className="logo-image" />
@@ -69,9 +76,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegi
             </button>
           </form>
 
-          <a href="#" className="forgot-password">
+          <button type="button" className="forgot-password">
             Esqueceu a senha?
-          </a>
+          </button>
 
           <button onClick={onSwitchToRegister} className="register-link">
             Cadastre-se
