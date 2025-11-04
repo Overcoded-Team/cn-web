@@ -137,9 +137,9 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onSwitch
             </button>
           </form>
 
-          <a onClick={onSwitchToLogin} className="login-text-link">
+          <button type="button" onClick={onSwitchToLogin} className="login-text-link">
             Login
-          </a>
+          </button>
         </div>
       </div>
     </div>
