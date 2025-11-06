@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import './Dashboard.css';
 import perfilVazio from '../assets/perfilvazio.png';
 import estrelaInteira from '../assets/estrelainteira.png';
@@ -6,6 +7,8 @@ import meiaEstrela from '../assets/meiaestrela.png';
 import estrelaVazia from '../assets/estrelavazia.png';
 
 const Dashboard: React.FC = () => {
+    const location = useLocation();
+    
     const chefData = {
         nome: 'Emily Costa',
         ganhos: 0.00,
@@ -67,10 +70,10 @@ const Dashboard: React.FC = () => {
                     </div>
                     
                     <nav className="sidebar-nav">
-                        <a href="#" className="nav-item active">Dashboard</a>
+                        <Link to="/dashboard" className={`nav-item ${location.pathname === '/dashboard' || location.pathname === '/' ? 'active' : ''}`}>Dashboard</Link>
                         <a href="#" className="nav-item">Perfil</a>
                         <a href="#" className="nav-item">Agendamentos</a>
-                        <a href="#" className="nav-item">Histórico</a>
+                        <Link to="/historico" className={`nav-item ${location.pathname === '/historico' ? 'active' : ''}`}>Histórico</Link>
                     </nav>
                 </div>
             </aside>
