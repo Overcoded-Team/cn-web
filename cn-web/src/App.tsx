@@ -1,11 +1,11 @@
 import React from 'react';
 import './App.css';
-import Hero from './pages/HomePage';
+import Historico from './pages/Historico';
 
 const App: React.FC = () => {
     return (
         <div className="App">
-            <Hero />
+            <Historico />
         </div>
     );
 }
