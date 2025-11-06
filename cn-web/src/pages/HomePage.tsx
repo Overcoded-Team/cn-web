@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import HeroSection from "../components/HeroSection";
 import Features from "../components/Features";
@@ -8,6 +9,7 @@ import RegisterModal from "../components/RegisterModal";
 import Contacts from "../components/Contacts";
 
 const Hero: React.FC = () => {
+  const navigate = useNavigate();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   const handleRegisterClick = () => {
