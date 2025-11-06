@@ -4,7 +4,7 @@ import './Historico.css';
 const Historico: React.FC = () => {
     const chefData = {
         nome: 'Emily Costa',
-        perfilImagem: 'https://via.placeholder.com/160' // Placeholder - substituir pela imagem real
+        perfilImagem: 'https://via.placeholder.com/160'
     };
 
     const historicoEntries = [
