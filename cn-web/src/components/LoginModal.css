@@ -138,12 +138,16 @@
 }
 
 .forgot-password {
+  background: none;
+  border: none;
   color: white;
   text-decoration: none;
   font-size: 0.9rem;
   font-family: 'Krub', sans-serif;
   opacity: 0.8;
   transition: opacity 0.3s ease;
+  cursor: pointer;
+  padding: 0;
 }
 
 .register-link {
