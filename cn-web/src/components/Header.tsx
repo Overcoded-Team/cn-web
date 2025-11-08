@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import LoginModal from './LoginModal.tsx';
 import RegisterModal from './RegisterModal.tsx';
 
 const Header: React.FC = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
@@ -42,17 +45,37 @@ const Header: React.FC = () => {
         }
     };
 
+    const handleChefsClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        e.preventDefault();
+        navigate('/chefs');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleHomeSectionClick = (e: React.MouseEvent<HTMLAnchorElement>, sectionId: string) => {
+        e.preventDefault();
+        if (location.pathname === '/') {
+            scrollToSection(sectionId);
+        } else {
+            navigate('/');
+            setTimeout(() => {
+                scrollToSection(sectionId);
+            }, 100);
+        }
+    };
+
     return (
         <>
             <header className="header">
                 <div className="header-logo">ChefNow</div>
                 <div className="header-right">
                     <nav className="nav-links">
-                        <a href="#como-funciona" onClick={(e) => { e.preventDefault(); scrollToSection('como-funciona'); }}>Como Funciona</a>
+                        <a href="#como-funciona" onClick={(e) => handleHomeSectionClick(e, 'como-funciona')}>Como Funciona</a>
                         <div className="nav-divider"></div>
-                        <a href="#faqs" onClick={(e) => { e.preventDefault(); scrollToSection('faqs'); }}>FAQs</a>
+                        <a href="/chefs" onClick={handleChefsClick}>Chefs</a>
                         <div className="nav-divider"></div>
-                        <a href="#contatos" onClick={(e) => { e.preventDefault(); scrollToSection('contacts'); }}>Contatos</a>
+                        <a href="#faqs" onClick={(e) => handleHomeSectionClick(e, 'faqs')}>FAQs</a>
+                        <div className="nav-divider"></div>
+                        <a href="#contatos" onClick={(e) => handleHomeSectionClick(e, 'contacts')}>Contatos</a>
                     </nav>
                     <div className="header-buttons">
                         <button onClick={handleLoginClick} className="btn-entrar">Entrar</button>
