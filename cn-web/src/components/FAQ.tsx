@@ -32,7 +32,7 @@ const FAQ: React.FC = () => {
             <h2 className="faq-title">Perguntas Frequentes</h2>
             <div className="faq-carousel-wrapper">
                 <button onClick={scrollLeft} className="carousel-nav-button carousel-nav-left">
-                    ←
+                    ‹
                 </button>
                 <div className="faq-carousel-container" ref={scrollContainerRef}>
                     <div className="feature-card">
@@ -108,7 +108,7 @@ const FAQ: React.FC = () => {
                     </div>
                 </div>
                 <button onClick={scrollRight} className="carousel-nav-button carousel-nav-right">
-                    →
+                    ›
                 </button>
             </div>
         </section>

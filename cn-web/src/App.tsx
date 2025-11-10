@@ -4,6 +4,7 @@ import "./App.css";
 import HomePage from "./pages/HomePage";
 import Dashboard from "./pages/Dashboard";
 import Historico from "./pages/Historico";
+import ChefsPage from "./pages/ChefsPage";
 
 const App: React.FC = () => {
   return (
@@ -13,6 +14,7 @@ const App: React.FC = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/historico" element={<Historico />} />
+          <Route path="/chefs" element={<ChefsPage />} />
         </Routes>
       </div>
     </BrowserRouter>

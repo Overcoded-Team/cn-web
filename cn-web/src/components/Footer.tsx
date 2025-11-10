@@ -9,7 +9,6 @@ const Footer: React.FC = () => {
             <div className="footer-logo">ChefNow</div>
             <div className="footer-copyright">© 2025 ChefNow. Todos os direitos reservados.</div>
             <div className="footer-social">
-                <span>Contatos</span>
                 <div className="social-icons">
                     <a href="https://www.facebook.com/?locale=pt_BR" className="social-icon">
                         <img src={facebookIcon} alt="Facebook" />
