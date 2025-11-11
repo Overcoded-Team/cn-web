@@ -26,10 +26,8 @@ const AppointmentsMockPage: React.FC = () => {
 	const [error, setError] = useState<string>('');
 
 	useEffect(() => {
-		// Preview: gerar itens fixos baseados na data atual (não mudam ao navegar no calendário)
 		const makeISO = (baseDate: Date, day: number, monthOffset: number) => {
 			const d = new Date(baseDate.getFullYear(), baseDate.getMonth() + monthOffset, day);
-			// Converter para YYYY-MM-DD sem problemas de timezone
 			const year = d.getFullYear();
 			const month = String(d.getMonth() + 1).padStart(2, '0');
 			const dayStr = String(d.getDate()).padStart(2, '0');
@@ -41,7 +39,7 @@ const AppointmentsMockPage: React.FC = () => {
 				id: '001260',
 				clientName: 'Ana Paula',
 				address: 'Local: Rua XV, 10 - Centro - Maringá',
-				dateISO: makeISO(today, 26, 2), // +2 meses (janeiro)
+				dateISO: makeISO(today, 26, 2),
 				priceBRL: 237.15,
 				observation: 'Chegar 30min antes para montagem. Preferência por sobremesa sem lactose.',
 			},
@@ -49,7 +47,7 @@ const AppointmentsMockPage: React.FC = () => {
 				id: '001259',
 				clientName: 'Pedro Henrique',
 				address: 'Local: Av. Tuiuti, 500 - Zona 01 - Maringá',
-				dateISO: makeISO(today, 18, 1), // +1 mês (dezembro)
+				dateISO: makeISO(today, 18, 1),
 				priceBRL: 237.15,
 				observation: 'Cliente pediu opção vegetariana para 1 convidado.',
 			},
@@ -57,7 +55,7 @@ const AppointmentsMockPage: React.FC = () => {
 				id: '001258',
 				clientName: 'Carlos Lima',
 				address: 'Local: Av. Brasil, 3000 - Centro - Maringá',
-				dateISO: makeISO(today, 8, 0), // mês atual (novembro)
+				dateISO: makeISO(today, 8, 0),
 				priceBRL: 237.15,
 				observation: 'Levar maçarico e ramequins para crème brûlée.',
 			},
@@ -65,7 +63,7 @@ const AppointmentsMockPage: React.FC = () => {
 				id: '001257',
 				clientName: 'Maria Souza',
 				address: 'Local: Rua das Flores, 120 - Zona 07 - Maringá',
-				dateISO: makeISO(today, 7, -1), // -1 mês (outubro)
+				dateISO: makeISO(today, 7, -1),
 				priceBRL: 237.15,
 				observation: 'Ajustar tempero com menos sal. Aniversário de 12 pessoas.',
 			},
@@ -73,14 +71,13 @@ const AppointmentsMockPage: React.FC = () => {
 				id: '001256',
 				clientName: 'Luciano de Freitas',
 				address: 'Local: Avenida Cerro Azul, 1855 - Zona 02 - Maringá',
-				dateISO: makeISO(today, 4, -2), // -2 meses (setembro)
+				dateISO: makeISO(today, 4, -2), 
 				priceBRL: 237.15,
 				observation: 'Levar utensílios para massa fresca. Cliente prefere menos sal.',
 			},
 		]);
 		setIsLoading(false);
 		setError('');
-		// sem dependências -> dados mock permanecem fixos
 	}, []);
 
 	const monthName = useMemo(() => {
@@ -122,7 +119,6 @@ const AppointmentsMockPage: React.FC = () => {
 		setSelectedDate(new Date(currentYear, currentMonth, day));
 	};
 
-	// Função para converter Date para YYYY-MM-DD sem problemas de timezone (uso interno)
 	const dateToISOString = (date: Date): string => {
 		const year = date.getFullYear();
 		const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -130,7 +126,6 @@ const AppointmentsMockPage: React.FC = () => {
 		return `${year}-${month}-${day}`;
 	};
 
-	// Função para formatar data no padrão brasileiro dd/mm/aaaa
 	const formatDateBR = (date: Date | string): string => {
 		const d = typeof date === 'string' ? new Date(date + 'T00:00:00') : date;
 		const day = String(d.getDate()).padStart(2, '0');
@@ -143,12 +138,10 @@ const AppointmentsMockPage: React.FC = () => {
 		return dateToISOString(selectedDate);
 	}, [selectedDate]);
 
-	// Listar todos, ordenados do mais recente para o mais antigo
 	const confirmedSorted = useMemo(() => {
 		return [...appointments].sort((a, b) => {
 			const timeA = new Date(a.dateISO).getTime();
 			const timeB = new Date(b.dateISO).getTime();
-			// Menor data (mais cedo) primeiro
 			if (timeA < timeB) return -1;
 			if (timeA > timeB) return 1;
 			return 0;

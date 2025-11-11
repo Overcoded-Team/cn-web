@@ -14,7 +14,6 @@ const App: React.FC = () => {
     <div className="App">
       <Routes>
         <Route path="/" element={<HomePage />} />
-        {/* Pré-visualização pública sem necessidade de login */}
         <Route path="/preview/agendamentos" element={<AppointmentsMockPage />} />
         <Route 
           path="/dashboard" 

@@ -90,7 +90,7 @@
 	color: #444;
 }
 .cal-day.selected {
-	background: #ff6a00;
+	background: #4d4c4b;
 	color: #fff;
 	font-weight: 700;
 }
@@ -106,6 +106,9 @@
 	border-radius: 8px;
 	padding: 12px;
 	color: #444;
+	font-size: 14px;
+	line-height: 1.4;
+	font-family: inherit;
 }
 
 @media (max-width: 1024px) {
