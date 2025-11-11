@@ -1,6 +1,6 @@
 import React from "react";
 import facebookIcon from "../assets/facebook.svg";
-import instagramIcon from "../assets/instagran.svg";
+import instagramIcon from "../assets/instagram.svg";
 
 const Footer: React.FC = () => {
   return (
