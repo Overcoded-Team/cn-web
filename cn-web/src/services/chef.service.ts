@@ -1,8 +1,20 @@
-import { api } from '../utils/api';
+import { api } from "../utils/api";
 
 export interface ChefCuisine {
   id: number;
   name: string;
+}
+
+export type ChefSocialType =
+  | "INSTAGRAM"
+  | "YOUTUBE"
+  | "TIKTOK"
+  | "FACEBOOK"
+  | "WHATSAPP";
+
+export interface ChefSocialLink {
+  type: ChefSocialType;
+  url: string;
 }
 
 export interface Chef {
@@ -14,6 +26,7 @@ export interface Chef {
   yearsOfExperience: number;
   bio?: string;
   cuisines: ChefCuisine[];
+  socialLinks?: ChefSocialLink[];
 }
 
 export interface PaginatedChefsResponse {
@@ -31,8 +44,8 @@ export interface ListChefsParams {
   minRating?: number;
   minExp?: number;
   maxExp?: number;
-  sortBy?: 'avgRating' | 'yearsOfExperience' | 'createdAt';
-  sortDir?: 'ASC' | 'DESC';
+  sortBy?: "avgRating" | "yearsOfExperience" | "createdAt";
+  sortDir?: "ASC" | "DESC";
 }
 
 export interface Cuisine {
@@ -43,28 +56,57 @@ export interface Cuisine {
   updatedAt: Date;
 }
 
+export interface ChefProfile {
+  id: number;
+  bio?: string;
+  yearsOfExperience?: number;
+  portfolioDescription?: string;
+  avgRating: number;
+  isAvailable: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  socialLinks?: ChefSocialLink[];
+}
+
 export const chefService = {
-  async listChefs(params: ListChefsParams = {}): Promise<PaginatedChefsResponse> {
+  async listChefs(
+    params: ListChefsParams = {}
+  ): Promise<PaginatedChefsResponse> {
     const queryParams = new URLSearchParams();
-    
-    if (params.page) queryParams.append('page', params.page.toString());
-    if (params.limit) queryParams.append('limit', params.limit.toString());
-    if (params.cuisineId) queryParams.append('cuisineId', params.cuisineId.toString());
-    if (params.available !== undefined) queryParams.append('available', params.available.toString());
-    if (params.minRating !== undefined) queryParams.append('minRating', params.minRating.toString());
-    if (params.minExp !== undefined) queryParams.append('minExp', params.minExp.toString());
-    if (params.maxExp !== undefined) queryParams.append('maxExp', params.maxExp.toString());
-    if (params.sortBy) queryParams.append('sortBy', params.sortBy);
-    if (params.sortDir) queryParams.append('sortDir', params.sortDir);
+
+    if (params.page) queryParams.append("page", params.page.toString());
+    if (params.limit) queryParams.append("limit", params.limit.toString());
+    if (params.cuisineId)
+      queryParams.append("cuisineId", params.cuisineId.toString());
+    if (params.available !== undefined)
+      queryParams.append("available", params.available.toString());
+    if (params.minRating !== undefined)
+      queryParams.append("minRating", params.minRating.toString());
+    if (params.minExp !== undefined)
+      queryParams.append("minExp", params.minExp.toString());
+    if (params.maxExp !== undefined)
+      queryParams.append("maxExp", params.maxExp.toString());
+    if (params.sortBy) queryParams.append("sortBy", params.sortBy);
+    if (params.sortDir) queryParams.append("sortDir", params.sortDir);
 
     const queryString = queryParams.toString();
-    const endpoint = `/chefs${queryString ? `?${queryString}` : ''}`;
-    
+    const endpoint = `/chefs${queryString ? `?${queryString}` : ""}`;
+
     return api.get<PaginatedChefsResponse>(endpoint);
   },
 
-  async listCuisines(page: number = 1, limit: number = 100): Promise<Cuisine[]> {
+  async listCuisines(
+    page: number = 1,
+    limit: number = 100
+  ): Promise<Cuisine[]> {
     return api.get<Cuisine[]>(`/cuisine/list?page=${page}&limit=${limit}`);
   },
-};
 
+  async getMyProfile(): Promise<ChefProfile> {
+    return api.get<ChefProfile>("/chefs/my-profile");
+  },
+
+  async getMySocialLinks(): Promise<ChefSocialLink[]> {
+    return api.get<ChefSocialLink[]>("/chefs/my-socials");
+  },
+};
