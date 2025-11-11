@@ -5,6 +5,8 @@ import HomePage from "./pages/HomePage";
 import Dashboard from "./pages/Dashboard";
 import Historico from "./pages/Historico";
 import ChefsPage from "./pages/ChefsPage";
+import AppointmentsPage from "./pages/AppointmentsPage";
+import AppointmentsMockPage from "./pages/AppointmentsMockPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const App: React.FC = () => {
@@ -12,11 +14,21 @@ const App: React.FC = () => {
     <div className="App">
       <Routes>
         <Route path="/" element={<HomePage />} />
+        {/* Pré-visualização pública sem necessidade de login */}
+        <Route path="/preview/agendamentos" element={<AppointmentsMockPage />} />
         <Route 
           path="/dashboard" 
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/agendamentos" 
+          element={
+            <ProtectedRoute>
+              <AppointmentsPage />
             </ProtectedRoute>
           } 
         />
