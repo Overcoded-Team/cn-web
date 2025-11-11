@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import logoIcon from '../assets/iconebranco.png';
 import './LoginModal.css';
+import { useAuth } from '../contexts/AuthContext';
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -17,10 +18,22 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onSwitch
     confirmarSenha: '',
     sobreVoce: ''
   });
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { register } = useAuth();
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      setError('');
+      setFormData({
+        nome: '',
+        cpfCnpj: '',
+        email: '',
+        senha: '',
+        confirmarSenha: '',
+        sobreVoce: ''
+      });
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -38,9 +51,35 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onSwitch
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Cadastro:', formData);
+    setError('');
+    setIsLoading(true);
+
+    try {
+      if (formData.senha !== formData.confirmarSenha) {
+        throw new Error('As senhas não coincidem');
+      }
+
+      if (formData.senha.length < 7) {
+        throw new Error('A senha deve ter pelo menos 7 caracteres');
+      }
+
+      await register({
+        name: formData.nome,
+        document: formData.cpfCnpj,
+        email: formData.email,
+        password: formData.senha,
+        confirmPassword: formData.confirmarSenha,
+        bio: formData.sobreVoce || undefined,
+      });
+
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao criar conta. Tente novamente.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -55,6 +94,12 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onSwitch
 
           <h2 className="modal-title">Faça seu cadastro</h2>
 
+          {error && (
+            <div className="error-message">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="login-form">
             <div className="form-row">
               <div className="input-group">
@@ -66,6 +111,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onSwitch
                   onChange={handleInputChange}
                   className="form-input"
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -78,6 +124,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onSwitch
                   onChange={handleInputChange}
                   className="form-input"
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -91,6 +138,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onSwitch
                 onChange={handleInputChange}
                 className="form-input"
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -104,6 +152,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onSwitch
                   onChange={handleInputChange}
                   className="form-input"
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -116,6 +165,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onSwitch
                   onChange={handleInputChange}
                   className="form-input"
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -129,11 +179,12 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onSwitch
                 className="form-input"
                 rows={4}
                 required
+                disabled={isLoading}
               />
             </div>
 
-            <button type="submit" className="login-button">
-              Cadastrar
+            <button type="submit" className="login-button" disabled={isLoading}>
+              {isLoading ? "Cadastrando..." : "Cadastrar"}
             </button>
           </form>
 

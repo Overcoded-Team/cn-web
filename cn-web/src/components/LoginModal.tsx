@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import logoIcon from "../assets/iconebranco.png";
 import "./LoginModal.css";
+import { useAuth } from "../contexts/AuthContext";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -15,10 +16,16 @@ const LoginModal: React.FC<LoginModalProps> = ({
 }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
+      setError("");
+      setEmail("");
+      setPassword("");
     } else {
       document.body.style.overflow = "unset";
     }
@@ -28,9 +35,23 @@ const LoginModal: React.FC<LoginModalProps> = ({
     };
   }, [isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login:", { email, password });
+    setError("");
+    setIsLoading(true);
+
+    try {
+      await login(email, password);
+      onClose();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Erro ao fazer login. Verifique suas credenciais."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -48,6 +69,8 @@ const LoginModal: React.FC<LoginModalProps> = ({
 
           <h2 className="modal-title">Bem vindo de volta</h2>
 
+          {error && <div className="error-message">{error}</div>}
+
           <form onSubmit={handleSubmit} className="login-form">
             <div className="input-group">
               <input
@@ -57,6 +80,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
                 onChange={(e) => setEmail(e.target.value)}
                 className="form-input"
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -68,11 +92,12 @@ const LoginModal: React.FC<LoginModalProps> = ({
                 onChange={(e) => setPassword(e.target.value)}
                 className="form-input"
                 required
+                disabled={isLoading}
               />
             </div>
 
-            <button type="submit" className="login-button">
-              Entrar
+            <button type="submit" className="login-button" disabled={isLoading}>
+              {isLoading ? "Entrando..." : "Entrar"}
             </button>
           </form>
 
