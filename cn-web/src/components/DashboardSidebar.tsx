@@ -76,9 +76,16 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           <a href="#" className="nav-item">
             Perfil
           </a>
-          <a href="#" className="nav-item">
+          <Link
+            to="/agendamentos"
+            className={`nav-item ${
+              location.pathname === "/agendamentos" || location.pathname === "/preview/agendamentos"
+                ? "active"
+                : ""
+            }`}
+          >
             Agendamentos
-          </a>
+          </Link>
           <Link
             to="/historico"
             className={`nav-item ${
