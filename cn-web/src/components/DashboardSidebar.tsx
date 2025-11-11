@@ -50,13 +50,13 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             <p className="chef-name">{chefName}</p>
           </div>
           <div className="social-media-icons">
-            <a href="#" className="social-icon" aria-label="Facebook">
+            <a href="https://www.facebook.com/" target="_blank" className="social-icon" aria-label="Facebook">
               <img src={facebookIcon} alt="Facebook" />
             </a>
-            <a href="#" className="social-icon" aria-label="Instagram">
+            <a href="https://www.instagram.com/" target="_blank" className="social-icon" aria-label="Instagram">
               <img src={instagramIcon} alt="Instagram" />
             </a>
-            <a href="#" className="social-icon" aria-label="X (Twitter)">
+            <a href="https://x.com/" target="_blank" className="social-icon" aria-label="X (Twitter)">
               <img src={xIcon} alt="X (Twitter)" />
             </a>
           </div>
