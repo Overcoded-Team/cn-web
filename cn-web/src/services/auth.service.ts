@@ -29,6 +29,7 @@ export interface User {
   email: string;
   role: 'CHEF' | 'CLIENT' | 'ADMIN';
   status: string;
+  profilePictureUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }
