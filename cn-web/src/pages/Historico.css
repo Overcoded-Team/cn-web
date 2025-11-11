@@ -100,13 +100,14 @@
     color: white;
 }
 
-.social-icon svg {
-    width: 30px;
-    height: 30px;
+.social-icon img {
+    width: 24px;
+    height: 24px;
     transition: transform 0.3s;
+    filter: brightness(0) invert(1);
 }
 
-.social-icon:hover svg {
+.social-icon:hover img {
     transform: scale(1.2);
 }
 
