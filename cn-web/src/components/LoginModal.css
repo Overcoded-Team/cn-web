@@ -65,7 +65,14 @@
   font-weight: 600;
   text-align: center;
   margin: 0;
-  font-family: 'Krub', sans-serif;
+  font-family: "Krub", sans-serif;
+}
+
+.error-message {
+  color: #f44336;
+  margin-bottom: 1rem;
+  text-align: center;
+  font-size: 0.9rem;
 }
 
 .login-form {
@@ -97,7 +104,7 @@
   background-color: rgba(179, 179, 179, 0.8);
   color: white;
   font-size: 1rem;
-  font-family: 'Krub', sans-serif;
+  font-family: "Krub", sans-serif;
   transition: all 0.3s ease;
   box-sizing: border-box;
 }
@@ -121,7 +128,7 @@
   border-radius: 12px;
   font-size: 1.1rem;
   font-weight: 600;
-  font-family: 'Krub', sans-serif;
+  font-family: "Krub", sans-serif;
   cursor: pointer;
   transition: all 0.3s ease;
   margin-top: 10px;
@@ -143,7 +150,7 @@
   color: white;
   text-decoration: none;
   font-size: 0.9rem;
-  font-family: 'Krub', sans-serif;
+  font-family: "Krub", sans-serif;
   opacity: 0.8;
   transition: opacity 0.3s ease;
   cursor: pointer;
@@ -156,7 +163,7 @@
   color: #ff6b35;
   text-decoration: none;
   font-size: 1rem;
-  font-family: 'Krub', sans-serif;
+  font-family: "Krub", sans-serif;
   cursor: pointer;
   transition: all 0.3s ease;
   margin-top: 5px;
@@ -168,7 +175,7 @@
   color: white;
   text-decoration: none;
   font-size: 1rem;
-  font-family: 'Krub', sans-serif;
+  font-family: "Krub", sans-serif;
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -183,26 +190,26 @@
     width: 50%;
     min-width: 350px;
   }
-  
+
   .register-modal {
     width: 70%;
     min-width: 400px;
   }
-  
+
   .modal-container {
     height: 100vh;
     padding: 30px 20px;
   }
-  
+
   .modal-title {
     font-size: 1.5rem;
   }
-  
+
   .logo-image {
     width: 70px;
     height: 70px;
   }
-  
+
   .form-row {
     flex-direction: column;
     gap: 15px;
@@ -216,20 +223,20 @@
     height: 100vh;
     padding: 25px 15px;
   }
-  
+
   .modal-content {
     gap: 25px;
   }
-  
+
   .logo-image {
     width: 60px;
     height: 60px;
   }
-  
+
   .form-input {
     padding: 12px 15px;
   }
-  
+
   .login-button {
     padding: 12px 15px;
   }
