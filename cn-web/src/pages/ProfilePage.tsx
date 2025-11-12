@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import './Dashboard.css';
 import './ProfilePage.css';
 import { DashboardSidebar } from '../components/DashboardSidebar';
@@ -37,7 +37,7 @@ interface ChefProfileResponse {
 }
 
 const ProfilePage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, checkAuth } = useAuth();
   const [profile, setProfile] = useState<ChefProfileResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
@@ -52,6 +52,8 @@ const ProfilePage: React.FC = () => {
   
   const [availableCuisines, setAvailableCuisines] = useState<Cuisine[]>([]);
   const [isLoadingCuisines, setIsLoadingCuisines] = useState<boolean>(false);
+  const [isUploadingPicture, setIsUploadingPicture] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -178,6 +180,44 @@ const ProfilePage: React.FC = () => {
     });
   };
 
+  const handlePictureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
+    if (!validTypes.includes(file.type)) {
+      setError('Formato de arquivo inválido. Use JPEG, PNG, WebP ou AVIF.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Arquivo muito grande. O tamanho máximo é 5MB.');
+      return;
+    }
+
+    try {
+      setIsUploadingPicture(true);
+      setError('');
+      await chefService.uploadProfilePicture(file);
+      
+      const updatedProfile = await chefService.getMyProfile();
+      setProfile(updatedProfile as ChefProfileResponse);
+      
+      await checkAuth();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao fazer upload da foto');
+    } finally {
+      setIsUploadingPicture(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handlePictureButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
   const bio = profile?.bio || '';
   const specialty = profile?.portfolioDescription || '';
   const yearsOfExperience = profile?.yearsOfExperience || 0;
@@ -191,7 +231,13 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="dashboard-layout">
-      <DashboardSidebar />
+      <DashboardSidebar 
+        isEditing={isEditing}
+        onPictureChange={handlePictureChange}
+        fileInputRef={fileInputRef}
+        isUploadingPicture={isUploadingPicture}
+        onPictureButtonClick={handlePictureButtonClick}
+      />
 
       <main className="dashboard-main">
         <div className="main-content">
