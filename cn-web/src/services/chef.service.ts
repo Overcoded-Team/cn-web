@@ -109,4 +109,29 @@ export const chefService = {
   async getMySocialLinks(): Promise<ChefSocialLink[]> {
     return api.get<ChefSocialLink[]>("/chefs/my-socials");
   },
+
+  async getMyCuisines(): Promise<ChefCuisine[]> {
+    return api.get<ChefCuisine[]>("/chefs/my-cuisines");
+  },
+
+  async updateMyProfile(data: { 
+    bio?: string; 
+    portfolioDescription?: string;
+    yearsOfExperience?: number;
+    isAvailable?: boolean;
+  }): Promise<ChefProfile> {
+    return api.patch<ChefProfile>("/chefs/my-profile", data);
+  },
+
+  async toggleAvailability(): Promise<{ isAvailable: boolean }> {
+    return api.patch<{ isAvailable: boolean }>("/chefs/my-profile/availability", {});
+  },
+
+  async addCuisine(cuisineId: number): Promise<void> {
+    return api.post("/chefs/cuisines", { cuisineId });
+  },
+
+  async removeCuisine(cuisineId: number): Promise<void> {
+    return api.delete(`/chefs/cuisines/${cuisineId}`);
+  },
 };
