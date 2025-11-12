@@ -69,23 +69,18 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
   const formatWhatsAppUrl = (url: string): string => {
     try {
-      // Se já for um link wa.me, retorna como está
       if (url.includes("wa.me")) {
         return url;
       }
 
-      // Extrai apenas os dígitos da URL
       const digitsOnly = url.replace(/\D/g, "");
 
-      // Se não tiver dígitos, retorna a URL original
       if (!digitsOnly) {
         return url;
       }
 
-      // Formata para wa.me
       return `https://wa.me/${digitsOnly}`;
     } catch (error) {
-      // Em caso de erro, retorna a URL original
       return url;
     }
   };
@@ -157,9 +152,14 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           >
             Dashboard
           </Link>
-          <a href="#" className="nav-item">
+          <Link
+            to="/perfil"
+            className={`nav-item ${
+              location.pathname === "/perfil" ? "active" : ""
+            }`}
+          >
             Perfil
-          </a>
+          </Link>
           <a href="#" className="nav-item">
             Agendamentos
           </a>
