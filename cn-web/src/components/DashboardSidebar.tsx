@@ -12,10 +12,20 @@ import { chefService, ChefSocialLink } from "../services/chef.service";
 
 interface DashboardSidebarProps {
   className?: string;
+  isEditing?: boolean;
+  onPictureChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  fileInputRef?: React.RefObject<HTMLInputElement>;
+  isUploadingPicture?: boolean;
+  onPictureButtonClick?: () => void;
 }
 
 export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   className = "",
+  isEditing = false,
+  onPictureChange,
+  fileInputRef,
+  isUploadingPicture = false,
+  onPictureButtonClick,
 }) => {
   const location = useLocation();
   const { user, logout } = useAuth();
@@ -133,7 +143,35 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                 }
               }}
             />
+            {isUploadingPicture && (
+              <div className="profile-photo-overlay">
+                <div className="upload-spinner-small">...</div>
+              </div>
+            )}
           </div>
+          {isEditing && onPictureChange && fileInputRef && (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/avif"
+                onChange={onPictureChange}
+                style={{ display: 'none' }}
+              />
+              <button
+                type="button"
+                className="change-picture-sidebar-button"
+                onClick={onPictureButtonClick}
+                disabled={isUploadingPicture}
+                aria-label="Alterar foto de perfil"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M18.5 2.50023C18.8978 2.10243 19.4374 1.87891 20 1.87891C20.5626 1.87891 21.1022 2.10243 21.5 2.50023C21.8978 2.89804 22.1213 3.43762 22.1213 4.00023C22.1213 4.56284 21.8978 5.10243 21.5 5.50023L12 15.0002L8 16.0002L9 12.0002L18.5 2.50023Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </>
+          )}
           <div className="chef-info">
             <p className="chef-label">Chef</p>
             <p className="chef-name">{chefName}</p>
