@@ -27,8 +27,6 @@ const AppointmentsPage: React.FC = () => {
 	const [error, setError] = useState<string>('');
 
 	useEffect(() => {
-		// Aqui ficará a chamada real ao backend para buscar agendamentos do chef
-		// Ex.: GET /appointments?from=&to=
 		setIsLoading(false);
 		setError('');
 		setAppointments([]);
@@ -73,7 +71,6 @@ const AppointmentsPage: React.FC = () => {
 		setSelectedDate(new Date(currentYear, currentMonth, day));
 	};
 
-	// Função para converter Date para YYYY-MM-DD sem problemas de timezone (uso interno)
 	const dateToISOString = (date: Date): string => {
 		const year = date.getFullYear();
 		const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -81,7 +78,6 @@ const AppointmentsPage: React.FC = () => {
 		return `${year}-${month}-${day}`;
 	};
 
-	// Função para formatar data no padrão brasileiro dd/mm/aaaa
 	const formatDateBR = (date: Date | string): string => {
 		const d = typeof date === 'string' ? new Date(date + 'T00:00:00') : date;
 		const day = String(d.getDate()).padStart(2, '0');
@@ -98,12 +94,10 @@ const AppointmentsPage: React.FC = () => {
 		return appointments.find((a) => a.dateISO === selectedDateISO) || null;
 	}, [appointments, selectedDateISO]);
 
-	// Listar todos, ordenados do mais recente para o mais antigo
 	const confirmedSorted = useMemo(() => {
 		return [...appointments].sort((a, b) => {
 			const timeA = new Date(a.dateISO).getTime();
 			const timeB = new Date(b.dateISO).getTime();
-			// Menor data (mais cedo) primeiro
 			if (timeA < timeB) return -1;
 			if (timeA > timeB) return 1;
 			return 0;
@@ -141,7 +135,6 @@ const AppointmentsPage: React.FC = () => {
 				body: JSON.stringify({ observation: text }),
 			});
 		} catch {
-			// fallback silencioso
 		}
 	};
 

@@ -37,7 +37,17 @@ export const api = {
         throw new Error(errorMessage);
       }
 
-      return response.json();
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        return undefined as T;
+      }
+
+      const text = await response.text();
+      if (!text) {
+        return undefined as T;
+      }
+
+      return JSON.parse(text) as T;
     } catch (error) {
       if (error instanceof Error) {
         throw error;

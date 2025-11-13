@@ -8,7 +8,6 @@ import ChefsPage from "./pages/ChefsPage";
 import AppointmentsPage from "./pages/AppointmentsPage";
 import AppointmentsMockPage from "./pages/AppointmentsMockPage";
 import ProfilePage from "./pages/ProfilePage";
-import ProfileMockPage from "./pages/ProfileMockPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const App: React.FC = () => {
@@ -16,40 +15,42 @@ const App: React.FC = () => {
     <div className="App">
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/preview/agendamentos" element={<AppointmentsMockPage />} />
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/preview/agendamentos"
+          element={<AppointmentsMockPage />}
+        />
+        <Route
+          path="/dashboard"
           element={
             <ProtectedRoute>
               <Dashboard />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/agendamentos" 
+        <Route
+          path="/agendamentos"
           element={
             <ProtectedRoute>
               <AppointmentsPage />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/historico" 
+        <Route
+          path="/historico"
           element={
             <ProtectedRoute>
               <Historico />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/perfil" 
+        <Route
+          path="/perfil"
           element={
             <ProtectedRoute>
               <ProfilePage />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route path="/preview/perfil" element={<ProfileMockPage />} />
         <Route path="/chefs" element={<ChefsPage />} />
       </Routes>
     </div>

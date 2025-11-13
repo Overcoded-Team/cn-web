@@ -76,7 +76,6 @@ const ChefsPage: React.FC = () => {
       const data = await chefService.listCuisines(1, 100);
       setCuisines(data);
     } catch (err) {
-      console.error("Erro ao carregar categorias:", err);
     }
   };
 
@@ -95,7 +94,6 @@ const ChefsPage: React.FC = () => {
       setChefs(response.items);
     } catch (err) {
       setError("Erro ao carregar chefs. Tente novamente mais tarde.");
-      console.error("Erro ao carregar chefs:", err);
     } finally {
       setIsLoading(false);
     }
