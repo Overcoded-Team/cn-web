@@ -75,8 +75,7 @@ const ChefsPage: React.FC = () => {
     try {
       const data = await chefService.listCuisines(1, 100);
       setCuisines(data);
-    } catch (err) {
-    }
+    } catch (err) {}
   };
 
   const loadChefs = async () => {
@@ -103,30 +102,6 @@ const ChefsPage: React.FC = () => {
     setSelectedCuisineId(
       selectedCuisineId === cuisineId ? undefined : cuisineId
     );
-  };
-
-  const getCuisineIcon = (cuisineName: string): string => {
-    const iconMap: Record<string, string> = {
-      Massas: "🍝",
-      Pães: "🥖",
-      Sobremesas: "🍰",
-      Asiático: "🍜",
-      Vegano: "🌱",
-      Caseira: "🍲",
-      Pizza: "🍕",
-      "Frutos do Mar": "🦐",
-      Churrasco: "🥩",
-      Italiana: "🍝",
-      Francesa: "🥐",
-      Japonesa: "🍣",
-      Mexicana: "🌮",
-      Árabe: "🥙",
-      Vegetariana: "🥗",
-      Doces: "🍬",
-      Bebidas: "🍹",
-      "Café da Manhã": "☕",
-    };
-    return iconMap[cuisineName] || "🍽️";
   };
 
   const scrollCategories = (direction: "left" | "right") => {
@@ -189,9 +164,6 @@ const ChefsPage: React.FC = () => {
                     }`}
                     onClick={() => handleCuisineClick(cuisine.id)}
                   >
-                    <span className="category-icon">
-                      {getCuisineIcon(cuisine.title)}
-                    </span>
                     <span className="category-name">{cuisine.title}</span>
                   </button>
                 ))}
