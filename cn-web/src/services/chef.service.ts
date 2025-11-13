@@ -109,4 +109,60 @@ export const chefService = {
   async getMySocialLinks(): Promise<ChefSocialLink[]> {
     return api.get<ChefSocialLink[]>("/chefs/my-socials");
   },
+
+  async getMyCuisines(): Promise<ChefCuisine[]> {
+    return api.get<ChefCuisine[]>("/chefs/my-cuisines");
+  },
+
+  async updateMyProfile(data: { 
+    bio?: string; 
+    portfolioDescription?: string;
+    yearsOfExperience?: number;
+    isAvailable?: boolean;
+  }): Promise<ChefProfile> {
+    return api.patch<ChefProfile>("/chefs/my-profile", data);
+  },
+
+  async toggleAvailability(): Promise<{ isAvailable: boolean }> {
+    return api.patch<{ isAvailable: boolean }>("/chefs/my-profile/availability", {});
+  },
+
+  async addCuisine(cuisineId: number): Promise<void> {
+    return api.post("/chefs/cuisines", { cuisineId });
+  },
+
+  async removeCuisine(cuisineId: number): Promise<void> {
+    return api.delete(`/chefs/cuisines/${cuisineId}`);
+  },
+
+  async uploadProfilePicture(file: File): Promise<{ url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = localStorage.getItem('access_token');
+    const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:3000';
+
+    const response = await fetch(`${API_BASE_URL}/user/profile/picture`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ 
+        message: 'Erro ao fazer upload da foto',
+        statusCode: response.status 
+      }));
+      
+      const errorMessage = Array.isArray(errorData.message) 
+        ? errorData.message.join(', ')
+        : errorData.message || `Erro: ${response.status}`;
+      
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  },
 };
