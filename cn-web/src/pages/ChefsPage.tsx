@@ -114,6 +114,28 @@ const ChefsPage: React.FC = () => {
     }
   };
 
+  const detectOS = (): "ios" | "android" | "other" => {
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    if (/iphone|ipad|ipod/.test(userAgent)) {
+      return "ios";
+    }
+    if (/android/.test(userAgent)) {
+      return "android";
+    }
+    return "other";
+  };
+
+  const handleChefCardClick = () => {
+    const os = detectOS();
+    if (os === "ios") {
+      window.open("https://apps.apple.com", "_blank");
+    } else if (os === "android") {
+      window.open("https://play.google.com/store", "_blank");
+    } else {
+      window.open("https://play.google.com/store", "_blank");
+    }
+  };
+
   return (
     <>
       <Header />
@@ -197,7 +219,12 @@ const ChefsPage: React.FC = () => {
           ) : (
             <div className="chefs-grid-container">
               {chefs.map((chef) => (
-                <div key={chef.id} className="chef-card">
+                <div
+                  key={chef.id}
+                  className="chef-card"
+                  onClick={handleChefCardClick}
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="chef-card-image">
                     <img src={perfilVazio} alt={chef.name} />
                   </div>
