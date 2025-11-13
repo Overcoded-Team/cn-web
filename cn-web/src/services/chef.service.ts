@@ -68,6 +68,17 @@ export interface ChefProfile {
   socialLinks?: ChefSocialLink[];
 }
 
+export interface ChefGalleryPhoto {
+  id: number;
+  chefProfilesId: number;
+  objectKey: string;
+  url: string;
+  caption?: string;
+  position: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export const chefService = {
   async listChefs(
     params: ListChefsParams = {}
@@ -120,7 +131,23 @@ export const chefService = {
     yearsOfExperience?: number;
     isAvailable?: boolean;
   }): Promise<ChefProfile> {
-    return api.patch<ChefProfile>("/chefs/my-profile", data);
+    const { isAvailable, ...chefProfileData } = data;
+    
+    const updateData: any = {
+      chefProfile: chefProfileData
+    };
+
+    const response = await api.patch<any>("/user/profile", updateData);
+    
+    if (isAvailable !== undefined) {
+      const currentProfile = await this.getMyProfile();
+      if (currentProfile.isAvailable !== isAvailable) {
+        await this.toggleAvailability();
+        return await this.getMyProfile();
+      }
+    }
+    
+    return response.chefProfile || response;
   },
 
   async toggleAvailability(): Promise<{ isAvailable: boolean }> {
@@ -164,5 +191,50 @@ export const chefService = {
     }
 
     return response.json();
+  },
+
+  async getMyGallery(): Promise<ChefGalleryPhoto[]> {
+    return api.get<ChefGalleryPhoto[]>("/chefs/my-gallery");
+  },
+
+  async addGalleryPhoto(file: File, caption?: string, position?: number): Promise<ChefGalleryPhoto> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (caption) {
+      formData.append('caption', caption);
+    }
+    if (position) {
+      formData.append('position', position.toString());
+    }
+
+    const token = localStorage.getItem('access_token');
+    const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:3000';
+
+    const response = await fetch(`${API_BASE_URL}/chefs/my-gallery`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ 
+        message: 'Erro ao fazer upload da foto',
+        statusCode: response.status 
+      }));
+      
+      const errorMessage = Array.isArray(errorData.message) 
+        ? errorData.message.join(', ')
+        : errorData.message || `Erro: ${response.status}`;
+      
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  },
+
+  async deleteGalleryPhoto(photoId: number): Promise<void> {
+    await api.delete<void>(`/chefs/my-gallery/${photoId}`);
   },
 };

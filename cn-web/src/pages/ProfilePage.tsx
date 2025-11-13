@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import './Dashboard.css';
 import './ProfilePage.css';
 import { DashboardSidebar } from '../components/DashboardSidebar';
-import { chefService, Cuisine } from '../services/chef.service';
+import { chefService, Cuisine, ChefGalleryPhoto } from '../services/chef.service';
 import { useAuth } from '../contexts/AuthContext';
 
 interface ChefCuisineRelation {
@@ -54,6 +54,10 @@ const ProfilePage: React.FC = () => {
   const [isLoadingCuisines, setIsLoadingCuisines] = useState<boolean>(false);
   const [isUploadingPicture, setIsUploadingPicture] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [galleryPhotos, setGalleryPhotos] = useState<ChefGalleryPhoto[]>([]);
+  const [isLoadingGallery, setIsLoadingGallery] = useState<boolean>(false);
+  const [isUploadingGalleryPhoto, setIsUploadingGalleryPhoto] = useState<boolean>(false);
+  const galleryFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -77,8 +81,20 @@ const ProfilePage: React.FC = () => {
       }
     };
 
+    const loadGallery = async () => {
+      try {
+        setIsLoadingGallery(true);
+        const photos = await chefService.getMyGallery();
+        setGalleryPhotos(photos);
+      } catch (err) {
+      } finally {
+        setIsLoadingGallery(false);
+      }
+    };
+
     if (user) {
       loadProfile();
+      loadGallery();
     }
   }, [user]);
 
@@ -90,7 +106,6 @@ const ProfilePage: React.FC = () => {
           const cuisines = await chefService.listCuisines(1, 100);
           setAvailableCuisines(cuisines);
         } catch (err) {
-          console.error('Erro ao carregar categorias:', err);
         } finally {
           setIsLoadingCuisines(false);
         }
@@ -218,6 +233,59 @@ const ProfilePage: React.FC = () => {
     fileInputRef.current?.click();
   };
 
+  const handleGalleryPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
+    if (!validTypes.includes(file.type)) {
+      setError('Formato de arquivo inválido. Use JPEG, PNG, WebP ou AVIF.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Arquivo muito grande. O tamanho máximo é 5MB.');
+      return;
+    }
+
+    if (galleryPhotos.length >= 12) {
+      setError('Você já atingiu o limite máximo de 12 fotos na galeria.');
+      return;
+    }
+
+    try {
+      setIsUploadingGalleryPhoto(true);
+      setError('');
+      const newPhoto = await chefService.addGalleryPhoto(file);
+      setGalleryPhotos(prev => [...prev, newPhoto].sort((a, b) => a.position - b.position));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao fazer upload da foto');
+    } finally {
+      setIsUploadingGalleryPhoto(false);
+      if (galleryFileInputRef.current) {
+        galleryFileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleDeleteGalleryPhoto = async (photoId: number) => {
+    if (!confirm('Tem certeza que deseja remover esta foto da galeria?')) {
+      return;
+    }
+
+    try {
+      setError('');
+      await chefService.deleteGalleryPhoto(photoId);
+      setGalleryPhotos(prev => prev.filter(photo => photo.id !== photoId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao remover foto');
+    }
+  };
+
+  const handleAddGalleryPhotoClick = () => {
+    galleryFileInputRef.current?.click();
+  };
+
   const bio = profile?.bio || '';
   const specialty = profile?.portfolioDescription || '';
   const yearsOfExperience = profile?.yearsOfExperience || 0;
@@ -227,7 +295,6 @@ const ProfilePage: React.FC = () => {
     title: cc.cuisine.title
   })) || [];
 
-  const galleryImages: string[] = [];
 
   return (
     <div className="dashboard-layout">
@@ -393,20 +460,60 @@ const ProfilePage: React.FC = () => {
                   <button className="menu-button">Ver Cardápio completo</button>
 
                   <div className="add-photos-section">
-                    <button className="add-photos-button" aria-label="Adicionar mais fotos">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 5V19M5 12H19" stroke="#ff6b35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                    <input
+                      ref={galleryFileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/avif"
+                      onChange={handleGalleryPhotoChange}
+                      style={{ display: 'none' }}
+                      disabled={isUploadingGalleryPhoto || galleryPhotos.length >= 12}
+                    />
+                    <button 
+                      className="add-photos-button" 
+                      aria-label="Adicionar mais fotos"
+                      onClick={handleAddGalleryPhotoClick}
+                      disabled={isUploadingGalleryPhoto || galleryPhotos.length >= 12}
+                    >
+                      {isUploadingGalleryPhoto ? (
+                        <div className="upload-spinner-small">...</div>
+                      ) : (
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 5V19M5 12H19" stroke="#ff6b35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
                     </button>
-                    <span className="add-photos-text">Adicione mais fotos</span>
+                    <span className="add-photos-text">
+                      {isUploadingGalleryPhoto 
+                        ? 'Enviando...' 
+                        : galleryPhotos.length >= 12 
+                          ? 'Limite de 12 fotos atingido' 
+                          : 'Adicione mais fotos'}
+                    </span>
                   </div>
 
                   <div className="gallery-section">
-                    {galleryImages.length > 0 ? (
+                    {isLoadingGallery ? (
+                      <div className="gallery-empty">
+                        <p>Carregando galeria...</p>
+                      </div>
+                    ) : galleryPhotos.length > 0 ? (
                       <div className="gallery-grid">
-                        {galleryImages.map((image, index) => (
-                          <div key={index} className="gallery-item">
-                            <img src={image} alt={`Prato ${index + 1}`} />
+                        {galleryPhotos.map((photo) => (
+                          <div key={photo.id} className="gallery-item">
+                            <img src={photo.url} alt={photo.caption || `Foto ${photo.position}`} />
+                            <button
+                              className="gallery-item-delete"
+                              onClick={() => handleDeleteGalleryPhoto(photo.id)}
+                              aria-label="Remover foto"
+                              title="Remover foto"
+                            >
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M18 6L6 18M6 6L18 18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </button>
+                            {photo.caption && (
+                              <div className="gallery-item-caption">{photo.caption}</div>
+                            )}
                           </div>
                         ))}
                       </div>
