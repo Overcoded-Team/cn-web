@@ -7,6 +7,8 @@ import Historico from "./pages/Historico";
 import ChefsPage from "./pages/ChefsPage";
 import AppointmentsPage from "./pages/AppointmentsPage";
 import AppointmentsMockPage from "./pages/AppointmentsMockPage";
+import ProfilePage from "./pages/ProfilePage";
+import ProfileMockPage from "./pages/ProfileMockPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const App: React.FC = () => {
@@ -39,6 +41,15 @@ const App: React.FC = () => {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="/perfil" 
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route path="/preview/perfil" element={<ProfileMockPage />} />
         <Route path="/chefs" element={<ChefsPage />} />
       </Routes>
     </div>
