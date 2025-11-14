@@ -16,6 +16,7 @@ const ChefsPage: React.FC = () => {
   const [cuisines, setCuisines] = useState<Cuisine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
   const categoriesRef = useRef<HTMLDivElement>(null);
 
   const renderStars = (rating: number) => {
@@ -218,42 +219,60 @@ const ChefsPage: React.FC = () => {
             </div>
           ) : (
             <div className="chefs-grid-container">
-              {chefs.map((chef) => (
-                <div
-                  key={chef.id}
-                  className="chef-card"
-                  onClick={handleChefCardClick}
-                  style={{ cursor: "pointer" }}
-                >
-                  <div className="chef-card-image">
-                    <img src={perfilVazio} alt={chef.name} />
-                  </div>
-                  <div className="chef-card-info">
-                    <h3 className="chef-card-name">{chef.name}</h3>
-                    <p className="chef-card-specialty">
-                      {chef.cuisines.length > 0
-                        ? chef.cuisines.map((c) => c.name).join(", ")
-                        : "Sem especialidade definida"}
-                    </p>
-                    <p className="chef-card-description">
-                      {chef.bio || "Chef sem descrição disponível"}
-                    </p>
-                    <div className="chef-card-rating">
-                      <span className="rating-value">
-                        {(() => {
-                          const rounded = Math.round(chef.avgRating * 2) / 2;
-                          return rounded % 1 === 0
-                            ? rounded.toFixed(1)
-                            : rounded;
-                        })()}
-                      </span>
-                      <div className="rating-stars">
-                        {renderStars(chef.avgRating)}
+              {chefs.map((chef) => {
+                const imageSrc =
+                  chef.profilePictureUrl && !imageErrors[chef.id]
+                    ? chef.profilePictureUrl
+                    : perfilVazio;
+
+                return (
+                  <div
+                    key={chef.id}
+                    className="chef-card"
+                    onClick={handleChefCardClick}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <div className="chef-card-image">
+                      <img
+                        src={imageSrc}
+                        alt={chef.name}
+                        onError={() => {
+                          if (chef.profilePictureUrl && !imageErrors[chef.id]) {
+                            setImageErrors((prev) => ({
+                              ...prev,
+                              [chef.id]: true,
+                            }));
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="chef-card-info">
+                      <h3 className="chef-card-name">{chef.name}</h3>
+                      <p className="chef-card-specialty">
+                        {chef.cuisines.length > 0
+                          ? chef.cuisines.map((c) => c.name).join(", ")
+                          : "Sem especialidade definida"}
+                      </p>
+                      <p className="chef-card-description">
+                        {chef.bio || "Chef sem descrição disponível"}
+                      </p>
+                      <div className="chef-card-rating">
+                        <span className="rating-value">
+                          {(() => {
+                            const rounded = Math.round(chef.avgRating * 2) / 2;
+                            return rounded % 1 === 0
+                              ? rounded.toFixed(1)
+                              : rounded;
+                          })()}
+                        </span>
+                        <div className="rating-stars">
+                          {renderStars(chef.avgRating)}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>

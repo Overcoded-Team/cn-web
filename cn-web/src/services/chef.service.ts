@@ -27,6 +27,7 @@ export interface Chef {
   bio?: string;
   cuisines: ChefCuisine[];
   socialLinks?: ChefSocialLink[];
+  profilePictureUrl?: string;
 }
 
 export interface PaginatedChefsResponse {
