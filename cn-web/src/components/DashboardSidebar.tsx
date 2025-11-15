@@ -139,43 +139,43 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
       <div className="sidebar-content">
         <div className="chef-profile">
           <div className="profile-photo-wrapper">
-            <div className="profile-photo">
-              <img
-                src={imageSrc}
-                alt={`Chef ${chefName}`}
-                className="chef-avatar"
-                onError={() => {
-                  if (profilePicture && !imageError) {
-                    setImageError(true);
-                  }
-                }}
-              />
-              {isUploadingPicture && (
-                <div className="profile-photo-overlay">
-                  <div className="upload-spinner-small">...</div>
-                </div>
-              )}
-            </div>
-            {isEditing && onPictureChange && fileInputRef && (
-              <>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/avif"
-                  onChange={onPictureChange}
-                  style={{ display: "none" }}
-                />
-                <button
-                  type="button"
-                  className="change-picture-sidebar-button"
-                  onClick={onPictureButtonClick}
-                  disabled={isUploadingPicture}
-                  aria-label="Alterar foto de perfil"
-                >
-                  <img src={editIcon} alt="Editar" width="16" height="16" />
-                </button>
-              </>
+          <div className="profile-photo">
+            <img
+              src={imageSrc}
+              alt={`Chef ${chefName}`}
+              className="chef-avatar"
+              onError={() => {
+                if (profilePicture && !imageError) {
+                  setImageError(true);
+                }
+              }}
+            />
+            {isUploadingPicture && (
+              <div className="profile-photo-overlay">
+                <div className="upload-spinner-small">...</div>
+              </div>
             )}
+          </div>
+          {isEditing && onPictureChange && fileInputRef && (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/avif"
+                onChange={onPictureChange}
+                style={{ display: "none" }}
+              />
+              <button
+                type="button"
+                className="change-picture-sidebar-button"
+                onClick={onPictureButtonClick}
+                disabled={isUploadingPicture}
+                aria-label="Alterar foto de perfil"
+              >
+                  <img src={editIcon} alt="Editar" width="16" height="16" />
+              </button>
+            </>
+          )}
           </div>
           <div className="chef-info">
             <p className="chef-label">Chef</p>

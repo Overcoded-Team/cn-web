@@ -3,6 +3,11 @@ import '../App.css';
 import './Dashboard.css';
 import './AppointmentsPage.css';
 import { DashboardSidebar } from '../components/DashboardSidebar';
+import {
+	serviceRequestService,
+	ServiceRequest,
+	ServiceRequestStatus,
+} from '../services/serviceRequest.service';
 
 type Appointment = {
 	id: string;
@@ -11,6 +16,7 @@ type Appointment = {
 	dateISO: string;
 	priceBRL: number;
 	observation?: string;
+	serviceRequestId: number;
 };
 
 const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -26,11 +32,70 @@ const AppointmentsPage: React.FC = () => {
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string>('');
 
+	const dateToISOString = (date: Date): string => {
+		const year = date.getFullYear();
+		const month = String(date.getMonth() + 1).padStart(2, '0');
+		const day = String(date.getDate()).padStart(2, '0');
+		return `${year}-${month}-${day}`;
+	};
+
 	useEffect(() => {
-		setIsLoading(false);
-		setError('');
-		setAppointments([]);
-	}, [currentMonth, currentYear, selectedDate]);
+		const loadAppointments = async () => {
+			try {
+				setIsLoading(true);
+				setError('');
+				const response = await serviceRequestService.listChefServiceRequests(1, 1000);
+				
+				console.log('Resposta da API:', response);
+				console.log('Items recebidos:', response.items);
+				
+				const confirmedStatuses = [
+					ServiceRequestStatus.SCHEDULED,
+					ServiceRequestStatus.PAYMENT_CONFIRMED,
+					ServiceRequestStatus.QUOTE_ACCEPTED,
+					ServiceRequestStatus.PAYMENT_PENDING,
+				];
+
+				const allRequests = response.items || [];
+				console.log('Total de requisições:', allRequests.length);
+				console.log('Status das requisições:', allRequests.map((r: ServiceRequest) => ({ id: r.id, status: r.status })));
+
+				const filteredRequests = allRequests.filter((req: ServiceRequest) => {
+					const isConfirmed = confirmedStatuses.includes(req.status);
+					console.log(`Requisição ${req.id}: status=${req.status}, incluída=${isConfirmed}`);
+					return isConfirmed;
+				});
+				console.log('Requisições filtradas:', filteredRequests.length);
+
+				const mappedAppointments: Appointment[] = filteredRequests.map((req: ServiceRequest) => {
+					const requestedDate = new Date(req.requested_date);
+					const clientName = req.client_profile?.user?.name || 'Cliente';
+					const priceCents = req.quote?.total_cents || req.quote?.amount_cents || 0;
+					const priceBRL = priceCents / 100;
+
+					return {
+						id: `appt-${req.id}`,
+						serviceRequestId: req.id,
+						clientName,
+						address: req.location,
+						dateISO: dateToISOString(requestedDate),
+						priceBRL,
+						observation: req.description || req.quote?.notes,
+					};
+				});
+
+				console.log('Agendamentos mapeados:', mappedAppointments);
+				setAppointments(mappedAppointments);
+			} catch (err) {
+				console.error('Erro ao carregar agendamentos:', err);
+				setError(err instanceof Error ? err.message : 'Erro ao carregar agendamentos');
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		loadAppointments();
+	}, []);
 
 	const monthName = useMemo(() => {
 		return new Date(currentYear, currentMonth, 1).toLocaleString('pt-BR', {
@@ -69,13 +134,6 @@ const AppointmentsPage: React.FC = () => {
 
 	const handleSelectDate = (day: number) => {
 		setSelectedDate(new Date(currentYear, currentMonth, day));
-	};
-
-	const dateToISOString = (date: Date): string => {
-		const year = date.getFullYear();
-		const month = String(date.getMonth() + 1).padStart(2, '0');
-		const day = String(date.getDate()).padStart(2, '0');
-		return `${year}-${month}-${day}`;
 	};
 
 	const formatDateBR = (date: Date | string): string => {
@@ -121,18 +179,11 @@ const AppointmentsPage: React.FC = () => {
 			: `obs:date:${selectedDateISO}`;
 		localStorage.setItem(localKey, text);
 
-		const token = localStorage.getItem('access_token');
-		const apiUrl = import.meta.env.VITE_API_URL;
-		if (!apiUrl || !selectedAppointment) return;
+		if (!selectedAppointment) return;
 
 		try {
-			await fetch(`${apiUrl}/appointments/${selectedAppointment.id}/observation`, {
-				method: 'PATCH',
-				headers: {
-					'Content-Type': 'application/json',
-					...(token ? { Authorization: `Bearer ${token}` } : {}),
-				},
-				body: JSON.stringify({ observation: text }),
+			await serviceRequestService.updateServiceRequest(selectedAppointment.serviceRequestId, {
+				description: text,
 			});
 		} catch {
 		}
@@ -170,7 +221,7 @@ const AppointmentsPage: React.FC = () => {
 							{confirmedSorted.map((a) => (
 								<li key={a.id} className="appointment-card">
 									<div className="card-left">
-										<div className="appt-code">#{a.id}</div>
+										<div className="appt-code">#{a.serviceRequestId}</div>
 										<div className="appt-client">{a.clientName}</div>
 										<div className="appt-address">{a.address}</div>
 									</div>

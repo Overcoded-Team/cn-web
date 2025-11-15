@@ -42,6 +42,13 @@
   position: relative;
 }
 
+.profile-photo-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .profile-photo {
   width: 160px;
   height: 160px;
@@ -82,8 +89,8 @@
 
 .change-picture-sidebar-button {
   position: absolute;
-  bottom: 140px;
-  right: calc(50% - 100px);
+  bottom: 0;
+  right: -20px;
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -95,7 +102,7 @@
   cursor: pointer;
   transition: all 0.3s;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
+  z-index: 10;
   margin: 0;
   padding: 0;
 }
@@ -111,9 +118,10 @@
   cursor: not-allowed;
 }
 
-.change-picture-sidebar-button svg {
+.change-picture-sidebar-button img {
   width: 16px;
   height: 16px;
+  filter: brightness(0) invert(1);
 }
 
 .chef-avatar-placeholder {
