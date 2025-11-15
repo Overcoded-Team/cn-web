@@ -22,8 +22,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: clamp(20px, 3vw, 40px) clamp(15px, 2vw, 30px);
+  justify-content: flex-start;
+  padding: clamp(10px, 2vh, 20px) clamp(15px, 2vw, 30px);
   box-shadow: -10px 0 30px rgba(0, 0, 0, 0.3);
   animation: slideInFromRight 0.4s ease-out;
   overflow-y: auto;
@@ -47,22 +47,24 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(10px, 1.5vh, 20px);
+  gap: clamp(8px, 1.2vh, 15px);
   box-sizing: border-box;
-  padding: 0;
+  padding: clamp(5px, 1vh, 10px) 0;
+  min-height: 0;
+  flex: 0 1 auto;
 }
 
 .logo-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: clamp(10px, 2vh, 20px);
+  margin-bottom: clamp(5px, 1vh, 12px);
   flex-shrink: 0;
 }
 
 .logo-image {
-  width: clamp(100px, 15vw, 200px);
-  height: clamp(100px, 15vw, 200px);
+  width: clamp(80px, 12vw, 150px);
+  height: clamp(80px, 12vw, 150px);
   object-fit: contain;
   filter: brightness(0) invert(1);
   max-width: 100%;
@@ -70,12 +72,13 @@
 
 .modal-title {
   color: white;
-  font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+  font-size: clamp(1.2rem, 2.2vw, 1.6rem);
   font-weight: 600;
   text-align: center;
   margin: 0;
   font-family: "Krub", sans-serif;
   line-height: 1.2;
+  flex-shrink: 0;
 }
 
 .error-message {
@@ -90,8 +93,10 @@
   max-width: 100%;
   display: flex;
   flex-direction: column;
-  gap: clamp(12px, 2vh, 20px);
+  gap: clamp(10px, 1.5vh, 16px);
   box-sizing: border-box;
+  flex: 0 1 auto;
+  min-height: 0;
 }
 
 .form-row {
@@ -206,7 +211,8 @@
 /* Step Indicator */
 .step-indicator {
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: clamp(5px, 0.8vh, 8px);
+  flex-shrink: 0;
 }
 
 .step-number {
@@ -247,13 +253,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px;
+  gap: clamp(8px, 1.2vh, 12px);
+  flex-shrink: 0;
 }
 
 .profile-picture-preview {
   position: relative;
-  width: clamp(100px, 12vw, 150px);
-  height: clamp(100px, 12vw, 150px);
+  width: clamp(80px, 10vw, 120px);
+  height: clamp(80px, 10vw, 120px);
   border-radius: 50%;
   overflow: hidden;
   border: 3px solid rgba(255, 255, 255, 0.3);
@@ -322,10 +329,10 @@
 .cuisines-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: clamp(8px, 1vw, 12px);
-  max-height: clamp(150px, 20vh, 200px);
+  gap: clamp(6px, 0.8vw, 10px);
+  max-height: clamp(100px, 15vh, 160px);
   overflow-y: auto;
-  padding: clamp(8px, 1vw, 12px);
+  padding: clamp(6px, 0.8vw, 10px);
   background-color: rgba(179, 179, 179, 0.2);
   border-radius: 12px;
   box-sizing: border-box;
@@ -364,9 +371,10 @@
 /* Step 2 Buttons */
 .step2-buttons {
   display: flex;
-  gap: 15px;
+  gap: clamp(10px, 1.5vw, 15px);
   width: 100%;
-  margin-top: 10px;
+  margin-top: clamp(5px, 0.8vh, 8px);
+  flex-shrink: 0;
 }
 
 .step2-buttons .login-button {
@@ -486,22 +494,57 @@
 }
 
 /* Garantir que o conteúdo não ultrapasse a viewport */
-@media (max-height: 700px) {
+@media (max-height: 800px) {
   .modal-container {
-    padding: clamp(10px, 1.5vh, 20px) clamp(10px, 1.5vw, 20px);
+    padding: clamp(8px, 1.2vh, 15px) clamp(10px, 1.5vw, 20px);
+    justify-content: flex-start;
   }
 
   .logo-image {
-    width: clamp(60px, 10vw, 120px);
-    height: clamp(60px, 10vw, 120px);
+    width: clamp(60px, 8vw, 100px);
+    height: clamp(60px, 8vw, 100px);
   }
 
   .modal-content {
-    gap: clamp(8px, 1vh, 15px);
+    gap: clamp(6px, 0.8vh, 12px);
+    padding: clamp(3px, 0.5vh, 8px) 0;
   }
 
   .cuisines-grid {
-    max-height: clamp(100px, 15vh, 150px);
+    max-height: clamp(80px, 12vh, 120px);
+  }
+
+  .profile-picture-preview {
+    width: clamp(70px, 8vw, 100px);
+    height: clamp(70px, 8vw, 100px);
+  }
+
+  .login-form {
+    gap: clamp(8px, 1.2vh, 14px);
+  }
+}
+
+@media (max-height: 600px) {
+  .modal-container {
+    padding: clamp(5px, 1vh, 10px) clamp(8px, 1.2vw, 15px);
+  }
+
+  .logo-image {
+    width: clamp(50px, 6vw, 80px);
+    height: clamp(50px, 6vw, 80px);
+  }
+
+  .modal-title {
+    font-size: clamp(1rem, 2vw, 1.3rem);
+  }
+
+  .cuisines-grid {
+    max-height: clamp(60px, 10vh, 100px);
+  }
+
+  .profile-picture-preview {
+    width: clamp(60px, 7vw, 90px);
+    height: clamp(60px, 7vw, 90px);
   }
 }
 
