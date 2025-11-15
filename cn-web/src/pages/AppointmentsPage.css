@@ -1,118 +1,322 @@
-.appointments-grid { display: grid; grid-template-columns: 1fr 360px; gap: 20px; }
+.appointments-grid { 
+	display: grid; 
+	grid-template-columns: 1fr minmax(280px, 360px); 
+	gap: clamp(12px, 1.5vw, 20px);
+	height: calc(100vh - 200px);
+	min-height: 500px;
+	max-height: calc(100vh - 120px);
+}
+
+.appointments-list-section {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+}
 
 .appointments-list-section .section-title {
 	color: #ff6a00;
 	font-weight: 700;
-	margin-bottom: 10px;
+	margin-bottom: clamp(8px, 1vh, 12px);
+	font-size: clamp(1rem, 1.2vw, 1.25rem);
 }
+
 .appointments-list {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
-	max-height: 560px;
-	overflow: auto;
+	gap: clamp(8px, 1vh, 12px);
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
 	padding-right: 4px;
 }
+
+.appointments-list::-webkit-scrollbar {
+	width: 6px;
+}
+
+.appointments-list::-webkit-scrollbar-track {
+	background: #f1f1f1;
+	border-radius: 10px;
+}
+
+.appointments-list::-webkit-scrollbar-thumb {
+	background: #ff6a00;
+	border-radius: 10px;
+}
+
 .appointment-card {
 	background: #fff;
 	border-radius: 12px;
-	padding: 12px 16px;
+	padding: clamp(10px, 1.2vh, 16px);
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+	flex-shrink: 0;
+	gap: 12px;
 }
-.card-left { display: flex; flex-direction: column; gap: 4px; }
-.appt-code { color: #ff6a00; font-weight: 700; font-size: 12px; }
-.appt-client { color: #333; font-weight: 600; }
-.appt-address { color: #666; font-size: 12px; }
-.card-right { text-align: right; display: flex; flex-direction: column; gap: 4px; }
-.appt-date { color: #999; font-size: 12px; }
-.appt-price { color: #ff6a00; font-weight: 700; }
+
+.card-left { 
+	display: flex; 
+	flex-direction: column; 
+	gap: 4px;
+	flex: 1;
+	min-width: 0;
+}
+
+.appt-code { 
+	color: #ff6a00; 
+	font-weight: 700; 
+	font-size: clamp(11px, 0.8vw, 12px); 
+}
+
+.appt-client { 
+	color: #333; 
+	font-weight: 600;
+	font-size: clamp(0.9rem, 1vw, 1rem);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.appt-address { 
+	color: #666; 
+	font-size: clamp(11px, 0.8vw, 12px);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.card-right { 
+	text-align: right; 
+	display: flex; 
+	flex-direction: column; 
+	gap: 4px;
+	flex-shrink: 0;
+}
+
+.appt-date { 
+	color: #999; 
+	font-size: clamp(11px, 0.8vw, 12px); 
+}
+
+.appt-price { 
+	color: #ff6a00; 
+	font-weight: 700;
+	font-size: clamp(0.9rem, 1vw, 1rem);
+}
 
 .empty-state {
 	background: #fff;
 	border-radius: 12px;
-	padding: 20px;
+	padding: clamp(16px, 2vh, 24px);
 	color: #666;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+	text-align: center;
 }
 
 .appointments-right-panel {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
+	gap: clamp(12px, 1.5vh, 16px);
+	height: 100%;
+	min-height: 0;
 }
+
 .calendar-card, .notes-card {
 	background: #fff;
 	border-radius: 12px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+	flex-shrink: 0;
 }
-.calendar-card { padding: 12px; }
+
+.calendar-card { 
+	padding: clamp(10px, 1.2vh, 14px);
+}
+
 .calendar-header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	margin-bottom: 8px;
+	margin-bottom: clamp(6px, 0.8vh, 10px);
 }
+
 .cal-title {
 	font-weight: 700;
 	color: #444;
 	text-transform: capitalize;
+	font-size: clamp(0.9rem, 1.1vw, 1rem);
 }
+
 .cal-nav {
-	width: 28px;
-	height: 28px;
+	width: clamp(24px, 2vw, 32px);
+	height: clamp(24px, 2vw, 32px);
 	border-radius: 50%;
 	border: none;
 	background: #f2f2f2;
 	color: #555;
 	cursor: pointer;
+	font-size: clamp(16px, 1.5vw, 20px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: background 0.2s;
 }
+
+.cal-nav:hover {
+	background: #e0e0e0;
+}
+
 .calendar-grid {
 	display: grid;
 	grid-template-columns: repeat(7, 1fr);
-	gap: 6px;
+	gap: clamp(4px, 0.5vw, 6px);
 }
+
 .cal-weekday {
 	text-align: center;
-	font-size: 12px;
+	font-size: clamp(10px, 0.8vw, 12px);
 	color: #999;
-	padding: 4px 0;
+	padding: clamp(3px, 0.5vh, 5px) 0;
 }
+
 .cal-day {
 	border: none;
 	border-radius: 8px;
 	background: #f7f7f7;
-	padding: 8px 0;
+	padding: clamp(6px, 0.8vh, 10px) 0;
 	text-align: center;
 	cursor: pointer;
 	color: #444;
+	font-size: clamp(11px, 0.9vw, 13px);
+	transition: background 0.2s;
 }
+
+.cal-day:hover:not(.empty):not(.selected) {
+	background: #e8e8e8;
+}
+
 .cal-day.selected {
 	background: #4d4c4b;
 	color: #fff;
 	font-weight: 700;
 }
-.cal-day.empty { background: transparent; cursor: default; }
 
-.notes-card { padding: 12px; }
-.notes-title { color: #ff6a00; font-weight: 700; margin-bottom: 8px; }
+.cal-day.empty { 
+	background: transparent; 
+	cursor: default; 
+}
+
+.notes-card { 
+	padding: clamp(10px, 1.2vh, 14px);
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.notes-title { 
+	color: #ff6a00; 
+	font-weight: 700; 
+	margin-bottom: clamp(6px, 0.8vh, 10px);
+	font-size: clamp(0.9rem, 1.1vw, 1rem);
+}
+
 .notes-textarea {
 	width: 100%;
-	min-height: 220px;
+	flex: 1;
+	min-height: clamp(120px, 15vh, 220px);
+	max-height: calc(100vh - 500px);
 	resize: none;
 	border: 1px solid #eee;
 	border-radius: 8px;
-	padding: 12px;
+	padding: clamp(10px, 1.2vh, 14px);
 	color: #444;
-	font-size: 14px;
+	font-size: clamp(13px, 0.9vw, 14px);
 	line-height: 1.4;
 	font-family: inherit;
+	box-sizing: border-box;
+}
+
+@media (max-width: 1400px) {
+	.appointments-grid {
+		grid-template-columns: 1fr minmax(260px, 320px);
+	}
+}
+
+@media (max-width: 1200px) {
+	.appointments-grid {
+		grid-template-columns: 1fr minmax(240px, 300px);
+		gap: clamp(10px, 1.2vw, 16px);
+	}
 }
 
 @media (max-width: 1024px) {
-	.appointments-grid { grid-template-columns: 1fr; }
+	.appointments-grid { 
+		grid-template-columns: 1fr;
+		height: auto;
+		max-height: none;
+		min-height: auto;
+	}
+
+	.appointments-list-section {
+		height: auto;
+		min-height: 400px;
+	}
+
+	.appointments-list {
+		max-height: 500px;
+	}
+
+	.appointments-right-panel {
+		height: auto;
+	}
+
+	.notes-textarea {
+		max-height: 200px;
+	}
+}
+
+@media (max-width: 768px) {
+	.appointments-grid {
+		gap: 12px;
+	}
+
+	.appointments-list {
+		max-height: 400px;
+	}
+
+	.calendar-card {
+		order: 2;
+	}
+
+	.notes-card {
+		order: 1;
+	}
+}
+
+@media (max-height: 800px) {
+	.appointments-grid {
+		height: calc(100vh - 150px);
+	}
+
+	.notes-textarea {
+		min-height: 100px;
+		max-height: 150px;
+	}
+}
+
+@media (max-height: 600px) {
+	.appointments-grid {
+		height: calc(100vh - 120px);
+	}
+
+	.notes-textarea {
+		min-height: 80px;
+		max-height: 120px;
+	}
 }
 
 

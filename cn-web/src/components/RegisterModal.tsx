@@ -79,13 +79,19 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
       if (currentStep === 2) {
         try {
           setIsLoadingCuisines(true);
-          const cuisines = await chefService.listCuisines(1, 100);
+          const response = await chefService.listCuisines(1, 100);
+          // Garantir que sempre seja um array (a API retorna Cuisine[] diretamente)
+          const cuisines = Array.isArray(response) ? response : [];
           setAvailableCuisines(cuisines);
         } catch (err) {
           console.error("Erro ao carregar especialidades:", err);
+          setAvailableCuisines([]); // Garantir que seja um array vazio em caso de erro
         } finally {
           setIsLoadingCuisines(false);
         }
+      } else {
+        // Resetar quando não estiver no step 2
+        setAvailableCuisines([]);
       }
     };
     loadCuisines();
@@ -427,21 +433,27 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
                   </p>
                 ) : (
                   <div className="cuisines-grid">
-                    {availableCuisines.map((cuisine) => (
-                      <button
-                        key={cuisine.id}
-                        type="button"
-                        className={`cuisine-chip ${
-                          step2Data.especialidades.includes(cuisine.id)
-                            ? "selected"
-                            : ""
-                        }`}
-                        onClick={() => toggleCuisine(cuisine.id)}
-                        disabled={isLoading}
-                      >
-                        {cuisine.title}
-                      </button>
-                    ))}
+                    {Array.isArray(availableCuisines) && availableCuisines.length > 0 ? (
+                      availableCuisines.map((cuisine) => (
+                        <button
+                          key={cuisine.id}
+                          type="button"
+                          className={`cuisine-chip ${
+                            step2Data.especialidades.includes(cuisine.id)
+                              ? "selected"
+                              : ""
+                          }`}
+                          onClick={() => toggleCuisine(cuisine.id)}
+                          disabled={isLoading}
+                        >
+                          {cuisine.title}
+                        </button>
+                      ))
+                    ) : (
+                      <p style={{ color: "white", textAlign: "center" }}>
+                        Nenhuma especialidade disponível
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
