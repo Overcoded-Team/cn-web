@@ -6,6 +6,8 @@ import {
   chefService,
   Cuisine,
   ChefGalleryPhoto,
+  ChefSocialType,
+  ChefSocialLink,
 } from "../services/chef.service";
 import { useAuth } from "../contexts/AuthContext";
 import editIcon from "../assets/edit.svg";
@@ -67,6 +69,9 @@ const ProfilePage: React.FC = () => {
   const [isUploadingGalleryPhoto, setIsUploadingGalleryPhoto] =
     useState<boolean>(false);
   const galleryFileInputRef = useRef<HTMLInputElement>(null);
+  const [socialLinks, setSocialLinks] = useState<ChefSocialLink[]>([]);
+  const [newSocialType, setNewSocialType] = useState<ChefSocialType | "">("");
+  const [newSocialUrl, setNewSocialUrl] = useState<string>("");
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -86,6 +91,15 @@ const ProfilePage: React.FC = () => {
             (cc) => cc.cuisine.id
           ) || [];
         setSelectedCuisineIds(new Set(cuisineIds));
+        
+        const loadSocialLinks = async () => {
+          try {
+            const links = await chefService.getMySocialLinks();
+            setSocialLinks(links);
+          } catch (err) {
+          }
+        };
+        loadSocialLinks();
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Erro ao carregar perfil"
@@ -129,7 +143,7 @@ const ProfilePage: React.FC = () => {
     loadAvailableCuisines();
   }, [isEditing]);
 
-  const handleEdit = () => {
+  const handleEdit = async () => {
     setIsEditing(true);
     if (profile) {
       setEditedBio(profile.bio || "");
@@ -144,6 +158,11 @@ const ProfilePage: React.FC = () => {
       setEditedYearsOfExperience(0);
       setEditedIsAvailable(true);
       setSelectedCuisineIds(new Set());
+    }
+    try {
+      const links = await chefService.getMySocialLinks();
+      setSocialLinks(links);
+    } catch (err) {
     }
   };
 
@@ -191,6 +210,8 @@ const ProfilePage: React.FC = () => {
 
       const updatedProfile = await chefService.getMyProfile();
       setProfile(updatedProfile as ChefProfileResponse);
+      const updatedLinks = await chefService.getMySocialLinks();
+      setSocialLinks(updatedLinks);
       setIsEditing(false);
     } catch (err) {
       setError(
@@ -312,6 +333,58 @@ const ProfilePage: React.FC = () => {
 
   const handleAddGalleryPhotoClick = () => {
     galleryFileInputRef.current?.click();
+  };
+
+  const handleAddSocialLink = async () => {
+    if (!newSocialType || !newSocialUrl.trim()) {
+      setError("Selecione uma rede social e informe a URL");
+      return;
+    }
+
+    try {
+      setError("");
+      await chefService.addSocialLink({
+        type: newSocialType as ChefSocialType,
+        url: newSocialUrl.trim(),
+      });
+      const updatedLinks = await chefService.getMySocialLinks();
+      setSocialLinks(updatedLinks);
+      setNewSocialType("");
+      setNewSocialUrl("");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Erro ao adicionar rede social"
+      );
+    }
+  };
+
+  const handleDeleteSocialLink = async (type: ChefSocialType) => {
+    if (!confirm("Tem certeza que deseja remover esta rede social?")) {
+      return;
+    }
+
+    try {
+      setError("");
+      await chefService.deleteSocialLink(type);
+      const updatedLinks = await chefService.getMySocialLinks();
+      setSocialLinks(updatedLinks);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Erro ao remover rede social"
+      );
+    }
+  };
+
+  const getAvailableSocialTypes = (): ChefSocialType[] => {
+    const allTypes: ChefSocialType[] = [
+      "INSTAGRAM",
+      "FACEBOOK",
+      "YOUTUBE",
+      "TIKTOK",
+      "WHATSAPP",
+    ];
+    const usedTypes = new Set(socialLinks.map((link) => link.type));
+    return allTypes.filter((type) => !usedTypes.has(type));
   };
 
   const bio = profile?.bio || "";
@@ -517,6 +590,84 @@ const ProfilePage: React.FC = () => {
                   </div>
                 )}
               </section>
+
+              {isEditing && (
+                <section className="profile-section">
+                  <h2 className="section-title-orange">Redes Sociais</h2>
+                  <div className="social-links-edit-container">
+                    {socialLinks.length > 0 && (
+                      <div className="social-links-list">
+                        {socialLinks.map((link) => (
+                          <div key={link.type} className="social-link-item">
+                            <span className="social-link-type">{link.type}</span>
+                            <span className="social-link-url">{link.url}</span>
+                            <button
+                              type="button"
+                              className="social-link-delete"
+                              onClick={() => handleDeleteSocialLink(link.type)}
+                              aria-label="Remover rede social"
+                            >
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M18 6L6 18M6 6L18 18"
+                                  stroke="#f44336"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {getAvailableSocialTypes().length > 0 && (
+                      <div className="add-social-link-container">
+                        <select
+                          className="edit-input"
+                          value={newSocialType}
+                          onChange={(e) =>
+                            setNewSocialType(e.target.value as ChefSocialType)
+                          }
+                        >
+                          <option value="">Selecione uma rede social</option>
+                          {getAvailableSocialTypes().map((type) => (
+                            <option key={type} value={type}>
+                              {type}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="text"
+                          className="edit-input"
+                          value={newSocialUrl}
+                          onChange={(e) => setNewSocialUrl(e.target.value)}
+                          placeholder="URL da rede social"
+                        />
+                        <button
+                          type="button"
+                          className="add-social-button"
+                          onClick={handleAddSocialLink}
+                        >
+                          Adicionar
+                        </button>
+                      </div>
+                    )}
+                    {getAvailableSocialTypes().length === 0 &&
+                      socialLinks.length > 0 && (
+                        <p className="section-text">
+                          Todas as redes sociais disponíveis foram adicionadas.
+                        </p>
+                      )}
+                  </div>
+                </section>
+              )}
 
               {!isEditing && (
                 <>
