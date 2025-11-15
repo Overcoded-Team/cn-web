@@ -24,7 +24,7 @@ const Dashboard: React.FC = () => {
         setIsLoading(true);
         const [profileData, requestsData] = await Promise.all([
           chefService.getMyProfile(),
-          serviceRequestService.listMyServiceRequests(1, 1000),
+          serviceRequestService.listChefServiceRequests(1, 1000),
         ]);
 
         setProfile(profileData);
@@ -56,14 +56,23 @@ const Dashboard: React.FC = () => {
     );
 
     const cancelledRequests = serviceRequests.filter(
-      (sr) => sr.status === ServiceRequestStatus.CANCELLED
+      (sr) =>
+        sr.status === ServiceRequestStatus.CANCELLED ||
+        sr.status === ServiceRequestStatus.REJECTED_BY_CHEF
+    );
+
+    const pendingRequests = serviceRequests.filter(
+      (sr) =>
+        sr.status !== ServiceRequestStatus.COMPLETED &&
+        sr.status !== ServiceRequestStatus.CANCELLED &&
+        sr.status !== ServiceRequestStatus.REJECTED_BY_CHEF
     );
 
     const completedWithQuote = completedRequests.filter((sr) => sr.quote);
 
     const totalEarnings = completedWithQuote.reduce((sum, sr) => {
       if (!sr.quote) return sum;
-      return sum + sr.quote.amount_cents;
+      return sum + (sr.quote.total_cents || sr.quote.amount_cents || 0);
     }, 0);
 
     const monthCompletedWithQuote = monthRequests.filter(
@@ -72,7 +81,7 @@ const Dashboard: React.FC = () => {
 
     const monthEarnings = monthCompletedWithQuote.reduce((sum, sr) => {
       if (!sr.quote) return sum;
-      return sum + sr.quote.amount_cents;
+      return sum + (sr.quote.total_cents || sr.quote.amount_cents || 0);
     }, 0);
 
     const yearRequests = serviceRequests.filter((sr) => {
@@ -85,21 +94,15 @@ const Dashboard: React.FC = () => {
     ).length;
 
     const yearCancelled = yearRequests.filter(
-      (sr) => sr.status === ServiceRequestStatus.CANCELLED
+      (sr) =>
+        sr.status === ServiceRequestStatus.CANCELLED ||
+        sr.status === ServiceRequestStatus.REJECTED_BY_CHEF
     ).length;
-
-    const scheduledRequests = serviceRequests.filter((sr) =>
-      [
-        ServiceRequestStatus.SCHEDULED,
-        ServiceRequestStatus.PAYMENT_CONFIRMED,
-        ServiceRequestStatus.QUOTE_ACCEPTED,
-      ].includes(sr.status as ServiceRequestStatus)
-    );
 
     const totalRequests = serviceRequests.length;
     const totalCompleted = completedRequests.length;
     const totalCancelled = cancelledRequests.length;
-    const totalScheduled = scheduledRequests.length;
+    const totalPending = pendingRequests.length;
 
     const greenPercent =
       totalRequests > 0
@@ -107,7 +110,7 @@ const Dashboard: React.FC = () => {
         : 0;
     const orangePercent =
       totalRequests > 0
-        ? Math.round((totalScheduled / totalRequests) * 100)
+        ? Math.round((totalPending / totalRequests) * 100)
         : 0;
     const redPercent =
       totalRequests > 0
@@ -118,9 +121,9 @@ const Dashboard: React.FC = () => {
       totalRequests > 0
         ? Math.round((totalCompleted / totalRequests) * 100)
         : 0;
-    const progressProximos =
+    const progressPendentes =
       totalRequests > 0
-        ? Math.round((totalScheduled / totalRequests) * 100)
+        ? Math.round((totalPending / totalRequests) * 100)
         : 0;
     const progressCancelados =
       totalRequests > 0
@@ -139,7 +142,7 @@ const Dashboard: React.FC = () => {
         })
         .reduce((sum, sr) => {
           if (!sr.quote) return sum;
-          return sum + (sr.quote.amount_cents || 0);
+          return sum + (sr.quote.total_cents || sr.quote.amount_cents || 0);
         }, 0);
     });
 
@@ -168,12 +171,13 @@ const Dashboard: React.FC = () => {
     };
 
     return {
-      avgRating: profile?.avgRating || 0,
+      avgRating: profile?.avgRating ? Number(profile.avgRating) : 0,
       totalEarnings: totalEarnings / 100,
       monthEarnings: monthEarnings / 100,
       period: formatPeriod(),
       totalRequests,
       totalCompleted,
+      totalPending,
       totalCancelled,
       yearCompleted,
       yearCancelled,
@@ -181,7 +185,7 @@ const Dashboard: React.FC = () => {
       orangePercent,
       redPercent,
       progressAtendidos,
-      progressProximos,
+      progressPendentes,
       progressCancelados,
       monthlyEarnings: monthlyEarnings.map((e) => e / 100),
       maxMonthlyEarning: maxMonthlyEarning / 100,
@@ -382,34 +386,76 @@ const Dashboard: React.FC = () => {
                     <div className="donut-chart-container">
                       {(() => {
                         const circumference = 2 * Math.PI * 50;
-                        const total =
-                          metrics.greenPercent +
-                          metrics.orangePercent +
-                          metrics.redPercent;
-                        const verde =
-                          total > 0
-                            ? (metrics.greenPercent / 100) * circumference
-                            : 0;
-                        const laranja =
-                          total > 0
-                            ? (metrics.orangePercent / 100) * circumference
-                            : 0;
-                        const vermelho =
-                          total > 0
-                            ? (metrics.redPercent / 100) * circumference
-                            : 0;
+                        const totalRequests = metrics.totalRequests || 0;
+                        const totalCompleted = metrics.totalCompleted || 0;
+                        const totalPending = metrics.totalPending || 0;
+                        const totalCancelled = metrics.totalCancelled || 0;
+
+                        let verde = 0;
+                        let laranja = 0;
+                        let vermelho = 0;
+                        let mostrarCinza = false;
+
+                        if (totalRequests === 0) {
+                          mostrarCinza = true;
+                        } else {
+                          const temVerde = totalCompleted > 0;
+                          const temLaranja = totalPending > 0;
+                          const temVermelho = totalCancelled > 0;
+
+                          const categoriasComValor = [temVerde, temLaranja, temVermelho].filter(Boolean).length;
+
+                          if (categoriasComValor === 1) {
+                            if (temVerde) {
+                              verde = circumference;
+                            } else if (temLaranja) {
+                              laranja = circumference;
+                            } else if (temVermelho) {
+                              vermelho = circumference;
+                            }
+                          } else if (categoriasComValor > 1) {
+                            const somaValores = totalCompleted + totalPending + totalCancelled;
+
+                            if (temVerde) {
+                              verde = (totalCompleted / somaValores) * circumference;
+                            }
+                            if (temLaranja) {
+                              laranja = (totalPending / somaValores) * circumference;
+                            }
+                            if (temVermelho) {
+                              vermelho = (totalCancelled / somaValores) * circumference;
+                            }
+
+                            const soma = verde + laranja + vermelho;
+                            const diff = circumference - soma;
+
+                            if (Math.abs(diff) > 0.0001) {
+                              if (temVermelho && vermelho > 0) {
+                                vermelho += diff;
+                              } else if (temLaranja && laranja > 0) {
+                                laranja += diff;
+                              } else if (temVerde && verde > 0) {
+                                verde += diff;
+                              }
+                            }
+                          } else {
+                            mostrarCinza = true;
+                          }
+                        }
 
                         return (
                           <svg className="donut-chart" viewBox="0 0 120 120">
-                            <circle
-                              className="donut-ring"
-                              cx="60"
-                              cy="60"
-                              r="50"
-                              fill="none"
-                              stroke="#E5E5E5"
-                              strokeWidth="20"
-                            />
+                            {mostrarCinza && (
+                              <circle
+                                className="donut-ring"
+                                cx="60"
+                                cy="60"
+                                r="50"
+                                fill="none"
+                                stroke="#E5E5E5"
+                                strokeWidth="20"
+                              />
+                            )}
                             {verde > 0 && (
                               <circle
                                 className="donut-segment donut-segment-green"
@@ -492,11 +538,11 @@ const Dashboard: React.FC = () => {
                       </div>
                     </div>
                     <div className="estatistica-progress-item">
-                      <h4 className="progress-title">Próximos</h4>
+                      <h4 className="progress-title">Pendentes</h4>
                       <div className="progress-bar-container">
                         <div
                           className="progress-bar progress-bar-orange"
-                          style={{ width: `${metrics.progressProximos}%` }}
+                          style={{ width: `${metrics.progressPendentes}%` }}
                         ></div>
                       </div>
                     </div>
