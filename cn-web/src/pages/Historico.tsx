@@ -1,77 +1,82 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "./Historico.css";
 import "./Dashboard.css";
 import { DashboardSidebar } from "../components/DashboardSidebar";
+import {
+  serviceRequestService,
+  ServiceRequest,
+  ServiceRequestStatus,
+} from "../services/serviceRequest.service";
+
+interface HistoricoEntry {
+  valor: number;
+  data: string;
+  hora: string;
+  tipoServico: string;
+  endereco: string;
+  clienteNome: string;
+  contato?: string;
+}
 
 const Historico: React.FC = () => {
+  const [historicoEntries, setHistoricoEntries] = useState<HistoricoEntry[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
 
-  const historicoEntries = [
-    {
-      valor: 252.0,
-      data: "04/11/2025",
-      hora: "18:00",
-      tipoServico: "Atendimento a domicilio",
-      endereco: "Av. Brasil, 1875 Zona 03 - Maringá - PR",
-      clienteNome: "Jorge da Silva",
-      contato: "(44)99988-4512",
-    },
-    {
-      valor: 415.0,
-      data: "21/10/2025",
-      hora: "21:00",
-      tipoServico: "Evento Privado",
-      endereco: "Av. JK, 1376 - Maringá - PR",
-      clienteNome: "Maria Souza",
-      contato: "(44)99876-5432",
-    },
-    {
-      valor: 210.0,
-      data: "15/10/2025",
-      hora: "14:00",
-      tipoServico: "Evento Privado",
-      endereco:
-        "Rua Pioneiro Geraldo M. da Silva, 450 - Zona 08 - Maringá - PR",
-      clienteNome: "João Moraes",
-      contato: "(44)99999-9999",
-    },
-    {
-      valor: 500.0,
-      data: "20/09/2025",
-      hora: "20:00",
-      tipoServico: "Atendimento a domicilio",
-      endereco: "Avenida Mauá, 1230 - Centro - Maringá - PR",
-      clienteNome: "Indiana Jones",
-      contato: "(44)99988-4512",
-    },
-    {
-      valor: 497.0,
-      data: "19/09/2025",
-      hora: "18:00",
-      tipoServico: "Atendimento a domicilio",
-      endereco:
-        "Rua Pioneiro Guarino Augusto Basilio, 200 - Parque Industrial - Maringá - PR",
-      clienteNome: "Alexandre Andrade",
-      contato: "(44)99988-4512",
-    },
-    {
-      valor: 252.0,
-      data: "04/11/2025",
-      hora: "18:00",
-      tipoServico: "Atendimento a domicilio",
-      endereco: "Av. Brasil, 1875 Zona 03 - Maringá - PR",
-      clienteNome: "Jorge da Silva",
-      contato: "(44)99988-4512",
-    },
-    {
-      valor: 305.0,
-      data: "04/11/2025",
-      hora: "18:00",
-      tipoServico: "Atendimento a domicilio",
-      endereco: "Rua Exemplo, 123 - Centro - Maringá - PR",
-      clienteNome: "Pedro Santos",
-      contato: "(44)98877-6655",
-    },
-  ];
+  useEffect(() => {
+    const loadHistorico = async () => {
+      try {
+        setIsLoading(true);
+        setError("");
+        const response = await serviceRequestService.listChefServiceRequests(1, 1000);
+
+        const completedRequests = (response.items || []).filter(
+          (req: ServiceRequest) => req.status === ServiceRequestStatus.COMPLETED
+        );
+
+        const mappedEntries: HistoricoEntry[] = completedRequests.map((req: ServiceRequest) => {
+          const requestedDate = new Date(req.requested_date);
+          const day = String(requestedDate.getDate()).padStart(2, "0");
+          const month = String(requestedDate.getMonth() + 1).padStart(2, "0");
+          const year = requestedDate.getFullYear();
+          const hours = String(requestedDate.getHours()).padStart(2, "0");
+          const minutes = String(requestedDate.getMinutes()).padStart(2, "0");
+
+          const clientName = req.client_profile?.user?.name || "Cliente";
+          const priceCents = req.quote?.total_cents || req.quote?.amount_cents || 0;
+          const priceBRL = priceCents / 100;
+
+          return {
+            valor: priceBRL,
+            data: `${day}/${month}/${year}`,
+            hora: `${hours}:${minutes}`,
+            tipoServico: req.service_type || "Serviço",
+            endereco: req.location || "",
+            clienteNome: clientName,
+            contato: req.client_profile?.user?.email || undefined,
+          };
+        });
+
+        const sortedEntries = mappedEntries.sort((a, b) => {
+          const dateA = new Date(a.data.split("/").reverse().join("-"));
+          const dateB = new Date(b.data.split("/").reverse().join("-"));
+          if (dateA.getTime() !== dateB.getTime()) {
+            return dateB.getTime() - dateA.getTime();
+          }
+          return b.hora.localeCompare(a.hora);
+        });
+
+        setHistoricoEntries(sortedEntries);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao carregar histórico");
+        console.error("Erro ao carregar histórico:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadHistorico();
+  }, []);
 
   return (
     <div className="historico-layout">
@@ -83,31 +88,58 @@ const Historico: React.FC = () => {
             <h1 className="historico-title">Histórico</h1>
           </div>
 
-          <div className="historico-list">
-            {historicoEntries.map((entry, index) => (
-              <div key={index} className="historico-entry">
-                <div className="entry-header">
-                  <span className="entry-value">
-                    R${" "}
-                    {entry.valor.toLocaleString("pt-BR", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </span>
-                  <span className="entry-date-time">
-                    {entry.data} - {entry.hora}
-                  </span>
-                </div>
-                <div className="entry-details">
-                  <p className="entry-service">
-                    {entry.tipoServico}: {entry.endereco}
-                  </p>
-                  <p className="entry-client">
-                    {entry.clienteNome} - Contato: {entry.contato}
-                  </p>
-                </div>
+          {isLoading ? (
+            <div className="historico-list">
+              <div className="historico-entry">
+                <p style={{ textAlign: "center", padding: "2rem", color: "#666" }}>
+                  Carregando histórico...
+                </p>
               </div>
-            ))}
-          </div>
+            </div>
+          ) : error ? (
+            <div className="historico-list">
+              <div className="historico-entry">
+                <p style={{ textAlign: "center", padding: "2rem", color: "#f44336" }}>
+                  {error}
+                </p>
+              </div>
+            </div>
+          ) : historicoEntries.length === 0 ? (
+            <div className="historico-list">
+              <div className="historico-entry">
+                <p style={{ textAlign: "center", padding: "2rem", color: "#666" }}>
+                  Nenhum serviço concluído encontrado.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="historico-list">
+              {historicoEntries.map((entry, index) => (
+                <div key={index} className="historico-entry">
+                  <div className="entry-header">
+                    <span className="entry-value">
+                      R${" "}
+                      {entry.valor.toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </span>
+                    <span className="entry-date-time">
+                      {entry.data} - {entry.hora}
+                    </span>
+                  </div>
+                  <div className="entry-details">
+                    <p className="entry-service">
+                      {entry.tipoServico}: {entry.endereco}
+                    </p>
+                    <p className="entry-client">
+                      {entry.clienteNome}
+                      {entry.contato && ` - Contato: ${entry.contato}`}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </main>
     </div>

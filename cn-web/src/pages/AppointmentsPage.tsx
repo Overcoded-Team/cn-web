@@ -46,9 +46,6 @@ const AppointmentsPage: React.FC = () => {
 				setError('');
 				const response = await serviceRequestService.listChefServiceRequests(1, 1000);
 				
-				console.log('Resposta da API:', response);
-				console.log('Items recebidos:', response.items);
-				
 				const confirmedStatuses = [
 					ServiceRequestStatus.SCHEDULED,
 					ServiceRequestStatus.PAYMENT_CONFIRMED,
@@ -57,15 +54,9 @@ const AppointmentsPage: React.FC = () => {
 				];
 
 				const allRequests = response.items || [];
-				console.log('Total de requisições:', allRequests.length);
-				console.log('Status das requisições:', allRequests.map((r: ServiceRequest) => ({ id: r.id, status: r.status })));
-
-				const filteredRequests = allRequests.filter((req: ServiceRequest) => {
-					const isConfirmed = confirmedStatuses.includes(req.status);
-					console.log(`Requisição ${req.id}: status=${req.status}, incluída=${isConfirmed}`);
-					return isConfirmed;
-				});
-				console.log('Requisições filtradas:', filteredRequests.length);
+				const filteredRequests = allRequests.filter((req: ServiceRequest) => 
+					confirmedStatuses.includes(req.status)
+				);
 
 				const mappedAppointments: Appointment[] = filteredRequests.map((req: ServiceRequest) => {
 					const requestedDate = new Date(req.requested_date);
@@ -84,10 +75,8 @@ const AppointmentsPage: React.FC = () => {
 					};
 				});
 
-				console.log('Agendamentos mapeados:', mappedAppointments);
 				setAppointments(mappedAppointments);
 			} catch (err) {
-				console.error('Erro ao carregar agendamentos:', err);
 				setError(err instanceof Error ? err.message : 'Erro ao carregar agendamentos');
 			} finally {
 				setIsLoading(false);
