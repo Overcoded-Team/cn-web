@@ -126,20 +126,20 @@ export const chefService = {
     return api.get<ChefCuisine[]>("/chefs/my-cuisines");
   },
 
-  async updateMyProfile(data: { 
-    bio?: string; 
+  async updateMyProfile(data: {
+    bio?: string;
     portfolioDescription?: string;
     yearsOfExperience?: number;
     isAvailable?: boolean;
   }): Promise<ChefProfile> {
     const { isAvailable, ...chefProfileData } = data;
-    
+
     const updateData: any = {
-      chefProfile: chefProfileData
+      chefProfile: chefProfileData,
     };
 
     const response = await api.patch<any>("/user/profile", updateData);
-    
+
     if (isAvailable !== undefined) {
       const currentProfile = await this.getMyProfile();
       if (currentProfile.isAvailable !== isAvailable) {
@@ -147,12 +147,15 @@ export const chefService = {
         return await this.getMyProfile();
       }
     }
-    
+
     return response.chefProfile || response;
   },
 
   async toggleAvailability(): Promise<{ isAvailable: boolean }> {
-    return api.patch<{ isAvailable: boolean }>("/chefs/my-profile/availability", {});
+    return api.patch<{ isAvailable: boolean }>(
+      "/chefs/my-profile/availability",
+      {}
+    );
   },
 
   async addCuisine(cuisineId: number): Promise<void> {
@@ -165,29 +168,30 @@ export const chefService = {
 
   async uploadProfilePicture(file: File): Promise<{ url: string }> {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
-    const token = localStorage.getItem('access_token');
-    const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:3000';
+    const token = localStorage.getItem("access_token");
+    const API_BASE_URL =
+      (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:3000";
 
     const response = await fetch(`${API_BASE_URL}/user/profile/picture`, {
-      method: 'PATCH',
+      method: "PATCH",
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
       body: formData,
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ 
-        message: 'Erro ao fazer upload da foto',
-        statusCode: response.status 
+      const errorData = await response.json().catch(() => ({
+        message: "Erro ao fazer upload da foto",
+        statusCode: response.status,
       }));
-      
-      const errorMessage = Array.isArray(errorData.message) 
-        ? errorData.message.join(', ')
+
+      const errorMessage = Array.isArray(errorData.message)
+        ? errorData.message.join(", ")
         : errorData.message || `Erro: ${response.status}`;
-      
+
       throw new Error(errorMessage);
     }
 
@@ -198,37 +202,42 @@ export const chefService = {
     return api.get<ChefGalleryPhoto[]>("/chefs/my-gallery");
   },
 
-  async addGalleryPhoto(file: File, caption?: string, position?: number): Promise<ChefGalleryPhoto> {
+  async addGalleryPhoto(
+    file: File,
+    caption?: string,
+    position?: number
+  ): Promise<ChefGalleryPhoto> {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
     if (caption) {
-      formData.append('caption', caption);
+      formData.append("caption", caption);
     }
     if (position) {
-      formData.append('position', position.toString());
+      formData.append("position", position.toString());
     }
 
-    const token = localStorage.getItem('access_token');
-    const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:3000';
+    const token = localStorage.getItem("access_token");
+    const API_BASE_URL =
+      (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:3000";
 
     const response = await fetch(`${API_BASE_URL}/chefs/my-gallery`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
       body: formData,
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ 
-        message: 'Erro ao fazer upload da foto',
-        statusCode: response.status 
+      const errorData = await response.json().catch(() => ({
+        message: "Erro ao fazer upload da foto",
+        statusCode: response.status,
       }));
-      
-      const errorMessage = Array.isArray(errorData.message) 
-        ? errorData.message.join(', ')
+
+      const errorMessage = Array.isArray(errorData.message)
+        ? errorData.message.join(", ")
         : errorData.message || `Erro: ${response.status}`;
-      
+
       throw new Error(errorMessage);
     }
 
