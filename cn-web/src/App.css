@@ -814,6 +814,13 @@ section[id] {
 .chef-card-rating {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.rating-content {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
 }
 
@@ -838,44 +845,37 @@ section[id] {
 .chef-card-social-links {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e0e0e0;
+  gap: 0.5rem;
+  margin-left: auto;
 }
 
-.chef-social-link {
+.chef-card-social-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background-color: #f5f5f5;
   transition: all 0.3s ease;
   text-decoration: none;
 }
 
-.chef-social-link:hover {
-  background-color: #fa4a0c;
-  transform: translateY(-2px);
+.chef-card-social-icon:hover {
+  background-color: #ff6b35;
+  transform: scale(1.1);
 }
 
-.chef-social-link img {
-  width: 20px;
-  height: 20px;
+.chef-card-social-icon img {
+  width: 18px;
+  height: 18px;
   object-fit: contain;
+  filter: brightness(0) invert(0.3);
+  transition: filter 0.3s ease;
 }
 
-.chef-social-link svg {
-  width: 20px;
-  height: 20px;
-  color: #333;
-  transition: color 0.3s ease;
-}
-
-.chef-social-link:hover svg {
-  color: white;
+.chef-card-social-icon:hover img {
+  filter: brightness(0) invert(1);
 }
 
 @media (max-width: 768px) {

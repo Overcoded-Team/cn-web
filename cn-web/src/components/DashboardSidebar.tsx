@@ -52,8 +52,16 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
     if (user) {
       loadSocialLinks();
+      
+      if (isEditing) {
+        const interval = setInterval(() => {
+          loadSocialLinks();
+        }, 2000);
+        
+        return () => clearInterval(interval);
+      }
     }
-  }, [user]);
+  }, [user, isEditing]);
 
   const imageSrc =
     profilePicture && !imageError ? profilePicture : fallbackImage;

@@ -5,7 +5,12 @@ import estrelaInteira from "../assets/estrelainteira.png";
 import meiaEstrela from "../assets/meiaestrela.png";
 import estrelaVazia from "../assets/estrelavazia.png";
 import perfilVazio from "../assets/perfilvazio.png";
-import { chefService, Chef, Cuisine } from "../services/chef.service";
+import facebookIcon from "../assets/facebook.svg";
+import instagramIcon from "../assets/instagram.svg";
+import youtubeIcon from "../assets/yt.svg";
+import tiktokIcon from "../assets/tiktok.svg";
+import whatsappIcon from "../assets/whatsapp.svg";
+import { chefService, Chef, Cuisine, ChefSocialLink } from "../services/chef.service";
 
 const ChefsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -61,6 +66,91 @@ const ChefsPage: React.FC = () => {
     }
 
     return stars;
+  };
+
+  const getSocialIcon = (type: string) => {
+    switch (type) {
+      case "INSTAGRAM":
+        return instagramIcon;
+      case "FACEBOOK":
+        return facebookIcon;
+      case "YOUTUBE":
+        return youtubeIcon;
+      case "TIKTOK":
+        return tiktokIcon;
+      case "WHATSAPP":
+        return whatsappIcon;
+      default:
+        return null;
+    }
+  };
+
+  const formatWhatsAppUrl = (url: string): string => {
+    try {
+      if (url.includes("wa.me")) {
+        return url;
+      }
+
+      const digitsOnly = url.replace(/\D/g, "");
+
+      if (!digitsOnly) {
+        return url;
+      }
+
+      return `https://wa.me/${digitsOnly}`;
+    } catch (error) {
+      return url;
+    }
+  };
+
+  const getSocialUrl = (link: ChefSocialLink): string => {
+    if (link.type === "WHATSAPP") {
+      return formatWhatsAppUrl(link.url);
+    }
+    return link.url;
+  };
+
+  const renderSocialLinks = (socialLinks?: ChefSocialLink[] | any) => {
+    if (!socialLinks) {
+      return null;
+    }
+
+    const linksArray = Array.isArray(socialLinks) ? socialLinks : [];
+    
+    if (linksArray.length === 0) {
+      return null;
+    }
+
+    const validLinks = linksArray.filter((link: any) => link && link.type && link.url);
+
+    if (validLinks.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="chef-card-social-links">
+        {validLinks.map((link: any, index: number) => {
+          const icon = getSocialIcon(link.type);
+          if (!icon) return null;
+
+          const url = getSocialUrl(link);
+
+          return (
+            <a
+              key={index}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="chef-card-social-icon"
+              aria-label={link.type}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img src={icon} alt={link.type} />
+            </a>
+          );
+        })}
+      </div>
+    );
   };
 
   useEffect(() => {
@@ -249,25 +339,33 @@ const ChefsPage: React.FC = () => {
                     <div className="chef-card-info">
                       <h3 className="chef-card-name">{chef.name}</h3>
                       <p className="chef-card-specialty">
-                        {chef.cuisines.length > 0
-                          ? chef.cuisines.map((c) => c.name).join(", ")
+                        {chef.cuisines &&
+                        Array.isArray(chef.cuisines) &&
+                        chef.cuisines.length > 0
+                          ? chef.cuisines
+                              .filter((c) => c && c.name)
+                              .map((c) => c.name)
+                              .join(", ")
                           : "Sem especialidade definida"}
                       </p>
                       <p className="chef-card-description">
                         {chef.bio || "Chef sem descrição disponível"}
                       </p>
                       <div className="chef-card-rating">
-                        <span className="rating-value">
-                          {(() => {
-                            const rounded = Math.round(chef.avgRating * 2) / 2;
-                            return rounded % 1 === 0
-                              ? rounded.toFixed(1)
-                              : rounded;
-                          })()}
-                        </span>
-                        <div className="rating-stars">
-                          {renderStars(chef.avgRating)}
+                        <div className="rating-content">
+                          <span className="rating-value">
+                            {(() => {
+                              const rounded = Math.round(chef.avgRating * 2) / 2;
+                              return rounded % 1 === 0
+                                ? rounded.toFixed(1)
+                                : rounded;
+                            })()}
+                          </span>
+                          <div className="rating-stars">
+                            {renderStars(chef.avgRating)}
+                          </div>
                         </div>
+                        {renderSocialLinks(chef.socialLinks)}
                       </div>
                     </div>
                   </div>

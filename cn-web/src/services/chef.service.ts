@@ -122,6 +122,18 @@ export const chefService = {
     return api.get<ChefSocialLink[]>("/chefs/my-socials");
   },
 
+  async addSocialLink(data: { type: ChefSocialType; url: string }): Promise<ChefSocialLink> {
+    return api.post<ChefSocialLink>("/chefs/socials", data);
+  },
+
+  async updateSocialLink(type: ChefSocialType, data: { url: string }): Promise<ChefSocialLink> {
+    return api.patch<ChefSocialLink>(`/chefs/socials/${type}`, data);
+  },
+
+  async deleteSocialLink(type: ChefSocialType): Promise<void> {
+    return api.delete(`/chefs/socials/${type}`);
+  },
+
   async getMyCuisines(): Promise<ChefCuisine[]> {
     return api.get<ChefCuisine[]>("/chefs/my-cuisines");
   },
