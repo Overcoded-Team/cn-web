@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import "./Dashboard.css";
 import estrelaInteira from "../assets/estrelainteira.png";
 import meiaEstrela from "../assets/meiaestrela.png";
@@ -46,25 +46,47 @@ const Dashboard: React.FC = () => {
   });
   const [payoutAmountInput, setPayoutAmountInput] = useState<string>("");
   const [isRequestingPayout, setIsRequestingPayout] = useState<boolean>(false);
+  const previousCompletedCountRef = useRef<number>(0);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const [profileData, requestsData, reviewsData, balanceData] =
-          await Promise.all([
-            chefService.getMyProfile(),
-            serviceRequestService.listChefServiceRequests(1, 1000),
-            chefService.getMyReviews(1, 1000),
-            chefWalletService.getBalance().catch(() => null),
-          ]);
+        const [profileData, reviewsData, balanceData] = await Promise.all([
+          chefService.getMyProfile(),
+          chefService.getMyReviews(1, 1000),
+          chefWalletService.getBalance().catch(() => null),
+        ]);
+
+        let allRequests: ServiceRequest[] = [];
+        let page = 1;
+        let hasMore = true;
+
+        while (hasMore) {
+          const requestsData = await serviceRequestService.listChefServiceRequests(
+            page,
+            1000
+          );
+          allRequests = [...allRequests, ...requestsData.items];
+          
+          if (requestsData.items.length < 1000 || allRequests.length >= requestsData.total) {
+            hasMore = false;
+          } else {
+            page++;
+          }
+        }
 
         setProfile(profileData);
-        setServiceRequests(requestsData.items);
+        setServiceRequests(allRequests);
         setReviews(reviewsData.items);
         if (balanceData) {
           setWalletBalance(balanceData);
         }
+        
+        const initialCompletedCount = allRequests.filter(
+          (sr) => sr.status === ServiceRequestStatus.COMPLETED
+        ).length;
+        previousCompletedCountRef.current = initialCompletedCount;
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
       } finally {
@@ -74,6 +96,26 @@ const Dashboard: React.FC = () => {
 
     loadData();
   }, []);
+
+  useEffect(() => {
+    const updateWalletBalance = async () => {
+      try {
+        const balance = await chefWalletService.getBalance();
+        setWalletBalance(balance);
+      } catch (error) {
+        console.error("Erro ao atualizar saldo da carteira:", error);
+      }
+    };
+
+    const completedCount = serviceRequests.filter(
+      (sr) => sr.status === ServiceRequestStatus.COMPLETED
+    ).length;
+
+    if (completedCount > previousCompletedCountRef.current) {
+      previousCompletedCountRef.current = completedCount;
+      updateWalletBalance();
+    }
+  }, [serviceRequests]);
 
   const metrics = useMemo(() => {
     const now = new Date();
@@ -108,7 +150,7 @@ const Dashboard: React.FC = () => {
 
     const totalEarnings = completedWithQuote.reduce((sum, sr) => {
       if (!sr.quote) return sum;
-      return sum + (sr.quote.total_cents || sr.quote.amount_cents || 0);
+      return sum + (sr.quote.amount_cents || 0);
     }, 0);
 
     const monthCompletedWithQuote = monthRequests.filter(
@@ -117,7 +159,7 @@ const Dashboard: React.FC = () => {
 
     const monthEarnings = monthCompletedWithQuote.reduce((sum, sr) => {
       if (!sr.quote) return sum;
-      return sum + (sr.quote.total_cents || sr.quote.amount_cents || 0);
+      return sum + (sr.quote.amount_cents || 0);
     }, 0);
 
     const yearRequests = serviceRequests.filter((sr) => {
@@ -174,7 +216,7 @@ const Dashboard: React.FC = () => {
         })
         .reduce((sum, sr) => {
           if (!sr.quote) return sum;
-          return sum + (sr.quote.total_cents || sr.quote.amount_cents || 0);
+          return sum + (sr.quote.amount_cents || 0);
         }, 0);
     });
 
@@ -553,7 +595,7 @@ const Dashboard: React.FC = () => {
                       Concluídos: {metrics.yearCompleted}
                     </p>
                     <p className="detalhamento-item cancelados">
-                      Cancelados: {metrics.yearCancelled}
+                      Recusados: {metrics.yearCancelled}
                     </p>
                   </div>
                   <div className="detalhamento-ano">{selectedYear}</div>
@@ -574,69 +616,9 @@ const Dashboard: React.FC = () => {
                         const totalPending = metrics.totalPending || 0;
                         const totalCancelled = metrics.totalCancelled || 0;
 
-                        let verde = 0;
-                        let laranja = 0;
-                        let vermelho = 0;
-                        let mostrarCinza = false;
-
                         if (totalRequests === 0) {
-                          mostrarCinza = true;
-                        } else {
-                          const temVerde = totalCompleted > 0;
-                          const temLaranja = totalPending > 0;
-                          const temVermelho = totalCancelled > 0;
-
-                          const categoriasComValor = [
-                            temVerde,
-                            temLaranja,
-                            temVermelho,
-                          ].filter(Boolean).length;
-
-                          if (categoriasComValor === 1) {
-                            if (temVerde) {
-                              verde = circumference;
-                            } else if (temLaranja) {
-                              laranja = circumference;
-                            } else if (temVermelho) {
-                              vermelho = circumference;
-                            }
-                          } else if (categoriasComValor > 1) {
-                            const somaValores =
-                              totalCompleted + totalPending + totalCancelled;
-
-                            if (temVerde) {
-                              verde =
-                                (totalCompleted / somaValores) * circumference;
-                            }
-                            if (temLaranja) {
-                              laranja =
-                                (totalPending / somaValores) * circumference;
-                            }
-                            if (temVermelho) {
-                              vermelho =
-                                (totalCancelled / somaValores) * circumference;
-                            }
-
-                            const soma = verde + laranja + vermelho;
-                            const diff = circumference - soma;
-
-                            if (Math.abs(diff) > 0.0001) {
-                              if (temVermelho && vermelho > 0) {
-                                vermelho += diff;
-                              } else if (temLaranja && laranja > 0) {
-                                laranja += diff;
-                              } else if (temVerde && verde > 0) {
-                                verde += diff;
-                              }
-                            }
-                          } else {
-                            mostrarCinza = true;
-                          }
-                        }
-
-                        return (
-                          <svg className="donut-chart" viewBox="0 0 120 120">
-                            {mostrarCinza && (
+                          return (
+                            <svg className="donut-chart" viewBox="0 0 120 120">
                               <circle
                                 className="donut-ring"
                                 cx="60"
@@ -646,8 +628,38 @@ const Dashboard: React.FC = () => {
                                 stroke="#E5E5E5"
                                 strokeWidth="20"
                               />
-                            )}
-                            {verde > 0 && (
+                            </svg>
+                          );
+                        }
+
+                        const verde = (totalCompleted / totalRequests) * circumference;
+                        const laranja = (totalPending / totalRequests) * circumference;
+                        const vermelho = (totalCancelled / totalRequests) * circumference;
+
+                        const soma = verde + laranja + vermelho;
+                        const diff = circumference - soma;
+
+                        let verdeFinal = verde;
+                        let laranjaFinal = laranja;
+                        let vermelhoFinal = vermelho;
+
+                        if (Math.abs(diff) > 0.0001) {
+                          if (vermelhoFinal > 0) {
+                            vermelhoFinal += diff;
+                          } else if (laranjaFinal > 0) {
+                            laranjaFinal += diff;
+                          } else if (verdeFinal > 0) {
+                            verdeFinal += diff;
+                          }
+                        }
+
+                        const offsetVerde = circumference - verdeFinal;
+                        const offsetLaranja = circumference - verdeFinal - laranjaFinal;
+                        const offsetVermelho = circumference - verdeFinal - laranjaFinal - vermelhoFinal;
+
+                        return (
+                          <svg className="donut-chart" viewBox="0 0 120 120">
+                            {verdeFinal > 0.01 && (
                               <circle
                                 className="donut-segment donut-segment-green"
                                 cx="60"
@@ -656,28 +668,28 @@ const Dashboard: React.FC = () => {
                                 fill="none"
                                 stroke="#4CAF50"
                                 strokeWidth="20"
-                                strokeDasharray={`${verde} ${circumference}`}
-                                strokeDashoffset={circumference - verde}
+                                strokeDasharray={`${verdeFinal} ${circumference - verdeFinal}`}
+                                strokeDashoffset="0"
                                 transform="rotate(-90 60 60)"
+                                strokeLinecap="butt"
                               />
                             )}
-                            {laranja > 0 && (
+                            {laranjaFinal > 0.01 && (
                               <circle
                                 className="donut-segment donut-segment-orange"
                                 cx="60"
                                 cy="60"
                                 r="50"
                                 fill="none"
-                                stroke="#FF6B35"
+                                stroke="#ff9500"
                                 strokeWidth="20"
-                                strokeDasharray={`${laranja} ${circumference}`}
-                                strokeDashoffset={
-                                  circumference - verde - laranja
-                                }
+                                strokeDasharray={`${laranjaFinal} ${circumference - laranjaFinal}`}
+                                strokeDashoffset={-verdeFinal}
                                 transform="rotate(-90 60 60)"
+                                strokeLinecap="butt"
                               />
                             )}
-                            {vermelho > 0 && (
+                            {vermelhoFinal > 0.01 && (
                               <circle
                                 className="donut-segment donut-segment-red"
                                 cx="60"
@@ -686,11 +698,10 @@ const Dashboard: React.FC = () => {
                                 fill="none"
                                 stroke="#F44336"
                                 strokeWidth="20"
-                                strokeDasharray={`${vermelho} ${circumference}`}
-                                strokeDashoffset={
-                                  circumference - verde - laranja - vermelho
-                                }
+                                strokeDasharray={`${vermelhoFinal} ${circumference - vermelhoFinal}`}
+                                strokeDashoffset={-(verdeFinal + laranjaFinal)}
                                 transform="rotate(-90 60 60)"
+                                strokeLinecap="butt"
                               />
                             )}
                           </svg>
@@ -738,7 +749,7 @@ const Dashboard: React.FC = () => {
                       </div>
                     </div>
                     <div className="estatistica-progress-item">
-                      <h4 className="progress-title">Cancelados</h4>
+                      <h4 className="progress-title">Recusados</h4>
                       <div className="progress-bar-container">
                         <div
                           className="progress-bar progress-bar-red"
