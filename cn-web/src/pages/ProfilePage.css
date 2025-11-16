@@ -402,6 +402,66 @@
   transform: translateY(0);
 }
 
+.menu-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.menu-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.menu-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.menu-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: #333;
+  font-size: 0.95rem;
+  transition: color 0.3s;
+}
+
+.menu-link:hover {
+  color: #ff6b35;
+}
+
+.menu-file-name {
+  font-weight: 500;
+}
+
+.menu-file-size {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.menu-delete-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.menu-delete-button:hover {
+  transform: scale(1.1);
+}
+
 .add-photos-section {
   display: flex;
   align-items: center;

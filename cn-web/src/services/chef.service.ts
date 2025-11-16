@@ -17,6 +17,17 @@ export interface ChefSocialLink {
   url: string;
 }
 
+export interface ChefReview {
+  id: number;
+  rating: number;
+  comment?: string;
+  createdAt: Date;
+  client?: {
+    id: number;
+    name?: string;
+  };
+}
+
 export interface Chef {
   id: number;
   userId: number;
@@ -28,6 +39,7 @@ export interface Chef {
   cuisines: ChefCuisine[];
   socialLinks?: ChefSocialLink[];
   profilePictureUrl?: string;
+  reviews?: ChefReview[];
 }
 
 export interface PaginatedChefsResponse {
@@ -258,5 +270,60 @@ export const chefService = {
 
   async deleteGalleryPhoto(photoId: number): Promise<void> {
     await api.delete<void>(`/chefs/my-gallery/${photoId}`);
+  },
+
+  async getMyReviews(
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{ items: ChefReview[]; page: number; limit: number; total: number }> {
+    return api.get<{ items: ChefReview[]; page: number; limit: number; total: number }>(
+      `/chefs/my-reviews?page=${page}&limit=${limit}`
+    );
+  },
+
+  async getChefReviews(
+    chefId: number,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{ items: ChefReview[]; page: number; limit: number; total: number }> {
+    return api.get<{ items: ChefReview[]; page: number; limit: number; total: number }>(
+      `/chefs/${chefId}/reviews?page=${page}&limit=${limit}`
+    );
+  },
+
+  async uploadMenu(file: File): Promise<{ url: string; originalName: string; mimeType: string; sizeBytes: number }> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const token = localStorage.getItem("access_token");
+    const API_BASE_URL =
+      (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:3000";
+
+    const response = await fetch(`${API_BASE_URL}/chefs/my-menu`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({
+        message: "Erro ao fazer upload do cardápio",
+        statusCode: response.status,
+      }));
+
+      const errorMessage = Array.isArray(errorData.message)
+        ? errorData.message.join(", ")
+        : errorData.message || `Erro: ${response.status}`;
+
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  },
+
+  async deleteMenu(): Promise<void> {
+    await api.delete<void>("/chefs/my-menu");
   },
 };

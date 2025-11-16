@@ -41,6 +41,10 @@ interface ChefProfileResponse {
     type: string;
     url: string;
   }>;
+  menuUrl?: string;
+  menuOriginalName?: string;
+  menuMimeType?: string;
+  menuSizeBytes?: number;
 }
 
 const ProfilePage: React.FC = () => {
@@ -72,6 +76,8 @@ const ProfilePage: React.FC = () => {
   const [socialLinks, setSocialLinks] = useState<ChefSocialLink[]>([]);
   const [newSocialType, setNewSocialType] = useState<ChefSocialType | "">("");
   const [newSocialUrl, setNewSocialUrl] = useState<string>("");
+  const [isUploadingMenu, setIsUploadingMenu] = useState<boolean>(false);
+  const menuFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -387,6 +393,71 @@ const ProfilePage: React.FC = () => {
     return allTypes.filter((type) => !usedTypes.has(type));
   };
 
+  const handleMenuChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    if (!validTypes.includes(file.type)) {
+      setError("Formato de arquivo inválido. Use PDF ou DOCX.");
+      return;
+    }
+
+    const maxSize = 20 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setError("Arquivo muito grande. O tamanho máximo é 20MB.");
+      return;
+    }
+
+    try {
+      setIsUploadingMenu(true);
+      setError("");
+      await chefService.uploadMenu(file);
+
+      const updatedProfile = await chefService.getMyProfile();
+      setProfile(updatedProfile as ChefProfileResponse);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Erro ao fazer upload do cardápio"
+      );
+    } finally {
+      setIsUploadingMenu(false);
+      if (menuFileInputRef.current) {
+        menuFileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleMenuButtonClick = () => {
+    menuFileInputRef.current?.click();
+  };
+
+  const handleDeleteMenu = async () => {
+    if (!confirm("Tem certeza que deseja remover o cardápio?")) {
+      return;
+    }
+
+    try {
+      setError("");
+      await chefService.deleteMenu();
+      const updatedProfile = await chefService.getMyProfile();
+      setProfile(updatedProfile as ChefProfileResponse);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao remover cardápio");
+    }
+  };
+
+  const formatFileSize = (bytes?: number): string => {
+    if (!bytes) return "";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   const bio = profile?.bio || "";
   const specialty = profile?.portfolioDescription || "";
   const yearsOfExperience = profile?.yearsOfExperience || 0;
@@ -671,7 +742,64 @@ const ProfilePage: React.FC = () => {
 
               {!isEditing && (
                 <>
-                  <button className="menu-button">Ver Cardápio completo</button>
+                  <div className="menu-section">
+                    <input
+                      ref={menuFileInputRef}
+                      type="file"
+                      accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      onChange={handleMenuChange}
+                      style={{ display: "none" }}
+                      disabled={isUploadingMenu}
+                    />
+                    <button
+                      className="menu-button"
+                      onClick={handleMenuButtonClick}
+                      disabled={isUploadingMenu}
+                    >
+                      {isUploadingMenu ? "Enviando..." : "Adicionar cardápio"}
+                    </button>
+                    {profile?.menuUrl && (
+                      <div className="menu-info">
+                        <a
+                          href={profile.menuUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="menu-link"
+                        >
+                          <span className="menu-file-name">
+                            {profile.menuOriginalName || "Cardápio"}
+                          </span>
+                          {profile.menuSizeBytes && (
+                            <span className="menu-file-size">
+                              ({formatFileSize(profile.menuSizeBytes)})
+                            </span>
+                          )}
+                        </a>
+                        <button
+                          type="button"
+                          className="menu-delete-button"
+                          onClick={handleDeleteMenu}
+                          aria-label="Remover cardápio"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M18 6L6 18M6 6L18 18"
+                              stroke="#f44336"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
                   <div className="add-photos-section">
                     <input
