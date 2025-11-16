@@ -97,13 +97,12 @@ const ProfilePage: React.FC = () => {
             (cc) => cc.cuisine.id
           ) || [];
         setSelectedCuisineIds(new Set(cuisineIds));
-        
+
         const loadSocialLinks = async () => {
           try {
             const links = await chefService.getMySocialLinks();
             setSocialLinks(links);
-          } catch (err) {
-          }
+          } catch (err) {}
         };
         loadSocialLinks();
       } catch (err) {
@@ -168,8 +167,7 @@ const ProfilePage: React.FC = () => {
     try {
       const links = await chefService.getMySocialLinks();
       setSocialLinks(links);
-    } catch (err) {
-    }
+    } catch (err) {}
   };
 
   const handleCancel = () => {
@@ -670,7 +668,9 @@ const ProfilePage: React.FC = () => {
                       <div className="social-links-list">
                         {socialLinks.map((link) => (
                           <div key={link.type} className="social-link-item">
-                            <span className="social-link-type">{link.type}</span>
+                            <span className="social-link-type">
+                              {link.type}
+                            </span>
                             <span className="social-link-url">{link.url}</span>
                             <button
                               type="button"
