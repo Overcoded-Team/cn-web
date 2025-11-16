@@ -61,7 +61,7 @@ const AppointmentsPage: React.FC = () => {
 				const mappedAppointments: Appointment[] = filteredRequests.map((req: ServiceRequest) => {
 					const requestedDate = new Date(req.requested_date);
 					const clientName = req.client_profile?.user?.name || 'Cliente';
-					const priceCents = req.quote?.total_cents || req.quote?.amount_cents || 0;
+					const priceCents = req.quote?.amount_cents || 0;
 					const priceBRL = priceCents / 100;
 
 					return {
