@@ -26,6 +26,9 @@ const Dashboard: React.FC = () => {
   const [reviews, setReviews] = useState<ChefReview[]>([]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedChartMonth, setSelectedChartMonth] = useState<number | null>(
+    new Date().getMonth()
+  );
 
   const [walletBalance, setWalletBalance] = useState<WalletBalance | null>(
     null
@@ -75,9 +78,9 @@ const Dashboard: React.FC = () => {
   const metrics = useMemo(() => {
     const now = new Date();
     const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
-    const startOfMonth = new Date(currentYear, currentMonth, 1);
-    const endOfMonth = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59);
+    const chartMonth = selectedChartMonth !== null ? selectedChartMonth : now.getMonth();
+    const startOfMonth = new Date(selectedYear, chartMonth, 1);
+    const endOfMonth = new Date(selectedYear, chartMonth + 1, 0, 23, 59, 59);
 
     const monthRequests = serviceRequests.filter((sr) => {
       const srDate = new Date(sr.created_at);
@@ -192,11 +195,12 @@ const Dashboard: React.FC = () => {
         "nov",
         "dez",
       ];
-      const startDate = new Date(currentYear, currentMonth, 1);
-      const endDate = new Date(currentYear, currentMonth + 1, 0);
+      const chartMonth = selectedChartMonth !== null ? selectedChartMonth : new Date().getMonth();
+      const startDate = new Date(selectedYear, chartMonth, 1);
+      const endDate = new Date(selectedYear, chartMonth + 1, 0);
       return `${startDate.getDate()} de ${
-        monthNames[currentMonth]
-      } - ${endDate.getDate()} de ${monthNames[currentMonth]}`;
+        monthNames[chartMonth]
+      } - ${endDate.getDate()} de ${monthNames[chartMonth]}`;
     };
 
     let avgRating5 = 0;
@@ -232,24 +236,14 @@ const Dashboard: React.FC = () => {
       maxMonthlyEarning: maxMonthlyEarning / 100,
       yearTotal: yearRequests.length,
     };
-  }, [serviceRequests, profile, selectedYear, selectedMonth, reviews]);
+  }, [serviceRequests, profile, selectedYear, selectedMonth, selectedChartMonth, reviews]);
 
-  const handlePreviousMonth = () => {
-    if (selectedMonth === 0) {
-      setSelectedMonth(11);
-      setSelectedYear(selectedYear - 1);
-    } else {
-      setSelectedMonth(selectedMonth - 1);
-    }
+  const handlePreviousYear = () => {
+    setSelectedYear(selectedYear - 1);
   };
 
-  const handleNextMonth = () => {
-    if (selectedMonth === 11) {
-      setSelectedMonth(0);
-      setSelectedYear(selectedYear + 1);
-    } else {
-      setSelectedMonth(selectedMonth + 1);
-    }
+  const handleNextYear = () => {
+    setSelectedYear(selectedYear + 1);
   };
 
   const loadWalletData = async () => {
@@ -495,17 +489,14 @@ const Dashboard: React.FC = () => {
                 <div className="bar-chart-header">
                   <button
                     className="chart-nav-btn"
-                    onClick={handlePreviousMonth}
+                    onClick={handlePreviousYear}
                   >
                     ‹
                   </button>
                   <h2 className="bar-chart-title">
-                    R${" "}
-                    {metrics.totalEarnings.toLocaleString("pt-BR", {
-                      minimumFractionDigits: 2,
-                    })}
+                    {selectedYear}
                   </h2>
-                  <button className="chart-nav-btn" onClick={handleNextMonth}>
+                  <button className="chart-nav-btn" onClick={handleNextYear}>
                     ›
                   </button>
                 </div>
@@ -530,13 +521,21 @@ const Dashboard: React.FC = () => {
                             metrics.maxMonthlyEarning) *
                           100
                         : 0;
+                    const isSelected = selectedChartMonth === index;
                     return (
-                      <div key={mes} className="bar-item">
+                      <div
+                        key={mes}
+                        className="bar-item"
+                        onClick={() => setSelectedChartMonth(index)}
+                        style={{ cursor: "pointer" }}
+                      >
                         <div
-                          className="bar"
+                          className={`bar ${isSelected ? "bar-selected" : ""}`}
                           style={{ height: `${Math.max(height, 5)}%` }}
                         ></div>
-                        <span className="bar-label">{mes}</span>
+                        <span className={`bar-label ${isSelected ? "bar-label-selected" : ""}`}>
+                          {mes}
+                        </span>
                       </div>
                     );
                   })}
