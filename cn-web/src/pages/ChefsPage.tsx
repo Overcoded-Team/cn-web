@@ -246,7 +246,7 @@ const ChefsPage: React.FC = () => {
         <section className="chefs-banner">
           <div className="chefs-banner-content">
             <h1 className="chefs-banner-title">
-              Encontre o Chef ideal para voce
+              Encontre o Chef ideal para você
             </h1>
             <div className="chefs-search-container">
               <div className="chefs-search-box">
