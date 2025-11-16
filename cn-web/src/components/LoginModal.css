@@ -25,16 +25,20 @@
   padding: 40px 30px;
   box-shadow: -10px 0 30px rgba(0, 0, 0, 0.3);
   animation: slideInFromRight 0.4s ease-out;
+  margin-left: auto;
+  margin-right: 0;
 }
 
 .login-modal {
   width: 30%;
   min-width: 400px;
+  max-width: 500px;
 }
 
 .register-modal {
   width: 45%;
   min-width: 500px;
+  max-width: 700px;
 }
 
 .modal-content {
@@ -372,19 +376,27 @@
 }
 
 @media (max-width: 768px) {
+  .modal-overlay {
+    justify-content: flex-end;
+  }
+
   .login-modal {
     width: 50%;
     min-width: 350px;
+    max-width: 450px;
   }
 
   .register-modal {
     width: 70%;
     min-width: 400px;
+    max-width: 550px;
   }
 
   .modal-container {
     height: 100vh;
     padding: 30px 20px;
+    margin-left: auto;
+    margin-right: 0;
   }
 
   .modal-title {
@@ -416,11 +428,21 @@
 }
 
 @media (max-width: 480px) {
+  .modal-overlay {
+    justify-content: flex-end;
+  }
+
   .login-modal,
   .register-modal {
     width: 100%;
     height: 100vh;
     padding: 25px 15px;
+    max-width: 100%;
+  }
+
+  .modal-container {
+    margin-left: auto;
+    margin-right: 0;
   }
 
   .modal-content {
