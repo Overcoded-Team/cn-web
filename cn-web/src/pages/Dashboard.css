@@ -478,6 +478,8 @@
   font-size: 3.2rem;
   font-weight: 700;
   color: #333;
+  text-decoration: none;
+  border-bottom: none;
 }
 
 .stars-rating {
@@ -496,7 +498,70 @@
   font-size: 1.2rem;
   color: #666;
   font-weight: 500;
-  margin-left: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.avaliacoes-list-card {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.avaliacoes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.avaliacao-item {
+  padding: 1rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border-left: 3px solid #ff6b35;
+}
+
+.avaliacao-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.avaliacao-item-stars {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.avaliacao-item-stars .star-image {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.avaliacao-item-rating {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.avaliacao-item-comment {
+  font-size: 0.95rem;
+  color: #555;
+  margin: 0.5rem 0;
+  font-style: italic;
+}
+
+.avaliacao-item-client {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0.3rem 0;
+  font-weight: 500;
+}
+
+.avaliacao-item-date {
+  font-size: 0.85rem;
+  color: #999;
+  margin-top: 0.3rem;
 }
 
 .bar-chart-card {

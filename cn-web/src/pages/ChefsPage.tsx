@@ -24,6 +24,17 @@ const ChefsPage: React.FC = () => {
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
   const categoriesRef = useRef<HTMLDivElement>(null);
 
+  const calculateAvgRating = (chef: Chef): number => {
+    if (chef.reviews && chef.reviews.length > 0) {
+      const totalRating = chef.reviews.reduce((sum, review) => sum + review.rating, 0);
+      const avgRating10 = totalRating / chef.reviews.length;
+      return (avgRating10 / 10) * 5;
+    } else if (chef.avgRating) {
+      return (chef.avgRating / 10) * 5;
+    }
+    return 0;
+  };
+
   const renderStars = (rating: number) => {
     const roundedRating = Math.round(rating * 2) / 2;
 
@@ -355,15 +366,19 @@ const ChefsPage: React.FC = () => {
                         <div className="rating-content">
                           <span className="rating-value">
                             {(() => {
-                              const rounded = Math.round(chef.avgRating * 2) / 2;
-                              return rounded % 1 === 0
-                                ? rounded.toFixed(1)
-                                : rounded;
+                              const avgRating5 = calculateAvgRating(chef);
+                              const rounded = Math.round(avgRating5 * 2) / 2;
+                              return rounded.toFixed(1);
                             })()}
                           </span>
                           <div className="rating-stars">
-                            {renderStars(chef.avgRating)}
+                            {renderStars(calculateAvgRating(chef))}
                           </div>
+                          {chef.reviews && chef.reviews.length > 0 && (
+                            <span className="rating-count">
+                              ({chef.reviews.length})
+                            </span>
+                          )}
                         </div>
                         {renderSocialLinks(chef.socialLinks)}
                       </div>

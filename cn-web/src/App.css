@@ -818,6 +818,12 @@ section[id] {
   gap: 1rem;
 }
 
+.rating-count {
+  font-size: 0.9rem;
+  color: #666;
+  margin-left: 0.5rem;
+}
+
 .rating-content {
   display: flex;
   align-items: center;

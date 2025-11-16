@@ -4,7 +4,7 @@ import estrelaInteira from "../assets/estrelainteira.png";
 import meiaEstrela from "../assets/meiaestrela.png";
 import estrelaVazia from "../assets/estrelavazia.png";
 import { DashboardSidebar } from "../components/DashboardSidebar";
-import { chefService } from "../services/chef.service";
+import { chefService, ChefReview } from "../services/chef.service";
 import {
   serviceRequestService,
   ServiceRequest,
@@ -15,6 +15,7 @@ const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
+  const [reviews, setReviews] = useState<ChefReview[]>([]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
 
@@ -22,13 +23,15 @@ const Dashboard: React.FC = () => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const [profileData, requestsData] = await Promise.all([
+        const [profileData, requestsData, reviewsData] = await Promise.all([
           chefService.getMyProfile(),
           serviceRequestService.listChefServiceRequests(1, 1000),
+          chefService.getMyReviews(1, 1000),
         ]);
 
         setProfile(profileData);
         setServiceRequests(requestsData.items);
+        setReviews(reviewsData.items);
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
       } finally {
@@ -170,8 +173,17 @@ const Dashboard: React.FC = () => {
       } - ${endDate.getDate()} de ${monthNames[currentMonth]}`;
     };
 
+    let avgRating5 = 0;
+    if (reviews.length > 0) {
+      const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+      const avgRating10 = totalRating / reviews.length;
+      avgRating5 = (avgRating10 / 10) * 5;
+    } else if (profile?.avgRating) {
+      avgRating5 = (Number(profile.avgRating) / 10) * 5;
+    }
+
     return {
-      avgRating: profile?.avgRating ? Number(profile.avgRating) : 0,
+      avgRating: avgRating5,
       totalEarnings: totalEarnings / 100,
       monthEarnings: monthEarnings / 100,
       period: formatPeriod(),
@@ -191,7 +203,7 @@ const Dashboard: React.FC = () => {
       maxMonthlyEarning: maxMonthlyEarning / 100,
       yearTotal: yearRequests.length,
     };
-  }, [serviceRequests, profile, selectedYear, selectedMonth]);
+  }, [serviceRequests, profile, selectedYear, selectedMonth, reviews]);
 
   const handlePreviousMonth = () => {
     if (selectedMonth === 0) {
@@ -303,6 +315,11 @@ const Dashboard: React.FC = () => {
                     <div className="stars-rating">
                       {renderStars(metrics.avgRating)}
                     </div>
+                    {reviews.length > 0 && (
+                      <p className="total-avaliacoes">
+                        {reviews.length} {reviews.length === 1 ? 'avaliação' : 'avaliações'}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
