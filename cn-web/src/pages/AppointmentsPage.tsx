@@ -31,6 +31,7 @@ const AppointmentsPage: React.FC = () => {
 	const [appointments, setAppointments] = useState<Appointment[]>([]);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string>('');
+	const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
 
 	const dateToISOString = (date: Date): string => {
 		const year = date.getFullYear();
@@ -122,7 +123,15 @@ const AppointmentsPage: React.FC = () => {
 	};
 
 	const handleSelectDate = (day: number) => {
-		setSelectedDate(new Date(currentYear, currentMonth, day));
+		const newDate = new Date(currentYear, currentMonth, day);
+		setSelectedDate(newDate);
+		const dateISO = dateToISOString(newDate);
+		const appointmentForDate = appointments.find((a) => a.dateISO === dateISO);
+		if (appointmentForDate) {
+			setSelectedAppointmentId(appointmentForDate.id);
+		} else {
+			setSelectedAppointmentId(null);
+		}
 	};
 
 	const formatDateBR = (date: Date | string): string => {
@@ -138,8 +147,11 @@ const AppointmentsPage: React.FC = () => {
 	}, [selectedDate]);
 
 	const selectedAppointment = useMemo(() => {
+		if (selectedAppointmentId) {
+			return appointments.find((a) => a.id === selectedAppointmentId) || null;
+		}
 		return appointments.find((a) => a.dateISO === selectedDateISO) || null;
-	}, [appointments, selectedDateISO]);
+	}, [appointments, selectedDateISO, selectedAppointmentId]);
 
 	const confirmedSorted = useMemo(() => {
 		return [...appointments].sort((a, b) => {
@@ -151,42 +163,6 @@ const AppointmentsPage: React.FC = () => {
 		});
 	}, [appointments]);
 
-	const [observationText, setObservationText] = useState<string>('');
-
-	useEffect(() => {
-		const localKey = selectedAppointment
-			? `obs:appointment:${selectedAppointment.id}`
-			: `obs:date:${selectedDateISO}`;
-		const initial =
-			selectedAppointment?.observation ?? localStorage.getItem(localKey) ?? '';
-		setObservationText(initial);
-	}, [selectedAppointment, selectedDateISO]);
-
-	const persistObservation = async (text: string) => {
-		const localKey = selectedAppointment
-			? `obs:appointment:${selectedAppointment.id}`
-			: `obs:date:${selectedDateISO}`;
-		localStorage.setItem(localKey, text);
-
-		if (!selectedAppointment) return;
-
-		try {
-			await serviceRequestService.updateServiceRequest(selectedAppointment.serviceRequestId, {
-				description: text,
-			});
-		} catch {
-		}
-	};
-
-	let debounceTimer: number | undefined;
-	const handleObservationChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-		const value = e.target.value;
-		setObservationText(value);
-		if (debounceTimer) window.clearTimeout(debounceTimer);
-		debounceTimer = window.setTimeout(() => {
-			persistObservation(value);
-		}, 500);
-	};
 
 	return (
 		<div className="dashboard-layout">
@@ -208,7 +184,17 @@ const AppointmentsPage: React.FC = () => {
 					) : (
 						<ul className="appointments-list">
 							{confirmedSorted.map((a) => (
-								<li key={a.id} className="appointment-card">
+								<li 
+									key={a.id} 
+									className={`appointment-card ${selectedAppointmentId === a.id ? 'selected' : ''}`}
+									onClick={() => {
+										setSelectedAppointmentId(a.id);
+										const appointmentDate = new Date(a.dateISO + 'T00:00:00');
+										setSelectedDate(appointmentDate);
+										setCurrentMonth(appointmentDate.getMonth());
+										setCurrentYear(appointmentDate.getFullYear());
+									}}
+								>
 									<div className="card-left">
 										<div className="appt-code">#{a.serviceRequestId}</div>
 										<div className="appt-client">{a.clientName}</div>
@@ -267,15 +253,22 @@ const AppointmentsPage: React.FC = () => {
 
 					<div className="notes-card">
 						<div className="notes-title">
-							{formatDateBR(selectedDate)} - Observações
+							{selectedAppointment 
+								? `${selectedAppointment.clientName} - ${formatDateBR(selectedAppointment.dateISO)}`
+								: `${formatDateBR(selectedDate)} - Observações`
+							}
 						</div>
 						
-						<textarea
-							className="notes-textarea"
-							placeholder="Escreva observações do atendimento..."
-							value={observationText}
-							onChange={handleObservationChange}
-						/>
+						{selectedAppointment && selectedAppointment.observation ? (
+							<div className="appointment-observation">
+								<strong>Observações:</strong>
+								<p>{selectedAppointment.observation}</p>
+							</div>
+						) : (
+							<div className="appointment-observation-empty">
+								<p>Nenhum observação disponível.</p>
+							</div>
+						)}
 					</div>
 				</section>
 				</div>
