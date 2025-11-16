@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import LoginModal from './LoginModal.tsx';
 import RegisterModal from './RegisterModal.tsx';
+import './Header.css';
 
 const Header: React.FC = () => {
     const navigate = useNavigate();

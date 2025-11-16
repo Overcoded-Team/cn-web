@@ -11,6 +11,7 @@ import youtubeIcon from "../assets/yt.svg";
 import tiktokIcon from "../assets/tiktok.svg";
 import whatsappIcon from "../assets/whatsapp.svg";
 import { chefService, Chef, Cuisine, ChefSocialLink } from "../services/chef.service";
+import "./ChefsPage.css";
 
 const ChefsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");

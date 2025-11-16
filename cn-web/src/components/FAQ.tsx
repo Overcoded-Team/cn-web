@@ -5,6 +5,7 @@ import chefIcon from '../assets/iconecard.png';
 import cancelamentoIcon from '../assets/cancelamento.svg';
 import dinheiroIcon from '../assets/dinheiro.svg';
 import avaliacaoIcon from '../assets/avaliacao.svg';
+import './FAQ.css';
 
 const FAQ: React.FC = () => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
