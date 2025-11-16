@@ -10,6 +10,14 @@ import {
   ServiceRequest,
   ServiceRequestStatus,
 } from "../services/serviceRequest.service";
+import {
+  chefWalletService,
+  WalletBalance,
+  WalletEntry,
+  ChefPayout,
+  PixKeyType,
+  RequestPayoutDTO,
+} from "../services/chef-wallet.service";
 
 const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -19,19 +27,41 @@ const Dashboard: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
 
+  const [walletBalance, setWalletBalance] = useState<WalletBalance | null>(
+    null
+  );
+  const [walletEntries, setWalletEntries] = useState<WalletEntry[]>([]);
+  const [walletPayouts, setWalletPayouts] = useState<ChefPayout[]>([]);
+  const [isLoadingWallet, setIsLoadingWallet] = useState<boolean>(false);
+  const [walletError, setWalletError] = useState<string>("");
+  const [showWalletModal, setShowWalletModal] = useState<boolean>(false);
+  const [showPayoutModal, setShowPayoutModal] = useState<boolean>(false);
+  const [payoutForm, setPayoutForm] = useState<RequestPayoutDTO>({
+    amount_cents: 0,
+    pix_key: "",
+    pix_key_type: "EVP",
+  });
+  const [payoutAmountInput, setPayoutAmountInput] = useState<string>("");
+  const [isRequestingPayout, setIsRequestingPayout] = useState<boolean>(false);
+
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const [profileData, requestsData, reviewsData] = await Promise.all([
-          chefService.getMyProfile(),
-          serviceRequestService.listChefServiceRequests(1, 1000),
-          chefService.getMyReviews(1, 1000),
-        ]);
+        const [profileData, requestsData, reviewsData, balanceData] =
+          await Promise.all([
+            chefService.getMyProfile(),
+            serviceRequestService.listChefServiceRequests(1, 1000),
+            chefService.getMyReviews(1, 1000),
+            chefWalletService.getBalance().catch(() => null),
+          ]);
 
         setProfile(profileData);
         setServiceRequests(requestsData.items);
         setReviews(reviewsData.items);
+        if (balanceData) {
+          setWalletBalance(balanceData);
+        }
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
       } finally {
@@ -112,9 +142,7 @@ const Dashboard: React.FC = () => {
         ? Math.round((totalCompleted / totalRequests) * 100)
         : 0;
     const orangePercent =
-      totalRequests > 0
-        ? Math.round((totalPending / totalRequests) * 100)
-        : 0;
+      totalRequests > 0 ? Math.round((totalPending / totalRequests) * 100) : 0;
     const redPercent =
       totalRequests > 0
         ? Math.round((totalCancelled / totalRequests) * 100)
@@ -125,9 +153,7 @@ const Dashboard: React.FC = () => {
         ? Math.round((totalCompleted / totalRequests) * 100)
         : 0;
     const progressPendentes =
-      totalRequests > 0
-        ? Math.round((totalPending / totalRequests) * 100)
-        : 0;
+      totalRequests > 0 ? Math.round((totalPending / totalRequests) * 100) : 0;
     const progressCancelados =
       totalRequests > 0
         ? Math.round((totalCancelled / totalRequests) * 100)
@@ -175,7 +201,10 @@ const Dashboard: React.FC = () => {
 
     let avgRating5 = 0;
     if (reviews.length > 0) {
-      const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+      const totalRating = reviews.reduce(
+        (sum, review) => sum + review.rating,
+        0
+      );
       const avgRating10 = totalRating / reviews.length;
       avgRating5 = (avgRating10 / 10) * 5;
     } else if (profile?.avgRating) {
@@ -221,6 +250,123 @@ const Dashboard: React.FC = () => {
     } else {
       setSelectedMonth(selectedMonth + 1);
     }
+  };
+
+  const loadWalletData = async () => {
+    try {
+      setIsLoadingWallet(true);
+      setWalletError("");
+      const [balance, entriesData, payoutsData] = await Promise.all([
+        chefWalletService.getBalance(),
+        chefWalletService.listEntries({ page: 1, limit: 10 }),
+        chefWalletService.listPayouts(1, 10),
+      ]);
+      setWalletBalance(balance);
+      setWalletEntries(entriesData.items);
+      setWalletPayouts(payoutsData.items);
+    } catch (err) {
+      setWalletError(
+        err instanceof Error ? err.message : "Erro ao carregar carteira"
+      );
+    } finally {
+      setIsLoadingWallet(false);
+    }
+  };
+
+  const handleOpenWallet = () => {
+    setShowWalletModal(true);
+    loadWalletData();
+  };
+
+  const handleRequestPayout = async () => {
+    const inputValue = payoutAmountInput.replace(",", ".");
+    const numericValue = inputValue.replace(/[^\d.]/g, "");
+    const value = parseFloat(numericValue) || 0;
+    const amountCents = Math.round(value * 100);
+
+    if (!amountCents || amountCents < 100) {
+      setWalletError("O valor mínimo para saque é R$ 1,00");
+      return;
+    }
+
+    if (!payoutForm.pix_key || payoutForm.pix_key.trim().length < 5) {
+      setWalletError("Informe uma chave PIX válida");
+      return;
+    }
+
+    if (!walletBalance || amountCents > walletBalance.available_cents) {
+      setWalletError("Saldo insuficiente");
+      return;
+    }
+
+    try {
+      setIsRequestingPayout(true);
+      setWalletError("");
+      await chefWalletService.requestPayout({
+        amount_cents: amountCents,
+        pix_key: payoutForm.pix_key.trim(),
+        pix_key_type: payoutForm.pix_key_type,
+      });
+
+      await loadWalletData();
+
+      const updatedBalance = await chefWalletService.getBalance();
+      setWalletBalance(updatedBalance);
+
+      setShowPayoutModal(false);
+      setPayoutForm({
+        amount_cents: 0,
+        pix_key: "",
+        pix_key_type: "EVP",
+      });
+      setPayoutAmountInput("");
+    } catch (err) {
+      setWalletError(
+        err instanceof Error ? err.message : "Erro ao solicitar saque"
+      );
+    } finally {
+      setIsRequestingPayout(false);
+    }
+  };
+
+  const formatCurrency = (cents: number): string => {
+    return `R$ ${(cents / 100).toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
+
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const getStatusLabel = (status: string): string => {
+    const statusMap: Record<string, string> = {
+      REQUESTED: "Solicitado",
+      PROCESSING: "Processando",
+      PAID: "Pago",
+      FAILED: "Falhou",
+      CANCELLED: "Cancelado",
+    };
+    return statusMap[status] || status;
+  };
+
+  const getStatusColor = (status: string): string => {
+    const colorMap: Record<string, string> = {
+      REQUESTED: "#FF6B35",
+      PROCESSING: "#FFA500",
+      PAID: "#4CAF50",
+      FAILED: "#F44336",
+      CANCELLED: "#9E9E9E",
+    };
+    return colorMap[status] || "#666";
   };
 
   if (isLoading) {
@@ -294,6 +440,12 @@ const Dashboard: React.FC = () => {
             <div className="dashboard-left-column">
               <div className="cards-row-top">
                 <div className="card ganhos-card">
+                  <button
+                    className="ver-carteira-button"
+                    onClick={handleOpenWallet}
+                  >
+                    Ver Carteira
+                  </button>
                   <h3 className="card-title-white">Ganhos</h3>
                   <p className="card-period">{metrics.period}</p>
                   <p className="card-value-white">
@@ -302,6 +454,20 @@ const Dashboard: React.FC = () => {
                       minimumFractionDigits: 2,
                     })}
                   </p>
+                  {walletBalance && (
+                    <div className="saldo-disponivel-section">
+                      <p className="saldo-disponivel-label">Saldo Disponível</p>
+                      <p className="saldo-disponivel-value">
+                        R${" "}
+                        {(walletBalance.available_cents / 100).toLocaleString(
+                          "pt-BR",
+                          {
+                            minimumFractionDigits: 2,
+                          }
+                        )}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="card avaliacao-card">
@@ -317,7 +483,8 @@ const Dashboard: React.FC = () => {
                     </div>
                     {reviews.length > 0 && (
                       <p className="total-avaliacoes">
-                        {reviews.length} {reviews.length === 1 ? 'avaliação' : 'avaliações'}
+                        {reviews.length}{" "}
+                        {reviews.length === 1 ? "avaliação" : "avaliações"}
                       </p>
                     )}
                   </div>
@@ -420,7 +587,11 @@ const Dashboard: React.FC = () => {
                           const temLaranja = totalPending > 0;
                           const temVermelho = totalCancelled > 0;
 
-                          const categoriasComValor = [temVerde, temLaranja, temVermelho].filter(Boolean).length;
+                          const categoriasComValor = [
+                            temVerde,
+                            temLaranja,
+                            temVermelho,
+                          ].filter(Boolean).length;
 
                           if (categoriasComValor === 1) {
                             if (temVerde) {
@@ -431,16 +602,20 @@ const Dashboard: React.FC = () => {
                               vermelho = circumference;
                             }
                           } else if (categoriasComValor > 1) {
-                            const somaValores = totalCompleted + totalPending + totalCancelled;
+                            const somaValores =
+                              totalCompleted + totalPending + totalCancelled;
 
                             if (temVerde) {
-                              verde = (totalCompleted / somaValores) * circumference;
+                              verde =
+                                (totalCompleted / somaValores) * circumference;
                             }
                             if (temLaranja) {
-                              laranja = (totalPending / somaValores) * circumference;
+                              laranja =
+                                (totalPending / somaValores) * circumference;
                             }
                             if (temVermelho) {
-                              vermelho = (totalCancelled / somaValores) * circumference;
+                              vermelho =
+                                (totalCancelled / somaValores) * circumference;
                             }
 
                             const soma = verde + laranja + vermelho;
@@ -579,6 +754,320 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {showWalletModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => {
+            if (!isRequestingPayout) {
+              setShowWalletModal(false);
+              setShowPayoutModal(false);
+              setWalletError("");
+            }
+          }}
+        >
+          <div className="wallet-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="wallet-modal-header">
+              <h2 className="wallet-modal-title">Carteira</h2>
+              <button
+                className="wallet-modal-close"
+                onClick={() => {
+                  if (!isRequestingPayout) {
+                    setShowWalletModal(false);
+                    setShowPayoutModal(false);
+                    setWalletError("");
+                  }
+                }}
+                disabled={isRequestingPayout}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="wallet-modal-content">
+              {walletError && <div className="wallet-error">{walletError}</div>}
+
+              {isLoadingWallet ? (
+                <div className="wallet-loading">
+                  <p>Carregando informações da carteira...</p>
+                </div>
+              ) : (
+                <>
+                  {walletBalance && (
+                    <div className="wallet-balance-container">
+                      <div className="wallet-balance-card">
+                        <h3 className="wallet-balance-label">
+                          Saldo Disponível
+                        </h3>
+                        <p className="wallet-balance-value">
+                          {formatCurrency(walletBalance.available_cents)}
+                        </p>
+                      </div>
+                      {walletBalance.blocked_cents > 0 && (
+                        <div className="wallet-balance-card blocked">
+                          <h3 className="wallet-balance-label">
+                            Saldo Bloqueado
+                          </h3>
+                          <p className="wallet-balance-value">
+                            {formatCurrency(walletBalance.blocked_cents)}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <button
+                    className="request-payout-button"
+                    onClick={() => setShowPayoutModal(true)}
+                    disabled={
+                      !walletBalance || walletBalance.available_cents < 100
+                    }
+                  >
+                    Solicitar Saque
+                  </button>
+
+                  <div className="wallet-tabs">
+                    <div className="wallet-tab-content">
+                      <h3 className="wallet-subtitle">Movimentações</h3>
+                      {walletEntries.length > 0 ? (
+                        <div className="wallet-entries-list">
+                          {walletEntries.map((entry) => (
+                            <div
+                              key={entry.id}
+                              className={`wallet-entry ${
+                                entry.type === "CREDIT" ? "credit" : "debit"
+                              }`}
+                            >
+                              <div className="wallet-entry-main">
+                                <div className="wallet-entry-info">
+                                  <p className="wallet-entry-description">
+                                    {entry.description || "Movimentação"}
+                                  </p>
+                                  <p className="wallet-entry-date">
+                                    {formatDate(entry.created_at)}
+                                  </p>
+                                </div>
+                                <div className="wallet-entry-amount">
+                                  <span
+                                    className={`wallet-entry-value ${
+                                      entry.type === "CREDIT"
+                                        ? "positive"
+                                        : "negative"
+                                    }`}
+                                  >
+                                    {entry.type === "CREDIT" ? "+" : "-"}
+                                    {formatCurrency(entry.amount_cents)}
+                                  </span>
+                                  <p className="wallet-entry-balance">
+                                    Saldo:{" "}
+                                    {formatCurrency(entry.balance_after_cents)}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="wallet-empty">
+                          Nenhuma movimentação encontrada.
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="wallet-tab-content">
+                      <h3 className="wallet-subtitle">Saques</h3>
+                      {walletPayouts.length > 0 ? (
+                        <div className="wallet-payouts-list">
+                          {walletPayouts.map((payout) => (
+                            <div key={payout.id} className="wallet-payout">
+                              <div className="wallet-payout-main">
+                                <div className="wallet-payout-info">
+                                  <p className="wallet-payout-amount">
+                                    {formatCurrency(payout.amount_cents)}
+                                  </p>
+                                  <p className="wallet-payout-date">
+                                    {formatDate(payout.requested_at)}
+                                  </p>
+                                  <p className="wallet-payout-key">
+                                    {payout.pix_key_type}: {payout.pix_key}
+                                  </p>
+                                </div>
+                                <div className="wallet-payout-status">
+                                  <span
+                                    className="wallet-status-badge"
+                                    style={{
+                                      backgroundColor: getStatusColor(
+                                        payout.status
+                                      ),
+                                    }}
+                                  >
+                                    {getStatusLabel(payout.status)}
+                                  </span>
+                                  {payout.processed_at && (
+                                    <p className="wallet-payout-processed">
+                                      Processado:{" "}
+                                      {formatDate(payout.processed_at)}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="wallet-empty">Nenhum saque encontrado.</p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showPayoutModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => {
+            if (!isRequestingPayout) {
+              setShowPayoutModal(false);
+              setWalletError("");
+              setPayoutAmountInput("");
+            }
+          }}
+        >
+          <div className="payout-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="payout-modal-header">
+              <h2 className="payout-modal-title">Solicitar Saque</h2>
+              <button
+                className="payout-modal-close"
+                onClick={() => {
+                  if (!isRequestingPayout) {
+                    setShowPayoutModal(false);
+                    setWalletError("");
+                    setPayoutAmountInput("");
+                  }
+                }}
+                disabled={isRequestingPayout}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="payout-modal-content">
+              {walletBalance && (
+                <p className="payout-available-balance">
+                  Saldo disponível:{" "}
+                  <strong>
+                    {formatCurrency(walletBalance.available_cents)}
+                  </strong>
+                </p>
+              )}
+
+              <div className="payout-form-group">
+                <label className="payout-form-label">
+                  Valor (R$)
+                  <span className="required-field">*</span>
+                </label>
+                <input
+                  type="text"
+                  className="payout-form-input"
+                  value={payoutAmountInput}
+                  onChange={(e) => {
+                    let inputValue = e.target.value;
+                    inputValue = inputValue.replace(/[^\d,.]/g, "");
+                    const parts = inputValue.split(/[,.]/);
+                    if (parts.length > 2) {
+                      inputValue = parts[0] + "," + parts.slice(1).join("");
+                    }
+                    setPayoutAmountInput(inputValue);
+                  }}
+                  onBlur={(e) => {
+                    const inputValue = e.target.value.replace(",", ".");
+                    const numericValue = inputValue.replace(/[^\d.]/g, "");
+                    const value = parseFloat(numericValue) || 0;
+                    if (value > 0) {
+                      setPayoutAmountInput(value.toFixed(2).replace(".", ","));
+                    }
+                  }}
+                  placeholder="0,00"
+                  disabled={isRequestingPayout}
+                />
+                <p className="payout-form-hint">Valor mínimo: R$ 1,00</p>
+              </div>
+
+              <div className="payout-form-group">
+                <label className="payout-form-label">
+                  Tipo de Chave PIX
+                  <span className="required-field">*</span>
+                </label>
+                <select
+                  className="payout-form-input"
+                  value={payoutForm.pix_key_type}
+                  onChange={(e) =>
+                    setPayoutForm({
+                      ...payoutForm,
+                      pix_key_type: e.target.value as PixKeyType,
+                    })
+                  }
+                  disabled={isRequestingPayout}
+                >
+                  <option value="EVP">Chave Aleatória (EVP)</option>
+                  <option value="CPF">CPF</option>
+                  <option value="CNPJ">CNPJ</option>
+                  <option value="EMAIL">E-mail</option>
+                  <option value="PHONE">Telefone</option>
+                </select>
+              </div>
+
+              <div className="payout-form-group">
+                <label className="payout-form-label">
+                  Chave PIX
+                  <span className="required-field">*</span>
+                </label>
+                <input
+                  type="text"
+                  className="payout-form-input"
+                  value={payoutForm.pix_key}
+                  onChange={(e) =>
+                    setPayoutForm({
+                      ...payoutForm,
+                      pix_key: e.target.value,
+                    })
+                  }
+                  placeholder="Digite a chave PIX"
+                  disabled={isRequestingPayout}
+                />
+              </div>
+
+              <div className="payout-modal-actions">
+                <button
+                  type="button"
+                  className="payout-modal-cancel"
+                  onClick={() => {
+                    if (!isRequestingPayout) {
+                      setShowPayoutModal(false);
+                      setWalletError("");
+                    }
+                  }}
+                  disabled={isRequestingPayout}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="payout-modal-submit"
+                  onClick={handleRequestPayout}
+                  disabled={isRequestingPayout}
+                >
+                  {isRequestingPayout ? "Processando..." : "Solicitar Saque"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
