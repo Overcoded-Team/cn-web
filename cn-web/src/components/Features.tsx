@@ -2,6 +2,7 @@ import React from 'react';
 import calendarioIcon from '../assets/calendario.svg';
 import pagamentoIcon from '../assets/pagamento.svg';
 import chefIcon from '../assets/iconecard.png';
+import './Features.css';
 
 const Features: React.FC = () => {
     return (

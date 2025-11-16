@@ -1,0 +1,152 @@
+.faq-section {
+  background: #f8f9fa;
+  padding: 4rem 2rem;
+}
+
+.faq-title {
+  text-align: center;
+  font-size: 2rem;
+  color: #fa4a0c;
+  margin-bottom: 3rem;
+  font-weight: 600;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 2rem;
+}
+
+.faq-carousel-wrapper {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 60px;
+  overflow: visible;
+}
+
+.faq-carousel-container {
+  display: flex;
+  gap: 2rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 1rem 0;
+  margin: 0;
+}
+
+.faq-carousel-container::-webkit-scrollbar {
+  display: none;
+}
+
+.faq-carousel-container .feature-card {
+  flex: 0 0 300px;
+  min-width: 300px;
+}
+
+.carousel-nav-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: white;
+  color: #ff6b35;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  line-height: 1;
+  padding: 0;
+  text-align: center;
+}
+
+.carousel-nav-button:hover {
+  background: white;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.carousel-nav-left {
+  left: 25px;
+  transform: translateY(-50%) translateX(-50%);
+}
+
+.carousel-nav-left:hover {
+  transform: translateY(-50%) translateX(-50%) scale(1.1);
+}
+
+.carousel-nav-right {
+  right: 25px;
+  transform: translateY(-50%) translateX(50%);
+}
+
+.carousel-nav-right:hover {
+  transform: translateY(-50%) translateX(50%) scale(1.1);
+}
+
+@media (max-width: 768px) {
+  .faq-section {
+    padding: 3rem 1.5rem;
+  }
+
+  .faq-title {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .faq-carousel-wrapper {
+    padding: 0 1rem;
+  }
+
+  .faq-carousel-container .feature-card {
+    flex: 0 0 280px;
+    min-width: 280px;
+  }
+
+  .carousel-nav-button {
+    width: 35px;
+    height: 35px;
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .faq-section {
+    padding: 2rem 1rem;
+  }
+
+  .faq-title {
+    font-size: 1.3rem;
+  }
+
+  .faq-carousel-wrapper {
+    padding: 0 0.5rem;
+  }
+
+  .faq-carousel-container .feature-card {
+    flex: 0 0 260px;
+    min-width: 260px;
+  }
+
+  .carousel-nav-button {
+    width: 30px;
+    height: 30px;
+    font-size: 1rem;
+  }
+
+  .carousel-nav-left {
+    left: 10px;
+  }
+
+  .carousel-nav-right {
+    right: 10px;
+  }
+}
+

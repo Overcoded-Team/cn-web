@@ -7,6 +7,7 @@ import Footer from "../components/Footer";
 import FAQ from "../components/FAQ";
 import RegisterModal from "../components/RegisterModal";
 import Contacts from "../components/Contacts";
+import "./HomePage.css";
 
 const Hero: React.FC = () => {
   const navigate = useNavigate();

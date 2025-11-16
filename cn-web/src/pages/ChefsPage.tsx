@@ -1,261 +1,399 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import estrelaInteira from '../assets/estrelainteira.png';
-import meiaEstrela from '../assets/meiaestrela.png';
-import estrelaVazia from '../assets/estrelavazia.png';
+import React, { useState, useRef, useEffect } from "react";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import estrelaInteira from "../assets/estrelainteira.png";
+import meiaEstrela from "../assets/meiaestrela.png";
+import estrelaVazia from "../assets/estrelavazia.png";
+import perfilVazio from "../assets/perfilvazio.png";
+import facebookIcon from "../assets/facebook.svg";
+import instagramIcon from "../assets/instagram.svg";
+import youtubeIcon from "../assets/yt.svg";
+import tiktokIcon from "../assets/tiktok.svg";
+import whatsappIcon from "../assets/whatsapp.svg";
+import { chefService, Chef, Cuisine, ChefSocialLink } from "../services/chef.service";
+import "./ChefsPage.css";
 
 const ChefsPage: React.FC = () => {
-    const navigate = useNavigate();
-    const [searchQuery, setSearchQuery] = useState('');
-    const categoriesRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCuisineId, setSelectedCuisineId] = useState<
+    number | undefined
+  >();
+  const [chefs, setChefs] = useState<Chef[]>([]);
+  const [cuisines, setCuisines] = useState<Cuisine[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
+  const categoriesRef = useRef<HTMLDivElement>(null);
 
-    const renderStars = (rating: number) => {
-        const roundedRating = Math.round(rating * 2) / 2;
-        
-        const stars = [];
-        const fullStars = Math.floor(roundedRating);
-        const hasHalfStar = roundedRating % 1 === 0.5;
-        const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+  const calculateAvgRating = (chef: Chef): number => {
+    if (chef.reviews && chef.reviews.length > 0) {
+      const totalRating = chef.reviews.reduce((sum, review) => sum + review.rating, 0);
+      const avgRating10 = totalRating / chef.reviews.length;
+      return (avgRating10 / 10) * 5;
+    } else if (chef.avgRating) {
+      return (chef.avgRating / 10) * 5;
+    }
+    return 0;
+  };
 
-        for (let i = 0; i < fullStars; i++) {
-            stars.push(
-                <img key={`full-${i}`} src={estrelaInteira} alt="Estrela inteira" className="star-icon" />
-            );
-        }
+  const renderStars = (rating: number) => {
+    const roundedRating = Math.round(rating * 2) / 2;
 
-        if (hasHalfStar) {
-            stars.push(
-                <img key="half" src={meiaEstrela} alt="Meia estrela" className="star-icon" />
-            );
-        }
+    const stars = [];
+    const fullStars = Math.floor(roundedRating);
+    const hasHalfStar = roundedRating % 1 === 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
 
-        for (let i = 0; i < emptyStars; i++) {
-            stars.push(
-                <img key={`empty-${i}`} src={estrelaVazia} alt="Estrela vazia" className="star-icon" />
-            );
-        }
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(
+        <img
+          key={`full-${i}`}
+          src={estrelaInteira}
+          alt="Estrela inteira"
+          className="star-icon"
+        />
+      );
+    }
 
-        return stars;
-    };
+    if (hasHalfStar) {
+      stars.push(
+        <img
+          key="half"
+          src={meiaEstrela}
+          alt="Meia estrela"
+          className="star-icon"
+        />
+      );
+    }
 
-    useEffect(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, []);
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(
+        <img
+          key={`empty-${i}`}
+          src={estrelaVazia}
+          alt="Estrela vazia"
+          className="star-icon"
+        />
+      );
+    }
 
-    const categories = [
-        { name: 'Massas', icon: '🍝' },
-        { name: 'Pães', icon: '🥖' },
-        { name: 'Sobremesas', icon: '🍰' },
-        { name: 'Asiático', icon: '🍜' },
-        { name: 'Vegano', icon: '🌱' },
-        { name: 'Caseira', icon: '🍲' },
-        { name: 'Pizza', icon: '🍕' },
-        { name: 'Frutos do Mar', icon: '🦐' },
-        { name: 'Churrasco', icon: '🥩' },
-        { name: 'Italiana', icon: '🍝' },
-        { name: 'Francesa', icon: '🥐' },
-        { name: 'Japonesa', icon: '🍣' },
-        { name: 'Mexicana', icon: '🌮' },
-        { name: 'Árabe', icon: '🥙' },
-        { name: 'Vegetariana', icon: '🥗' },
-        { name: 'Doces', icon: '🍬' },
-        { name: 'Bebidas', icon: '🍹' },
-        { name: 'Café da Manhã', icon: '☕' },
-    ];
+    return stars;
+  };
 
-    const chefs = [
-        {
-            id: 1,
-            name: 'Chef João Silva',
-            specialty: 'Culinária Italiana',
-            description: 'Especialista em massas frescas e molhos tradicionais',
-            rating: 4.8,
-            image: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&h=400&fit=crop'
-        },
-        {
-            id: 2,
-            name: 'Chef Maria Santos',
-            specialty: 'Culinária Brasileira',
-            description: 'Sabores autênticos da culinária regional brasileira',
-            rating: 4.9,
-            image: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=400&h=400&fit=crop'
-        },
-        {
-            id: 3,
-            name: 'Chef Carlos Oliveira',
-            specialty: 'Culinária Gourmet',
-            description: 'Experiências gastronômicas sofisticadas e únicas',
-            rating: 4.7,
-            image: 'https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?w=400&h=400&fit=crop'
-        },
-        {
-            id: 4,
-            name: 'Chef Ana Costa',
-            specialty: 'Culinária Vegana',
-            description: 'Criatividade e sabor em pratos 100% vegetais',
-            rating: 4.9,
-            image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop'
-        },
-        {
-            id: 5,
-            name: 'Chef Roberto Lima',
-            specialty: 'Culinária Asiática',
-            description: 'Técnicas orientais e sabores exóticos autênticos',
-            rating: 4.8,
-            image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop'
-        },
-        {
-            id: 6,
-            name: 'Chef Fernanda Alves',
-            specialty: 'Sobremesas',
-            description: 'Doces e sobremesas artesanais que encantam',
-            rating: 5.0,
-            image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop'
-        },
-        {
-            id: 7,
-            name: 'Chef Pedro Mendes',
-            specialty: 'Churrasco',
-            description: 'Cortes especiais e técnicas de churrasco perfeitas',
-            rating: 4.8,
-            image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop'
-        },
-        {
-            id: 8,
-            name: 'Chef Juliana Rocha',
-            specialty: 'Culinária Francesa',
-            description: 'Técnicas clássicas francesas com toque contemporâneo',
-            rating: 4.9,
-            image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop'
-        },
-        {
-            id: 9,
-            name: 'Chef Lucas Ferreira',
-            specialty: 'Pizzas Artesanais',
-            description: 'Massas fermentadas naturalmente e ingredientes premium',
-            rating: 4.7,
-            image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop'
-        },
-        {
-            id: 10,
-            name: 'Chef Beatriz Souza',
-            specialty: 'Culinária Mediterrânea',
-            description: 'Sabores frescos e saudáveis do Mediterrâneo',
-            rating: 4.8,
-            image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop'
-        },
-        {
-            id: 11,
-            name: 'Chef Rafael Torres',
-            specialty: 'Frutos do Mar',
-            description: 'Peixes e frutos do mar frescos preparados com maestria',
-            rating: 4.9,
-            image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop'
-        },
-        {
-            id: 12,
-            name: 'Chef Camila Martins',
-            specialty: 'Culinária Caseira',
-            description: 'Receitas tradicionais com carinho e sabor de casa',
-            rating: 4.8,
-            image: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&h=400&fit=crop'
-        },
-    ];
+  const getSocialIcon = (type: string) => {
+    switch (type) {
+      case "INSTAGRAM":
+        return instagramIcon;
+      case "FACEBOOK":
+        return facebookIcon;
+      case "YOUTUBE":
+        return youtubeIcon;
+      case "TIKTOK":
+        return tiktokIcon;
+      case "WHATSAPP":
+        return whatsappIcon;
+      default:
+        return null;
+    }
+  };
 
-    const scrollCategories = (direction: 'left' | 'right') => {
-        if (categoriesRef.current) {
-            const scrollAmount = 200;
-            categoriesRef.current.scrollBy({
-                left: direction === 'left' ? -scrollAmount : scrollAmount,
-                behavior: 'smooth'
-            });
-        }
-    };
+  const formatWhatsAppUrl = (url: string): string => {
+    try {
+      if (url.includes("wa.me")) {
+        return url;
+      }
+
+      const digitsOnly = url.replace(/\D/g, "");
+
+      if (!digitsOnly) {
+        return url;
+      }
+
+      return `https://wa.me/${digitsOnly}`;
+    } catch (error) {
+      return url;
+    }
+  };
+
+  const getSocialUrl = (link: ChefSocialLink): string => {
+    if (link.type === "WHATSAPP") {
+      return formatWhatsAppUrl(link.url);
+    }
+    return link.url;
+  };
+
+  const renderSocialLinks = (socialLinks?: ChefSocialLink[] | any) => {
+    if (!socialLinks) {
+      return null;
+    }
+
+    const linksArray = Array.isArray(socialLinks) ? socialLinks : [];
+    
+    if (linksArray.length === 0) {
+      return null;
+    }
+
+    const validLinks = linksArray.filter((link: any) => link && link.type && link.url);
+
+    if (validLinks.length === 0) {
+      return null;
+    }
 
     return (
-        <>
-            <Header />
-            <div className="chefs-page">
-                <section className="chefs-banner">
-                    <div className="chefs-banner-content">
-                        <h1 className="chefs-banner-title">Encontre o Chef ideal para voce</h1>
-                        <div className="chefs-search-container">
-                            <div className="chefs-search-box">
-                                <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <circle cx="11" cy="11" r="8"></circle>
-                                    <path d="m21 21-4.35-4.35"></path>
-                                </svg>
-                                <input
-                                    type="text"
-                                    placeholder="Busque por uma categoria ou prato"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="chefs-search-input"
-                                />
-                            </div>
-                        </div>
-                        
-                        <div className="categories-container">
-                            <button 
-                                className="category-nav-btn category-nav-left" 
-                                onClick={() => scrollCategories('left')}
-                                aria-label="Categorias anteriores"
-                            >
-                                ‹
-                            </button>
-                            <div className="categories-scroll" ref={categoriesRef}>
-                                {categories.map((category, index) => (
-                                    <button key={index} className="category-chip">
-                                        <span className="category-icon">{category.icon}</span>
-                                        <span className="category-name">{category.name}</span>
-                                    </button>
-                                ))}
-                            </div>
-                            <button 
-                                className="category-nav-btn category-nav-right" 
-                                onClick={() => scrollCategories('right')}
-                                aria-label="Próximas categorias"
-                            >
-                                ›
-                            </button>
-                        </div>
-                    </div>
-                </section>
+      <div className="chef-card-social-links">
+        {validLinks.map((link: any, index: number) => {
+          const icon = getSocialIcon(link.type);
+          if (!icon) return null;
 
-                <section className="chefs-grid-section">
-                    <div className="chefs-grid-container">
-                        {chefs.map((chef) => (
-                            <div key={chef.id} className="chef-card">
-                                <div className="chef-card-image">
-                                    <img src={chef.image} alt={chef.name} />
-                                </div>
-                                <div className="chef-card-info">
-                                    <h3 className="chef-card-name">{chef.name}</h3>
-                                    <p className="chef-card-specialty">{chef.specialty}</p>
-                                    <p className="chef-card-description">{chef.description}</p>
-                                    <div className="chef-card-rating">
-                                        <span className="rating-value">
-                                            {(() => {
-                                                const rounded = Math.round(chef.rating * 2) / 2;
-                                                return rounded % 1 === 0 ? rounded.toFixed(1) : rounded;
-                                            })()}
-                                        </span>
-                                        <div className="rating-stars">
-                                            {renderStars(chef.rating)}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            </div>
-            <Footer />
-        </>
+          const url = getSocialUrl(link);
+
+          return (
+            <a
+              key={index}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="chef-card-social-icon"
+              aria-label={link.type}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img src={icon} alt={link.type} />
+            </a>
+          );
+        })}
+      </div>
     );
+  };
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    loadCuisines();
+  }, []);
+
+  useEffect(() => {
+    loadChefs();
+  }, [selectedCuisineId]);
+
+  const loadCuisines = async () => {
+    try {
+      const data = await chefService.listCuisines(1, 100);
+      setCuisines(data);
+    } catch (err) {}
+  };
+
+  const loadChefs = async () => {
+    try {
+      setIsLoading(true);
+      setError("");
+      const response = await chefService.listChefs({
+        page: 1,
+        limit: 100,
+        cuisineId: selectedCuisineId,
+        available: true,
+        sortBy: "avgRating",
+        sortDir: "DESC",
+      });
+      setChefs(response.items);
+    } catch (err) {
+      setError("Erro ao carregar chefs. Tente novamente mais tarde.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCuisineClick = (cuisineId: number) => {
+    setSelectedCuisineId(
+      selectedCuisineId === cuisineId ? undefined : cuisineId
+    );
+  };
+
+  const scrollCategories = (direction: "left" | "right") => {
+    if (categoriesRef.current) {
+      const scrollAmount = 200;
+      categoriesRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  const detectOS = (): "ios" | "android" | "other" => {
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    if (/iphone|ipad|ipod/.test(userAgent)) {
+      return "ios";
+    }
+    if (/android/.test(userAgent)) {
+      return "android";
+    }
+    return "other";
+  };
+
+  const handleChefCardClick = () => {
+    const os = detectOS();
+    if (os === "ios") {
+      window.open("https://apps.apple.com", "_blank");
+    } else if (os === "android") {
+      window.open("https://play.google.com/store", "_blank");
+    } else {
+      window.open("https://play.google.com/store", "_blank");
+    }
+  };
+
+  return (
+    <>
+      <Header />
+      <div className="chefs-page">
+        <section className="chefs-banner">
+          <div className="chefs-banner-content">
+            <h1 className="chefs-banner-title">
+              Encontre o Chef ideal para você
+            </h1>
+            <div className="chefs-search-container">
+              <div className="chefs-search-box">
+                <svg
+                  className="search-icon"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Busque por uma categoria ou prato"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="chefs-search-input"
+                />
+              </div>
+            </div>
+
+            <div className="categories-container">
+              <button
+                className="category-nav-btn category-nav-left"
+                onClick={() => scrollCategories("left")}
+                aria-label="Categorias anteriores"
+              >
+                ‹
+              </button>
+              <div className="categories-scroll" ref={categoriesRef}>
+                {cuisines.map((cuisine) => (
+                  <button
+                    key={cuisine.id}
+                    className={`category-chip ${
+                      selectedCuisineId === cuisine.id ? "active" : ""
+                    }`}
+                    onClick={() => handleCuisineClick(cuisine.id)}
+                  >
+                    <span className="category-name">{cuisine.title}</span>
+                  </button>
+                ))}
+              </div>
+              <button
+                className="category-nav-btn category-nav-right"
+                onClick={() => scrollCategories("right")}
+                aria-label="Próximas categorias"
+              >
+                ›
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section className="chefs-grid-section">
+          {isLoading ? (
+            <div style={{ textAlign: "center", padding: "2rem" }}>
+              <p>Carregando chefs...</p>
+            </div>
+          ) : error ? (
+            <div
+              style={{ textAlign: "center", padding: "2rem", color: "#f44336" }}
+            >
+              <p>{error}</p>
+            </div>
+          ) : chefs.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "2rem" }}>
+              <p>Nenhum chef encontrado.</p>
+            </div>
+          ) : (
+            <div className="chefs-grid-container">
+              {chefs.map((chef) => {
+                const imageSrc =
+                  chef.profilePictureUrl && !imageErrors[chef.id]
+                    ? chef.profilePictureUrl
+                    : perfilVazio;
+
+                return (
+                  <div
+                    key={chef.id}
+                    className="chef-card"
+                    onClick={handleChefCardClick}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <div className="chef-card-image">
+                      <img
+                        src={imageSrc}
+                        alt={chef.name}
+                        onError={() => {
+                          if (chef.profilePictureUrl && !imageErrors[chef.id]) {
+                            setImageErrors((prev) => ({
+                              ...prev,
+                              [chef.id]: true,
+                            }));
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="chef-card-info">
+                      <h3 className="chef-card-name">{chef.name}</h3>
+                      <p className="chef-card-specialty">
+                        {chef.cuisines &&
+                        Array.isArray(chef.cuisines) &&
+                        chef.cuisines.length > 0
+                          ? chef.cuisines
+                              .filter((c) => c && c.name)
+                              .map((c) => c.name)
+                              .join(", ")
+                          : "Sem especialidade definida"}
+                      </p>
+                      <p className="chef-card-description">
+                        {chef.bio || "Chef sem descrição disponível"}
+                      </p>
+                      <div className="chef-card-rating">
+                        <div className="rating-content">
+                          <span className="rating-value">
+                            {(() => {
+                              const avgRating5 = calculateAvgRating(chef);
+                              const rounded = Math.round(avgRating5 * 2) / 2;
+                              return rounded.toFixed(1);
+                            })()}
+                          </span>
+                          <div className="rating-stars">
+                            {renderStars(calculateAvgRating(chef))}
+                          </div>
+                          {chef.reviews && chef.reviews.length > 0 && (
+                            <span className="rating-count">
+                              ({chef.reviews.length})
+                            </span>
+                          )}
+                        </div>
+                        {renderSocialLinks(chef.socialLinks)}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </div>
+      <Footer />
+    </>
+  );
 };
 
 export default ChefsPage;
-

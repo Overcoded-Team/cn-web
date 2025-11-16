@@ -1,0 +1,155 @@
+.cta-about-container {
+  position: relative;
+  background-image: url("../assets/iconefundo.png");
+  background-repeat: no-repeat;
+  background-size: 900px 900px;
+  background-position: -300px center;
+}
+
+.cta-about-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("../assets/iconefundo.png");
+  background-repeat: no-repeat;
+  background-size: 900px 900px;
+  background-position: -300px center;
+  opacity: 0.005;
+  z-index: 0;
+}
+
+.cta-about-container > * {
+  position: relative;
+  z-index: 1;
+}
+
+.cta-section {
+  padding: 4rem 2rem;
+  text-align: center;
+  background: transparent;
+  position: relative;
+}
+
+.cta-section > * {
+  position: relative;
+  z-index: 1;
+}
+
+.cta-section h2 {
+  font-size: 4.5rem;
+  color: #333;
+  margin-bottom: 1rem;
+  font-family: "Lancelot", serif;
+  font-weight: normal;
+}
+
+.cta-section p {
+  font-size: 2rem;
+  color: #666;
+  margin-bottom: 2rem;
+  font-weight: normal;
+  font-family: "Krub", serif;
+  text-align: center;
+}
+
+.btn-cta {
+  background: #ff6b35;
+  color: white;
+  border: none;
+  padding: 1.2rem 2.5rem;
+  border-radius: 30px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-cta:hover {
+  transform: scale(1.05);
+}
+
+.about {
+  padding: 4rem 1rem;
+  background: transparent;
+  max-width: 100%;
+  margin: 0 auto;
+  position: relative;
+  width: 100%;
+}
+
+.about h2 {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 2.5rem;
+  font-weight: normal;
+  font-family: "Krub", serif;
+  text-align: center;
+  max-width: 100%;
+  padding: 0 2rem;
+}
+
+.about p {
+  font-size: 1.7rem;
+  color: #666;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+  font-family: "Lancelot", serif;
+  font-weight: normal;
+  text-align: center;
+  max-width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 768px) {
+  .cta-section {
+    padding: 3rem 1.5rem;
+  }
+
+  .cta-section h2 {
+    font-size: 3rem;
+  }
+
+  .cta-section p {
+    font-size: 1.5rem;
+  }
+
+  .about {
+    padding: 3rem 1rem;
+  }
+
+  .about h2 {
+    font-size: 1.8rem;
+  }
+
+  .about p {
+    font-size: 1.3rem;
+    max-width: 90%;
+  }
+}
+
+@media (max-width: 480px) {
+  .cta-section h2 {
+    font-size: 2.5rem;
+  }
+
+  .cta-section p {
+    font-size: 1.2rem;
+  }
+
+  .about h2 {
+    font-size: 1.5rem;
+  }
+
+  .about p {
+    font-size: 1.1rem;
+    max-width: 100%;
+  }
+}
+

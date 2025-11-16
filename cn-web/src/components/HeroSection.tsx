@@ -1,6 +1,7 @@
 import React from "react";
 import { useState } from "react";
 import RegisterModal from "./RegisterModal";
+import "./HeroSection.css";
 
 const HeroSection: React.FC = () => {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
