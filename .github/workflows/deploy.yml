@@ -48,4 +48,4 @@ jobs:
           source: "cn-web/dist/*"
           strip_components: 2
           target: "/home/ubuntu/cn-web"
-          rm: true
+          overwrite: true
