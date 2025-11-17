@@ -12,6 +12,7 @@
 	max-height: 560px;
 	overflow: auto;
 	padding-right: 4px;
+	padding-top: 2px;
 }
 .appointment-card {
 	background: #fff;
@@ -21,6 +22,26 @@
 	justify-content: space-between;
 	align-items: center;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+	cursor: pointer;
+	transition: all 0.2s;
+	border: 2px solid transparent;
+}
+
+.appointment-card:hover {
+	box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+	transform: translateY(-2px);
+	border: 2px solid transparent;
+}
+
+.appointment-card.selected {
+	border: 2px solid #ff6a00;
+	box-shadow: 0 4px 12px rgba(255, 106, 0, 0.2);
+}
+
+.appointment-card.selected:hover {
+	border: 2px solid #ff6a00;
+	box-shadow: 0 4px 12px rgba(255, 106, 0, 0.3);
+	transform: translateY(-2px);
 }
 .card-left { display: flex; flex-direction: column; gap: 4px; }
 .appt-code { color: #ff6a00; font-weight: 700; font-size: 12px; }
@@ -98,17 +119,42 @@
 
 .notes-card { padding: 12px; }
 .notes-title { color: #ff6a00; font-weight: 700; margin-bottom: 8px; }
-.notes-textarea {
-	width: 100%;
-	min-height: 220px;
-	resize: none;
-	border: 1px solid #eee;
-	border-radius: 8px;
+.appointment-observation {
+	margin-bottom: 12px;
 	padding: 12px;
-	color: #444;
+	background: #f9f9f9;
+	border-radius: 8px;
+	border-left: 3px solid #ff6a00;
+}
+
+.appointment-observation strong {
+	color: #333;
 	font-size: 14px;
-	line-height: 1.4;
-	font-family: inherit;
+	display: block;
+	margin-bottom: 8px;
+}
+
+.appointment-observation p {
+	color: #666;
+	font-size: 14px;
+	line-height: 1.5;
+	margin: 0;
+	white-space: pre-wrap;
+}
+
+.appointment-observation-empty {
+	padding: 12px;
+	background: #f9f9f9;
+	border-radius: 8px;
+	border-left: 3px solid #ddd;
+}
+
+.appointment-observation-empty p {
+	color: #999;
+	font-size: 14px;
+	line-height: 1.5;
+	margin: 0;
+	font-style: italic;
 }
 
 @media (max-width: 1024px) {
