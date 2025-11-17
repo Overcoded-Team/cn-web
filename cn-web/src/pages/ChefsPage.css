@@ -198,7 +198,7 @@
   max-width: 1200px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 400px));
+  grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
   justify-content: start;
 }
@@ -342,7 +342,7 @@
   }
 
   .chefs-grid-container {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 380px));
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
