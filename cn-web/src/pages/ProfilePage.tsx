@@ -10,6 +10,7 @@ import {
   ChefSocialLink,
 } from "../services/chef.service";
 import { useAuth } from "../contexts/AuthContext";
+import { authService } from "../services/auth.service";
 import editIcon from "../assets/edit.svg";
 
 interface ChefCuisineRelation {
@@ -55,6 +56,7 @@ const ProfilePage: React.FC = () => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
+  const [editedName, setEditedName] = useState<string>("");
   const [editedBio, setEditedBio] = useState<string>("");
   const [editedSpecialty, setEditedSpecialty] = useState<string>("");
   const [editedYearsOfExperience, setEditedYearsOfExperience] =
@@ -87,6 +89,7 @@ const ProfilePage: React.FC = () => {
         const profileData = await chefService.getMyProfile();
         setProfile(profileData as ChefProfileResponse);
 
+        setEditedName(user?.name || "");
         setEditedBio(profileData.bio || "");
         setEditedSpecialty(profileData.portfolioDescription || "");
         setEditedYearsOfExperience(profileData.yearsOfExperience || 0);
@@ -151,6 +154,7 @@ const ProfilePage: React.FC = () => {
   const handleEdit = async () => {
     setIsEditing(true);
     if (profile) {
+      setEditedName(user?.name || "");
       setEditedBio(profile.bio || "");
       setEditedSpecialty(profile.portfolioDescription || "");
       setEditedYearsOfExperience(profile.yearsOfExperience || 0);
@@ -158,6 +162,7 @@ const ProfilePage: React.FC = () => {
       const cuisineIds = profile.chefCuisines?.map((cc) => cc.cuisine.id) || [];
       setSelectedCuisineIds(new Set(cuisineIds));
     } else {
+      setEditedName(user?.name || "");
       setEditedBio("");
       setEditedSpecialty("");
       setEditedYearsOfExperience(0);
@@ -173,6 +178,7 @@ const ProfilePage: React.FC = () => {
   const handleCancel = () => {
     setIsEditing(false);
     if (profile) {
+      setEditedName(user?.name || "");
       setEditedBio(profile.bio || "");
       setEditedSpecialty(profile.portfolioDescription || "");
       setEditedYearsOfExperience(profile.yearsOfExperience || 0);
@@ -188,6 +194,11 @@ const ProfilePage: React.FC = () => {
     try {
       setIsSaving(true);
       setError("");
+
+      if (editedName.trim() && editedName !== user?.name) {
+        await authService.updateName(editedName.trim());
+        await checkAuth();
+      }
 
       await chefService.updateMyProfile({
         bio: editedBio,
@@ -292,8 +303,8 @@ const ProfilePage: React.FC = () => {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Arquivo muito grande. O tamanho máximo é 5MB.");
+    if (file.size > 50 * 1024 * 1024) {
+      setError("Arquivo muito grande. O tamanho máximo é 50MB.");
       return;
     }
 
@@ -525,158 +536,287 @@ const ProfilePage: React.FC = () => {
             <div className="profile-loading">Carregando...</div>
           ) : (
             <div className="profile-content">
-              <section className="profile-section">
-                <h2 className="section-title-orange">Biografia</h2>
-                {isEditing ? (
-                  <textarea
-                    className="edit-textarea"
-                    value={editedBio}
-                    onChange={(e) => setEditedBio(e.target.value)}
-                    placeholder="Escreva sua biografia..."
-                    rows={4}
-                  />
-                ) : (
-                  <p className="section-text">
-                    {bio || "Nenhuma biografia cadastrada."}
-                  </p>
-                )}
-              </section>
-
-              <section className="profile-section">
-                <h2 className="section-title-orange">Especialidade</h2>
-                {isEditing ? (
-                  <textarea
-                    className="edit-textarea"
-                    value={editedSpecialty}
-                    onChange={(e) => setEditedSpecialty(e.target.value)}
-                    placeholder="Descreva sua especialidade..."
-                    rows={3}
-                  />
-                ) : (
-                  <p className="section-text">
-                    {specialty || "Nenhuma especialidade cadastrada."}
-                  </p>
-                )}
-              </section>
-
-              <section className="profile-section">
-                <h2 className="section-title-orange">Anos de Experiência</h2>
-                {isEditing ? (
-                  <input
-                    type="number"
-                    className="edit-input"
-                    value={editedYearsOfExperience}
-                    onChange={(e) =>
-                      setEditedYearsOfExperience(parseInt(e.target.value) || 0)
-                    }
-                    placeholder="0"
-                    min="0"
-                    max="100"
-                  />
-                ) : (
-                  <p className="section-text">
-                    {yearsOfExperience > 0
-                      ? `${yearsOfExperience} ${
-                          yearsOfExperience === 1 ? "ano" : "anos"
-                        } de experiência`
-                      : "Não informado"}
-                  </p>
-                )}
-              </section>
-
-              {isEditing && (
-                <section className="profile-section">
-                  <h2 className="section-title-orange">
-                    Status de Disponibilidade
-                  </h2>
-                  <div className="availability-toggle-container">
-                    <label className="toggle-switch">
+              <div className="profile-main-grid">
+                <div className="profile-left-column">
+                  <section className="profile-section">
+                    <h2 className="section-title-orange">Nome</h2>
+                    {isEditing ? (
                       <input
-                        type="checkbox"
-                        checked={editedIsAvailable}
-                        onChange={(e) => setEditedIsAvailable(e.target.checked)}
+                        type="text"
+                        className="edit-input"
+                        value={editedName}
+                        onChange={(e) => setEditedName(e.target.value)}
+                        placeholder="Seu nome"
+                        maxLength={120}
                       />
-                      <span className="toggle-slider"></span>
-                    </label>
-                    <span className="availability-label">
-                      {editedIsAvailable
-                        ? "Disponível para novos agendamentos"
-                        : "Indisponível"}
-                    </span>
-                  </div>
-                </section>
-              )}
-
-              <section className="profile-section">
-                <h2 className="section-title-orange">Categorias</h2>
-                {isEditing ? (
-                  <div className="categories-edit-container">
-                    {isLoadingCuisines ? (
-                      <p className="section-text">Carregando categorias...</p>
-                    ) : (
-                      <>
-                        <p className="categories-hint">
-                          Clique nas categorias para adicionar ou remover:
-                        </p>
-                        <div className="available-categories">
-                          {availableCuisines.map((cuisine) => {
-                            const isSelected = selectedCuisineIds.has(
-                              cuisine.id
-                            );
-                            return (
-                              <button
-                                key={cuisine.id}
-                                type="button"
-                                className={`category-tag ${
-                                  isSelected ? "selected" : ""
-                                }`}
-                                onClick={() => toggleCuisine(cuisine.id)}
-                              >
-                                {cuisine.title}
-                                {isSelected && (
-                                  <span className="category-check"></span>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  <div className="categories-container">
-                    {cuisines.length > 0 ? (
-                      cuisines.map((cuisine) => (
-                        <span key={cuisine.id} className="category-tag">
-                          {cuisine.title}
-                        </span>
-                      ))
                     ) : (
                       <p className="section-text">
-                        Nenhuma categoria cadastrada.
+                        {user?.name || "Nome não informado"}
                       </p>
                     )}
-                  </div>
-                )}
-              </section>
+                  </section>
 
-              {isEditing && (
-                <section className="profile-section">
-                  <h2 className="section-title-orange">Redes Sociais</h2>
-                  <div className="social-links-edit-container">
-                    {socialLinks.length > 0 && (
-                      <div className="social-links-list">
-                        {socialLinks.map((link) => (
-                          <div key={link.type} className="social-link-item">
-                            <span className="social-link-type">
-                              {link.type}
+                  <section className="profile-section">
+                    <h2 className="section-title-orange">Biografia</h2>
+                    {isEditing ? (
+                      <textarea
+                        className="edit-textarea"
+                        value={editedBio}
+                        onChange={(e) => setEditedBio(e.target.value)}
+                        placeholder="Escreva sua biografia..."
+                        rows={4}
+                      />
+                    ) : (
+                      <p className="section-text">
+                        {bio || "Nenhuma biografia cadastrada."}
+                      </p>
+                    )}
+                  </section>
+
+                  <section className="profile-section">
+                    <h2 className="section-title-orange">Especialidade</h2>
+                    {isEditing ? (
+                      <textarea
+                        className="edit-textarea"
+                        value={editedSpecialty}
+                        onChange={(e) => setEditedSpecialty(e.target.value)}
+                        placeholder="Descreva sua especialidade..."
+                        rows={3}
+                      />
+                    ) : (
+                      <p className="section-text">
+                        {specialty || "Nenhuma especialidade cadastrada."}
+                      </p>
+                    )}
+                  </section>
+
+                  <section className="profile-section">
+                    <h2 className="section-title-orange">Categorias</h2>
+                    {isEditing ? (
+                      <div className="categories-edit-container">
+                        {isLoadingCuisines ? (
+                          <p className="section-text">Carregando categorias...</p>
+                        ) : (
+                          <>
+                            <p className="categories-hint">
+                              Clique nas categorias para adicionar ou remover:
+                            </p>
+                            <div className="available-categories">
+                              {availableCuisines.map((cuisine) => {
+                                const isSelected = selectedCuisineIds.has(
+                                  cuisine.id
+                                );
+                                return (
+                                  <button
+                                    key={cuisine.id}
+                                    type="button"
+                                    className={`category-tag ${
+                                      isSelected ? "selected" : ""
+                                    }`}
+                                    onClick={() => toggleCuisine(cuisine.id)}
+                                  >
+                                    {cuisine.title}
+                                    {isSelected && (
+                                      <span className="category-check"></span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="categories-container">
+                        {cuisines.length > 0 ? (
+                          cuisines.map((cuisine) => (
+                            <span key={cuisine.id} className="category-tag">
+                              {cuisine.title}
                             </span>
-                            <span className="social-link-url">{link.url}</span>
+                          ))
+                        ) : (
+                          <p className="section-text">
+                            Nenhuma categoria cadastrada.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </section>
+                </div>
+
+                <div className="profile-right-column">
+                  <section className="profile-section">
+                    <h2 className="section-title-orange">Informações</h2>
+                    <div className="info-card">
+                      <div className="info-item">
+                        <span className="info-label">Anos de Experiência</span>
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            className="edit-input"
+                            value={editedYearsOfExperience}
+                            onChange={(e) =>
+                              setEditedYearsOfExperience(parseInt(e.target.value) || 0)
+                            }
+                            placeholder="0"
+                            min="0"
+                            max="100"
+                          />
+                        ) : (
+                          <span className="info-value">
+                            {yearsOfExperience > 0
+                              ? `${yearsOfExperience} ${
+                                  yearsOfExperience === 1 ? "ano" : "anos"
+                                } de experiência`
+                              : "Não informado"}
+                          </span>
+                        )}
+                      </div>
+
+                      {isEditing && (
+                        <div className="info-item">
+                          <span className="info-label">Disponibilidade</span>
+                          <div className="availability-toggle-container">
+                            <label className="toggle-switch">
+                              <input
+                                type="checkbox"
+                                checked={editedIsAvailable}
+                                onChange={(e) => setEditedIsAvailable(e.target.checked)}
+                              />
+                              <span className="toggle-slider"></span>
+                            </label>
+                            <span className="availability-label">
+                              {editedIsAvailable
+                                ? "Disponível"
+                                : "Indisponível"}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+
+                  {isEditing && (
+                    <section className="profile-section">
+                      <h2 className="section-title-orange">Redes Sociais</h2>
+                      <div className="social-links-edit-container">
+                        {socialLinks.length > 0 && (
+                          <div className="social-links-list">
+                            {socialLinks.map((link) => (
+                              <div key={link.type} className="social-link-item">
+                                <span className="social-link-type">
+                                  {link.type}
+                                </span>
+                                <span className="social-link-url">{link.url}</span>
+                                <button
+                                  type="button"
+                                  className="social-link-delete"
+                                  onClick={() => handleDeleteSocialLink(link.type)}
+                                  aria-label="Remover rede social"
+                                >
+                                  <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
+                                    <path
+                                      d="M18 6L6 18M6 6L18 18"
+                                      stroke="#f44336"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                  </svg>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {getAvailableSocialTypes().length > 0 && (
+                          <div className="add-social-link-container">
+                            <select
+                              className="edit-input"
+                              value={newSocialType}
+                              onChange={(e) =>
+                                setNewSocialType(e.target.value as ChefSocialType)
+                              }
+                            >
+                              <option value="">Selecione uma rede social</option>
+                              {getAvailableSocialTypes().map((type) => (
+                                <option key={type} value={type}>
+                                  {type}
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              type="text"
+                              className="edit-input"
+                              value={newSocialUrl}
+                              onChange={(e) => setNewSocialUrl(e.target.value)}
+                              placeholder="URL da rede social"
+                            />
                             <button
                               type="button"
-                              className="social-link-delete"
-                              onClick={() => handleDeleteSocialLink(link.type)}
-                              aria-label="Remover rede social"
+                              className="add-social-button"
+                              onClick={handleAddSocialLink}
+                            >
+                              Adicionar
+                            </button>
+                          </div>
+                        )}
+                        {getAvailableSocialTypes().length === 0 &&
+                          socialLinks.length > 0 && (
+                            <p className="section-text">
+                              Todas as redes sociais disponíveis foram adicionadas.
+                            </p>
+                          )}
+                      </div>
+                    </section>
+                  )}
+
+                  {!isEditing && (
+                    <section className="profile-section">
+                      <h2 className="section-title-orange">Cardápio</h2>
+                      <div className="menu-section">
+                        <input
+                          ref={menuFileInputRef}
+                          type="file"
+                          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                          onChange={handleMenuChange}
+                          style={{ display: "none" }}
+                          disabled={isUploadingMenu}
+                        />
+                        <button
+                          className="menu-button"
+                          onClick={handleMenuButtonClick}
+                          disabled={isUploadingMenu}
+                        >
+                          {isUploadingMenu ? "Enviando..." : "Adicionar cardápio"}
+                        </button>
+                        {profile?.menuUrl && (
+                          <div className="menu-info">
+                            <a
+                              href={profile.menuUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="menu-link"
+                            >
+                              <span className="menu-file-name">
+                                {profile.menuOriginalName || "Cardápio"}
+                              </span>
+                              {profile.menuSizeBytes && (
+                                <span className="menu-file-size">
+                                  ({formatFileSize(profile.menuSizeBytes)})
+                                </span>
+                              )}
+                            </a>
+                            <button
+                              type="button"
+                              className="menu-delete-button"
+                              onClick={handleDeleteMenu}
+                              aria-label="Remover cardápio"
                             >
                               <svg
                                 width="16"
@@ -695,112 +835,15 @@ const ProfilePage: React.FC = () => {
                               </svg>
                             </button>
                           </div>
-                        ))}
+                        )}
                       </div>
-                    )}
-                    {getAvailableSocialTypes().length > 0 && (
-                      <div className="add-social-link-container">
-                        <select
-                          className="edit-input"
-                          value={newSocialType}
-                          onChange={(e) =>
-                            setNewSocialType(e.target.value as ChefSocialType)
-                          }
-                        >
-                          <option value="">Selecione uma rede social</option>
-                          {getAvailableSocialTypes().map((type) => (
-                            <option key={type} value={type}>
-                              {type}
-                            </option>
-                          ))}
-                        </select>
-                        <input
-                          type="text"
-                          className="edit-input"
-                          value={newSocialUrl}
-                          onChange={(e) => setNewSocialUrl(e.target.value)}
-                          placeholder="URL da rede social"
-                        />
-                        <button
-                          type="button"
-                          className="add-social-button"
-                          onClick={handleAddSocialLink}
-                        >
-                          Adicionar
-                        </button>
-                      </div>
-                    )}
-                    {getAvailableSocialTypes().length === 0 &&
-                      socialLinks.length > 0 && (
-                        <p className="section-text">
-                          Todas as redes sociais disponíveis foram adicionadas.
-                        </p>
-                      )}
-                  </div>
-                </section>
-              )}
+                    </section>
+                  )}
+                </div>
+              </div>
 
               {!isEditing && (
                 <>
-                  <div className="menu-section">
-                    <input
-                      ref={menuFileInputRef}
-                      type="file"
-                      accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                      onChange={handleMenuChange}
-                      style={{ display: "none" }}
-                      disabled={isUploadingMenu}
-                    />
-                    <button
-                      className="menu-button"
-                      onClick={handleMenuButtonClick}
-                      disabled={isUploadingMenu}
-                    >
-                      {isUploadingMenu ? "Enviando..." : "Adicionar cardápio"}
-                    </button>
-                    {profile?.menuUrl && (
-                      <div className="menu-info">
-                        <a
-                          href={profile.menuUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="menu-link"
-                        >
-                          <span className="menu-file-name">
-                            {profile.menuOriginalName || "Cardápio"}
-                          </span>
-                          {profile.menuSizeBytes && (
-                            <span className="menu-file-size">
-                              ({formatFileSize(profile.menuSizeBytes)})
-                            </span>
-                          )}
-                        </a>
-                        <button
-                          type="button"
-                          className="menu-delete-button"
-                          onClick={handleDeleteMenu}
-                          aria-label="Remover cardápio"
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              d="M18 6L6 18M6 6L18 18"
-                              stroke="#f44336"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
                   <div className="add-photos-section">
                     <input
                       ref={galleryFileInputRef}
