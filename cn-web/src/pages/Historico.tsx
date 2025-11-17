@@ -16,6 +16,7 @@ interface HistoricoEntry {
   endereco: string;
   clienteNome: string;
   contato?: string;
+  clientProfilePicture?: string;
 }
 
 const Historico: React.FC = () => {
@@ -43,6 +44,7 @@ const Historico: React.FC = () => {
           const minutes = String(requestedDate.getMinutes()).padStart(2, "0");
 
           const clientName = req.client_profile?.user?.name || "Cliente";
+          const clientProfilePicture = req.client_profile?.user?.profilePictureUrl;
           const priceCents = req.quote?.amount_cents || 0;
           const priceBRL = priceCents / 100;
 
@@ -54,6 +56,7 @@ const Historico: React.FC = () => {
             endereco: req.location || "",
             clienteNome: clientName,
             contato: req.client_profile?.user?.email || undefined,
+            clientProfilePicture: clientProfilePicture,
           };
         });
 
@@ -127,14 +130,29 @@ const Historico: React.FC = () => {
                       {entry.data} - {entry.hora}
                     </span>
                   </div>
-                  <div className="entry-details">
-                    <p className="entry-service">
-                      {entry.tipoServico}: {entry.endereco}
-                    </p>
-                    <p className="entry-client">
-                      {entry.clienteNome}
-                      {entry.contato && ` - Contato: ${entry.contato}`}
-                    </p>
+                  <div className="entry-content">
+                    <div className="entry-avatar-container">
+                      {entry.clientProfilePicture ? (
+                        <img
+                          src={entry.clientProfilePicture}
+                          alt={entry.clienteNome}
+                          className="entry-client-avatar"
+                        />
+                      ) : (
+                        <div className="entry-client-avatar-placeholder">
+                          {entry.clienteNome.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div className="entry-details">
+                      <p className="entry-service">
+                        {entry.tipoServico}: {entry.endereco}
+                      </p>
+                      <p className="entry-client">
+                        {entry.clienteNome}
+                        {entry.contato && ` - Contato: ${entry.contato}`}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}
