@@ -25,7 +25,6 @@ const Dashboard: React.FC = () => {
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [reviews, setReviews] = useState<ChefReview[]>([]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedChartMonth, setSelectedChartMonth] = useState<number | null>(
     new Date().getMonth()
   );
@@ -121,7 +120,6 @@ const Dashboard: React.FC = () => {
 
   const metrics = useMemo(() => {
     const now = new Date();
-    const currentYear = now.getFullYear();
     const chartMonth =
       selectedChartMonth !== null ? selectedChartMonth : now.getMonth();
     const startOfMonth = new Date(selectedYear, chartMonth, 1);
@@ -284,14 +282,7 @@ const Dashboard: React.FC = () => {
       maxMonthlyEarning: maxMonthlyEarning / 100,
       yearTotal: yearRequests.length,
     };
-  }, [
-    serviceRequests,
-    profile,
-    selectedYear,
-    selectedMonth,
-    selectedChartMonth,
-    reviews,
-  ]);
+  }, [serviceRequests, profile, selectedYear, selectedChartMonth, reviews]);
 
   const handlePreviousYear = () => {
     setSelectedYear(selectedYear - 1);
