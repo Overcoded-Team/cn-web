@@ -47,4 +47,5 @@ jobs:
 
           source: "cn-web/dist/*"
           strip_components: 2
-          target: "/opt/cn-web"
+          target: "/home/ubuntu/cn-web"
+          overwrite: true

@@ -48,6 +48,19 @@ const AppointmentsPage: React.FC = () => {
   const [quoteNotes, setQuoteNotes] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
+  // Função para calcular o valor com taxas (15% + R$ 0,80)
+  const calculateValueWithFees = (value: string): string => {
+    if (!value || value.trim() === "") return "0,00";
+    const numericValue = parseFloat(value.replace(",", "."));
+    if (isNaN(numericValue) || numericValue <= 0) return "0,00";
+    
+    const feePercentage = 0.15; // 15%
+    const fixedFee = 0.80; // R$ 0,80
+    const totalWithFees = numericValue + (numericValue * feePercentage) + fixedFee;
+    
+    return totalWithFees.toFixed(2).replace(".", ",");
+  };
+
   const dateToISOString = (date: Date): string => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -712,21 +725,33 @@ const AppointmentsPage: React.FC = () => {
                 <label className="accept-form-label">
                   Valor do Serviço (R$)
                 </label>
-                <input
-                  type="text"
-                  className="accept-form-input"
-                  value={quoteAmount}
-                  onChange={(e) => {
-                    const value = e.target.value
-                      .replace(/[^\d,]/g, "")
-                      .replace(",", ".");
-                    if (value === "" || !isNaN(parseFloat(value))) {
-                      setQuoteAmount(e.target.value.replace(/[^\d,]/g, ""));
-                    }
-                  }}
-                  placeholder="0,00"
-                  disabled={isProcessing}
-                />
+                <div className="accept-value-container">
+                  <input
+                    type="text"
+                    className="accept-form-input"
+                    value={quoteAmount}
+                    onChange={(e) => {
+                      const value = e.target.value
+                        .replace(/[^\d,]/g, "")
+                        .replace(",", ".");
+                      if (value === "" || !isNaN(parseFloat(value))) {
+                        setQuoteAmount(e.target.value.replace(/[^\d,]/g, ""));
+                      }
+                    }}
+                    placeholder="0,00"
+                    disabled={isProcessing}
+                  />
+                  {quoteAmount && parseFloat(quoteAmount.replace(",", ".")) > 0 && (
+                    <div className="accept-value-with-fees">
+                      <span className="accept-fees-label">
+                        Valor incluindo as taxas para o cliente:
+                      </span>
+                      <span className="accept-fees-value">
+                        R$ {calculateValueWithFees(quoteAmount)}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="accept-form-group">
