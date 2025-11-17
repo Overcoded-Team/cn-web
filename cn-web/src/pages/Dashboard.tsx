@@ -84,10 +84,13 @@ const Dashboard: React.FC = () => {
           setWalletBalance(balanceData);
         }
 
-        const initialCompletedCount = allRequests.filter(
-          (sr) => sr.status === ServiceRequestStatus.COMPLETED
+        const initialPaidCount = allRequests.filter(
+          (sr) =>
+            sr.status === ServiceRequestStatus.PAYMENT_CONFIRMED ||
+            sr.status === ServiceRequestStatus.SCHEDULED ||
+            sr.status === ServiceRequestStatus.COMPLETED
         ).length;
-        previousCompletedCountRef.current = initialCompletedCount;
+        previousCompletedCountRef.current = initialPaidCount;
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
       } finally {
@@ -108,12 +111,15 @@ const Dashboard: React.FC = () => {
       }
     };
 
-    const completedCount = serviceRequests.filter(
-      (sr) => sr.status === ServiceRequestStatus.COMPLETED
+    const paidCount = serviceRequests.filter(
+      (sr) =>
+        sr.status === ServiceRequestStatus.PAYMENT_CONFIRMED ||
+        sr.status === ServiceRequestStatus.SCHEDULED ||
+        sr.status === ServiceRequestStatus.COMPLETED
     ).length;
 
-    if (completedCount > previousCompletedCountRef.current) {
-      previousCompletedCountRef.current = completedCount;
+    if (paidCount > previousCompletedCountRef.current) {
+      previousCompletedCountRef.current = paidCount;
       updateWalletBalance();
     }
   }, [serviceRequests]);
@@ -147,18 +153,29 @@ const Dashboard: React.FC = () => {
         sr.status !== ServiceRequestStatus.REJECTED_BY_CHEF
     );
 
-    const completedWithQuote = completedRequests.filter((sr) => sr.quote);
+    const paidRequests = serviceRequests.filter(
+      (sr) =>
+        sr.status === ServiceRequestStatus.PAYMENT_CONFIRMED ||
+        sr.status === ServiceRequestStatus.SCHEDULED ||
+        sr.status === ServiceRequestStatus.COMPLETED
+    );
 
-    const totalEarnings = completedWithQuote.reduce((sum, sr) => {
+    const paidWithQuote = paidRequests.filter((sr) => sr.quote);
+
+    const totalEarnings = paidWithQuote.reduce((sum, sr) => {
       if (!sr.quote) return sum;
       return sum + (sr.quote.amount_cents || 0);
     }, 0);
 
-    const monthCompletedWithQuote = monthRequests.filter(
-      (sr) => sr.status === ServiceRequestStatus.COMPLETED && sr.quote
+    const monthPaidWithQuote = monthRequests.filter(
+      (sr) =>
+        (sr.status === ServiceRequestStatus.PAYMENT_CONFIRMED ||
+          sr.status === ServiceRequestStatus.SCHEDULED ||
+          sr.status === ServiceRequestStatus.COMPLETED) &&
+        sr.quote
     );
 
-    const monthEarnings = monthCompletedWithQuote.reduce((sum, sr) => {
+    const monthEarnings = monthPaidWithQuote.reduce((sum, sr) => {
       if (!sr.quote) return sum;
       return sum + (sr.quote.amount_cents || 0);
     }, 0);
@@ -210,10 +227,15 @@ const Dashboard: React.FC = () => {
       const monthEnd = new Date(selectedYear, monthIndex + 1, 0, 23, 59, 59);
       return serviceRequests
         .filter((sr) => {
-          if (sr.status !== ServiceRequestStatus.COMPLETED || !sr.quote)
+          if (
+            (sr.status !== ServiceRequestStatus.PAYMENT_CONFIRMED &&
+              sr.status !== ServiceRequestStatus.SCHEDULED &&
+              sr.status !== ServiceRequestStatus.COMPLETED) ||
+            !sr.quote
+          )
             return false;
-          const completedDate = new Date(sr.updated_at);
-          return completedDate >= monthStart && completedDate <= monthEnd;
+          const paymentDate = new Date(sr.updated_at);
+          return paymentDate >= monthStart && paymentDate <= monthEnd;
         })
         .reduce((sum, sr) => {
           if (!sr.quote) return sum;
@@ -334,7 +356,12 @@ const Dashboard: React.FC = () => {
       return;
     }
 
-    if (!walletBalance || amountCents > walletBalance.available_cents) {
+    const availableBalance =
+      walletBalance?.available_cents > 0
+        ? walletBalance.available_cents
+        : metrics.totalEarnings * 100;
+
+    if (amountCents > availableBalance) {
       setWalletError("Saldo insuficiente");
       return;
     }
@@ -494,20 +521,20 @@ const Dashboard: React.FC = () => {
                       minimumFractionDigits: 2,
                     })}
                   </p>
-                  {walletBalance && (
-                    <div className="saldo-disponivel-section">
-                      <p className="saldo-disponivel-label">Saldo Disponível</p>
-                      <p className="saldo-disponivel-value">
-                        R${" "}
-                        {(walletBalance.available_cents / 100).toLocaleString(
-                          "pt-BR",
-                          {
-                            minimumFractionDigits: 2,
-                          }
-                        )}
-                      </p>
-                    </div>
-                  )}
+                  <div className="saldo-disponivel-section">
+                    <p className="saldo-disponivel-label">Saldo Disponível</p>
+                    <p className="saldo-disponivel-value">
+                      R${" "}
+                      {(
+                        walletBalance?.available_cents && walletBalance.available_cents > 0
+                          ? walletBalance.available_cents / 100
+                          : metrics.totalEarnings
+                      ).toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </p>
+                  </div>
                 </div>
 
                 <div className="card avaliacao-card">
@@ -820,34 +847,38 @@ const Dashboard: React.FC = () => {
                 </div>
               ) : (
                 <>
-                  {walletBalance && (
-                    <div className="wallet-balance-container">
-                      <div className="wallet-balance-card">
+                  <div className="wallet-balance-container">
+                    <div className="wallet-balance-card">
+                      <h3 className="wallet-balance-label">
+                        Saldo Disponível
+                      </h3>
+                      <p className="wallet-balance-value">
+                        {formatCurrency(
+                          walletBalance?.available_cents > 0
+                            ? walletBalance.available_cents
+                            : metrics.totalEarnings * 100
+                        )}
+                      </p>
+                    </div>
+                    {walletBalance && walletBalance.blocked_cents > 0 && (
+                      <div className="wallet-balance-card blocked">
                         <h3 className="wallet-balance-label">
-                          Saldo Disponível
+                          Saldo Bloqueado
                         </h3>
                         <p className="wallet-balance-value">
-                          {formatCurrency(walletBalance.available_cents)}
+                          {formatCurrency(walletBalance.blocked_cents)}
                         </p>
                       </div>
-                      {walletBalance.blocked_cents > 0 && (
-                        <div className="wallet-balance-card blocked">
-                          <h3 className="wallet-balance-label">
-                            Saldo Bloqueado
-                          </h3>
-                          <p className="wallet-balance-value">
-                            {formatCurrency(walletBalance.blocked_cents)}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   <button
                     className="request-payout-button"
                     onClick={() => setShowPayoutModal(true)}
                     disabled={
-                      !walletBalance || walletBalance.available_cents < 100
+                      (walletBalance?.available_cents > 0
+                        ? walletBalance.available_cents
+                        : metrics.totalEarnings * 100) < 100
                     }
                   >
                     Solicitar Saque
@@ -983,14 +1014,16 @@ const Dashboard: React.FC = () => {
             </div>
 
             <div className="payout-modal-content">
-              {walletBalance && (
-                <p className="payout-available-balance">
-                  Saldo disponível:{" "}
-                  <strong>
-                    {formatCurrency(walletBalance.available_cents)}
-                  </strong>
-                </p>
-              )}
+              <p className="payout-available-balance">
+                Saldo disponível:{" "}
+                <strong>
+                  {formatCurrency(
+                    walletBalance?.available_cents > 0
+                      ? walletBalance.available_cents
+                      : metrics.totalEarnings * 100
+                  )}
+                </strong>
+              </p>
 
               <div className="payout-form-group">
                 <label className="payout-form-label">
