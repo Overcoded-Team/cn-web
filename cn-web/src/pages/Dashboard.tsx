@@ -63,13 +63,14 @@ const Dashboard: React.FC = () => {
         let hasMore = true;
 
         while (hasMore) {
-          const requestsData = await serviceRequestService.listChefServiceRequests(
-            page,
-            1000
-          );
+          const requestsData =
+            await serviceRequestService.listChefServiceRequests(page, 1000);
           allRequests = [...allRequests, ...requestsData.items];
-          
-          if (requestsData.items.length < 1000 || allRequests.length >= requestsData.total) {
+
+          if (
+            requestsData.items.length < 1000 ||
+            allRequests.length >= requestsData.total
+          ) {
             hasMore = false;
           } else {
             page++;
@@ -82,7 +83,7 @@ const Dashboard: React.FC = () => {
         if (balanceData) {
           setWalletBalance(balanceData);
         }
-        
+
         const initialCompletedCount = allRequests.filter(
           (sr) => sr.status === ServiceRequestStatus.COMPLETED
         ).length;
@@ -120,7 +121,8 @@ const Dashboard: React.FC = () => {
   const metrics = useMemo(() => {
     const now = new Date();
     const currentYear = now.getFullYear();
-    const chartMonth = selectedChartMonth !== null ? selectedChartMonth : now.getMonth();
+    const chartMonth =
+      selectedChartMonth !== null ? selectedChartMonth : now.getMonth();
     const startOfMonth = new Date(selectedYear, chartMonth, 1);
     const endOfMonth = new Date(selectedYear, chartMonth + 1, 0, 23, 59, 59);
 
@@ -237,7 +239,10 @@ const Dashboard: React.FC = () => {
         "nov",
         "dez",
       ];
-      const chartMonth = selectedChartMonth !== null ? selectedChartMonth : new Date().getMonth();
+      const chartMonth =
+        selectedChartMonth !== null
+          ? selectedChartMonth
+          : new Date().getMonth();
       const startDate = new Date(selectedYear, chartMonth, 1);
       const endDate = new Date(selectedYear, chartMonth + 1, 0);
       return `${startDate.getDate()} de ${
@@ -278,7 +283,14 @@ const Dashboard: React.FC = () => {
       maxMonthlyEarning: maxMonthlyEarning / 100,
       yearTotal: yearRequests.length,
     };
-  }, [serviceRequests, profile, selectedYear, selectedMonth, selectedChartMonth, reviews]);
+  }, [
+    serviceRequests,
+    profile,
+    selectedYear,
+    selectedMonth,
+    selectedChartMonth,
+    reviews,
+  ]);
 
   const handlePreviousYear = () => {
     setSelectedYear(selectedYear - 1);
@@ -535,9 +547,7 @@ const Dashboard: React.FC = () => {
                   >
                     ‹
                   </button>
-                  <h2 className="bar-chart-title">
-                    {selectedYear}
-                  </h2>
+                  <h2 className="bar-chart-title">{selectedYear}</h2>
                   <button className="chart-nav-btn" onClick={handleNextYear}>
                     ›
                   </button>
@@ -575,7 +585,11 @@ const Dashboard: React.FC = () => {
                           className={`bar ${isSelected ? "bar-selected" : ""}`}
                           style={{ height: `${Math.max(height, 5)}%` }}
                         ></div>
-                        <span className={`bar-label ${isSelected ? "bar-label-selected" : ""}`}>
+                        <span
+                          className={`bar-label ${
+                            isSelected ? "bar-label-selected" : ""
+                          }`}
+                        >
                           {mes}
                         </span>
                       </div>
@@ -632,9 +646,12 @@ const Dashboard: React.FC = () => {
                           );
                         }
 
-                        const verde = (totalCompleted / totalRequests) * circumference;
-                        const laranja = (totalPending / totalRequests) * circumference;
-                        const vermelho = (totalCancelled / totalRequests) * circumference;
+                        const verde =
+                          (totalCompleted / totalRequests) * circumference;
+                        const laranja =
+                          (totalPending / totalRequests) * circumference;
+                        const vermelho =
+                          (totalCancelled / totalRequests) * circumference;
 
                         const soma = verde + laranja + vermelho;
                         const diff = circumference - soma;
@@ -653,10 +670,6 @@ const Dashboard: React.FC = () => {
                           }
                         }
 
-                        const offsetVerde = circumference - verdeFinal;
-                        const offsetLaranja = circumference - verdeFinal - laranjaFinal;
-                        const offsetVermelho = circumference - verdeFinal - laranjaFinal - vermelhoFinal;
-
                         return (
                           <svg className="donut-chart" viewBox="0 0 120 120">
                             {verdeFinal > 0.01 && (
@@ -668,7 +681,9 @@ const Dashboard: React.FC = () => {
                                 fill="none"
                                 stroke="#4CAF50"
                                 strokeWidth="20"
-                                strokeDasharray={`${verdeFinal} ${circumference - verdeFinal}`}
+                                strokeDasharray={`${verdeFinal} ${
+                                  circumference - verdeFinal
+                                }`}
                                 strokeDashoffset="0"
                                 transform="rotate(-90 60 60)"
                                 strokeLinecap="butt"
@@ -683,7 +698,9 @@ const Dashboard: React.FC = () => {
                                 fill="none"
                                 stroke="#ff9500"
                                 strokeWidth="20"
-                                strokeDasharray={`${laranjaFinal} ${circumference - laranjaFinal}`}
+                                strokeDasharray={`${laranjaFinal} ${
+                                  circumference - laranjaFinal
+                                }`}
                                 strokeDashoffset={-verdeFinal}
                                 transform="rotate(-90 60 60)"
                                 strokeLinecap="butt"
@@ -698,7 +715,9 @@ const Dashboard: React.FC = () => {
                                 fill="none"
                                 stroke="#F44336"
                                 strokeWidth="20"
-                                strokeDasharray={`${vermelhoFinal} ${circumference - vermelhoFinal}`}
+                                strokeDasharray={`${vermelhoFinal} ${
+                                  circumference - vermelhoFinal
+                                }`}
                                 strokeDashoffset={-(verdeFinal + laranjaFinal)}
                                 transform="rotate(-90 60 60)"
                                 strokeLinecap="butt"
