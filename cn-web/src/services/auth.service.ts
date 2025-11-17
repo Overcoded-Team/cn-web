@@ -68,5 +68,9 @@ export const authService = {
   setUser(user: User): void {
     localStorage.setItem('user', JSON.stringify(user));
   },
+
+  async updateName(name: string): Promise<User> {
+    return api.patch<User>('/user/name', { name });
+  },
 };
 
