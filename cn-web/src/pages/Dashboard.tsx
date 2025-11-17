@@ -357,8 +357,8 @@ const Dashboard: React.FC = () => {
     }
 
     const availableBalance =
-      walletBalance?.available_cents > 0
-        ? walletBalance.available_cents
+      (walletBalance?.available_cents ?? 0) > 0
+        ? (walletBalance?.available_cents ?? 0)
         : metrics.totalEarnings * 100;
 
     if (amountCents > availableBalance) {
@@ -854,8 +854,8 @@ const Dashboard: React.FC = () => {
                       </h3>
                       <p className="wallet-balance-value">
                         {formatCurrency(
-                          walletBalance?.available_cents > 0
-                            ? walletBalance.available_cents
+                          (walletBalance?.available_cents ?? 0) > 0
+                            ? (walletBalance?.available_cents ?? 0)
                             : metrics.totalEarnings * 100
                         )}
                       </p>
@@ -876,8 +876,8 @@ const Dashboard: React.FC = () => {
                     className="request-payout-button"
                     onClick={() => setShowPayoutModal(true)}
                     disabled={
-                      (walletBalance?.available_cents > 0
-                        ? walletBalance.available_cents
+                      ((walletBalance?.available_cents ?? 0) > 0
+                        ? (walletBalance?.available_cents ?? 0)
                         : metrics.totalEarnings * 100) < 100
                     }
                   >
@@ -1018,8 +1018,8 @@ const Dashboard: React.FC = () => {
                 Saldo disponível:{" "}
                 <strong>
                   {formatCurrency(
-                    walletBalance?.available_cents > 0
-                      ? walletBalance.available_cents
+                    (walletBalance?.available_cents ?? 0) > 0
+                      ? (walletBalance?.available_cents ?? 0)
                       : metrics.totalEarnings * 100
                   )}
                 </strong>
