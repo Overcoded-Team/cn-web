@@ -70,6 +70,7 @@ export interface ServiceRequest {
       id: number;
       name: string;
       email: string;
+      profilePictureUrl?: string;
     };
   };
   created_at: Date;

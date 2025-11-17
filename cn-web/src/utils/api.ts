@@ -1,21 +1,19 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "https://api.chefnow.cloud";
 
 export const api = {
   baseURL: API_BASE_URL,
-  
-  async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const token = localStorage.getItem('access_token');
-    
+
+  async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const token = localStorage.getItem("access_token");
+
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...options.headers,
     };
 
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     try {
@@ -25,20 +23,20 @@ export const api = {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ 
-          message: 'Erro na requisição',
-          statusCode: response.status 
+        const errorData = await response.json().catch(() => ({
+          message: "Erro na requisição",
+          statusCode: response.status,
         }));
-        
-        const errorMessage = Array.isArray(errorData.message) 
-          ? errorData.message.join(', ')
+
+        const errorMessage = Array.isArray(errorData.message)
+          ? errorData.message.join(", ")
           : errorData.message || `Erro: ${response.status}`;
-        
+
         throw new Error(errorMessage);
       }
 
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
         return undefined as T;
       }
 
@@ -52,32 +50,35 @@ export const api = {
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('Erro desconhecido na requisição');
+      throw new Error("Erro desconhecido na requisição");
     }
   },
 
   get<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    return this.request<T>(endpoint, { ...options, method: 'GET' });
+    return this.request<T>(endpoint, { ...options, method: "GET" });
   },
 
   post<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
-      method: 'POST',
+      method: "POST",
       body: data ? JSON.stringify(data) : undefined,
     });
   },
 
-  patch<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
+  patch<T>(
+    endpoint: string,
+    data?: unknown,
+    options?: RequestInit
+  ): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
-      method: 'PATCH',
+      method: "PATCH",
       body: data ? JSON.stringify(data) : undefined,
     });
   },
 
   delete<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    return this.request<T>(endpoint, { ...options, method: 'DELETE' });
+    return this.request<T>(endpoint, { ...options, method: "DELETE" });
   },
 };
-

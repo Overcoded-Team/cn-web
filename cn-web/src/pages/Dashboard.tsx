@@ -39,6 +39,7 @@ const Dashboard: React.FC = () => {
   const [walletError, setWalletError] = useState<string>("");
   const [showWalletModal, setShowWalletModal] = useState<boolean>(false);
   const [showPayoutModal, setShowPayoutModal] = useState<boolean>(false);
+  const [showReviewsModal, setShowReviewsModal] = useState<boolean>(false);
   const [payoutForm, setPayoutForm] = useState<RequestPayoutDTO>({
     amount_cents: 0,
     pix_key: "",
@@ -519,6 +520,12 @@ const Dashboard: React.FC = () => {
                 </div>
 
                 <div className="card avaliacao-card">
+                  <button
+                    className="ver-avaliacoes-button"
+                    onClick={() => setShowReviewsModal(true)}
+                  >
+                    Ver Avaliações
+                  </button>
                   <h3 className="card-title-orange">Avaliação Média</h3>
                   <div className="avaliacao-content">
                     <span className="avaliacao-number">
@@ -1093,6 +1100,64 @@ const Dashboard: React.FC = () => {
                   {isRequestingPayout ? "Processando..." : "Solicitar Saque"}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showReviewsModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowReviewsModal(false)}
+        >
+          <div className="wallet-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="wallet-modal-header">
+              <h2 className="wallet-modal-title">Avaliações</h2>
+              <button
+                className="wallet-modal-close"
+                onClick={() => setShowReviewsModal(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="wallet-modal-content">
+              {reviews.length > 0 ? (
+                <div className="reviews-list">
+                  {reviews.map((review) => {
+                    const rating5 = (review.rating / 10) * 5;
+                    return (
+                      <div key={review.id} className="review-item">
+                        <div className="review-header">
+                          <div className="review-rating">
+                            <div className="review-stars">
+                              {renderStars(rating5)}
+                            </div>
+                            <span className="review-rating-value">
+                              {rating5.toFixed(1)}
+                            </span>
+                          </div>
+                          <p className="review-date">
+                            {new Date(review.createdAt).toLocaleDateString(
+                              "pt-BR"
+                            )}
+                          </p>
+                        </div>
+                        {review.client && (
+                          <p className="review-client">
+                            {review.client.name || "Cliente"}
+                          </p>
+                        )}
+                        {review.comment && (
+                          <p className="review-comment">{review.comment}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="wallet-empty">Nenhuma avaliação encontrada.</p>
+              )}
             </div>
           </div>
         </div>

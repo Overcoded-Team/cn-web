@@ -196,7 +196,7 @@ export const chefService = {
 
     const token = localStorage.getItem("access_token");
     const API_BASE_URL =
-      (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:3000";
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
     const response = await fetch(`${API_BASE_URL}/user/profile/picture`, {
       method: "PATCH",
@@ -242,7 +242,7 @@ export const chefService = {
 
     const token = localStorage.getItem("access_token");
     const API_BASE_URL =
-      (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:3000";
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
     const response = await fetch(`${API_BASE_URL}/chefs/my-gallery`, {
       method: "POST",
@@ -297,7 +297,7 @@ export const chefService = {
 
     const token = localStorage.getItem("access_token");
     const API_BASE_URL =
-      (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:3000";
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
     const response = await fetch(`${API_BASE_URL}/chefs/my-menu`, {
       method: "POST",

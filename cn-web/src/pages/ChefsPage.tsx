@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import estrelaInteira from "../assets/estrelainteira.png";
@@ -18,7 +18,7 @@ const ChefsPage: React.FC = () => {
   const [selectedCuisineId, setSelectedCuisineId] = useState<
     number | undefined
   >();
-  const [chefs, setChefs] = useState<Chef[]>([]);
+  const [allChefs, setAllChefs] = useState<Chef[]>([]);
   const [cuisines, setCuisines] = useState<Cuisine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -172,7 +172,31 @@ const ChefsPage: React.FC = () => {
 
   useEffect(() => {
     loadChefs();
-  }, [selectedCuisineId]);
+  }, []);
+
+  const filteredChefs = useMemo(() => {
+    let filtered = allChefs;
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((chef) => {
+        const nameMatch = chef.name.toLowerCase().includes(query);
+        const bioMatch = chef.bio?.toLowerCase().includes(query);
+        const cuisineMatch = chef.cuisines?.some((cuisine) =>
+          cuisine.name?.toLowerCase().includes(query)
+        );
+        return nameMatch || bioMatch || cuisineMatch;
+      });
+    }
+
+    if (selectedCuisineId) {
+      filtered = filtered.filter((chef) =>
+        chef.cuisines?.some((cuisine) => cuisine.id === selectedCuisineId)
+      );
+    }
+
+    return filtered;
+  }, [allChefs, searchQuery, selectedCuisineId]);
 
   const loadCuisines = async () => {
     try {
@@ -188,12 +212,11 @@ const ChefsPage: React.FC = () => {
       const response = await chefService.listChefs({
         page: 1,
         limit: 100,
-        cuisineId: selectedCuisineId,
         available: true,
         sortBy: "avgRating",
         sortDir: "DESC",
       });
-      setChefs(response.items);
+      setAllChefs(response.items);
     } catch (err) {
       setError("Erro ao carregar chefs. Tente novamente mais tarde.");
     } finally {
@@ -243,12 +266,18 @@ const ChefsPage: React.FC = () => {
     <>
       <Header />
       <div className="chefs-page">
-        <section className="chefs-banner">
-          <div className="chefs-banner-content">
-            <h1 className="chefs-banner-title">
-              Encontre o Chef ideal para você
-            </h1>
-            <div className="chefs-search-container">
+        <section className="chefs-header">
+          <div className="chefs-header-content">
+            <div className="chefs-header-top">
+              <h1 className="chefs-header-title">
+                Encontre o Chef ideal para você
+              </h1>
+              <p className="chefs-header-subtitle">
+                Explore nossa seleção de chefs profissionais e encontre o perfeito para seu evento
+              </p>
+            </div>
+            
+            <div className="chefs-search-wrapper">
               <div className="chefs-search-box">
                 <svg
                   className="search-icon"
@@ -272,34 +301,39 @@ const ChefsPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="categories-container">
-              <button
-                className="category-nav-btn category-nav-left"
-                onClick={() => scrollCategories("left")}
-                aria-label="Categorias anteriores"
-              >
-                ‹
-              </button>
-              <div className="categories-scroll" ref={categoriesRef}>
-                {cuisines.map((cuisine) => (
-                  <button
-                    key={cuisine.id}
-                    className={`category-chip ${
-                      selectedCuisineId === cuisine.id ? "active" : ""
-                    }`}
-                    onClick={() => handleCuisineClick(cuisine.id)}
-                  >
-                    <span className="category-name">{cuisine.title}</span>
-                  </button>
-                ))}
+            <div className="categories-wrapper">
+              <div className="categories-header">
+                <h2 className="categories-title">Categorias</h2>
               </div>
-              <button
-                className="category-nav-btn category-nav-right"
-                onClick={() => scrollCategories("right")}
-                aria-label="Próximas categorias"
-              >
-                ›
-              </button>
+              <div className="categories-container">
+                <button
+                  className="category-nav-btn category-nav-left"
+                  onClick={() => scrollCategories("left")}
+                  aria-label="Categorias anteriores"
+                >
+                  ‹
+                </button>
+                <div className="categories-scroll" ref={categoriesRef}>
+                  {cuisines.map((cuisine) => (
+                    <button
+                      key={cuisine.id}
+                      className={`category-chip ${
+                        selectedCuisineId === cuisine.id ? "active" : ""
+                      }`}
+                      onClick={() => handleCuisineClick(cuisine.id)}
+                    >
+                      <span className="category-name">{cuisine.title}</span>
+                    </button>
+                  ))}
+                </div>
+                <button
+                  className="category-nav-btn category-nav-right"
+                  onClick={() => scrollCategories("right")}
+                  aria-label="Próximas categorias"
+                >
+                  ›
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -315,13 +349,17 @@ const ChefsPage: React.FC = () => {
             >
               <p>{error}</p>
             </div>
-          ) : chefs.length === 0 ? (
+          ) : filteredChefs.length === 0 ? (
             <div style={{ textAlign: "center", padding: "2rem" }}>
-              <p>Nenhum chef encontrado.</p>
+              <p>
+                {searchQuery.trim() || selectedCuisineId
+                  ? "Nenhum chef encontrado com os filtros aplicados."
+                  : "Nenhum chef encontrado."}
+              </p>
             </div>
           ) : (
             <div className="chefs-grid-container">
-              {chefs.map((chef) => {
+              {filteredChefs.map((chef) => {
                 const imageSrc =
                   chef.profilePictureUrl && !imageErrors[chef.id]
                     ? chef.profilePictureUrl
