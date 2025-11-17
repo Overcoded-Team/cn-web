@@ -198,8 +198,9 @@
   max-width: 1200px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 400px));
   gap: 2rem;
+  justify-content: start;
 }
 
 .chef-card {
@@ -209,6 +210,7 @@
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   cursor: pointer;
+  width: 100%;
 }
 
 .chef-card:hover {
@@ -340,7 +342,7 @@
   }
 
   .chefs-grid-container {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 380px));
   }
 }
 

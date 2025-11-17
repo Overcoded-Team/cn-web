@@ -251,9 +251,11 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-content">
-          <div className="logo-container">
-            <img src={logoIcon} alt="ChefNow Logo" className="logo-image" />
-          </div>
+          {currentStep === 1 && (
+            <div className="logo-container">
+              <img src={logoIcon} alt="ChefNow Logo" className="logo-image" />
+            </div>
+          )}
 
           <h2 className="modal-title">
             {currentStep === 1 ? "Faça seu cadastro" : "Complete seu perfil"}
