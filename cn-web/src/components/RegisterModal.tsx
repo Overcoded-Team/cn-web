@@ -213,6 +213,10 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
         }
       }
 
+      const updatedUserData = await authService.getProfile();
+      authService.setUser(updatedUserData);
+      await checkAuth();
+
       onClose();
       navigate("/dashboard");
     } catch (err) {
