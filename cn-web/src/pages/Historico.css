@@ -225,7 +225,7 @@
 .entry-content {
   display: flex;
   gap: 1rem;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .entry-avatar-container {
