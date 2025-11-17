@@ -21,6 +21,7 @@ type Appointment = {
   expectedDurationMinutes?: number;
   priceBRL: number;
   observation?: string;
+  description?: string;
   serviceRequestId: number;
 };
 
@@ -105,6 +106,7 @@ const AppointmentsPage: React.FC = () => {
               expectedDurationMinutes: req.expected_duration_minutes,
               priceBRL,
               observation: req.quote?.notes,
+              description: req.description,
             };
           }
         );
@@ -316,6 +318,7 @@ const AppointmentsPage: React.FC = () => {
             expectedDurationMinutes: req.expected_duration_minutes,
             priceBRL,
             observation: req.quote?.notes,
+            description: req.description,
           };
         }
       );
@@ -612,10 +615,21 @@ const AppointmentsPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {selectedAppointment.observation ? (
+                    {(selectedAppointment.description ||
+                      selectedAppointment.observation) ? (
                       <div className="appointment-observation">
-                        <strong>Observações:</strong>
-                        <p>{selectedAppointment.observation}</p>
+                        {selectedAppointment.description && (
+                          <div style={{ marginBottom: selectedAppointment.observation ? "16px" : "0" }}>
+                            <strong>Descrição do Cliente:</strong>
+                            <p>{selectedAppointment.description}</p>
+                          </div>
+                        )}
+                        {selectedAppointment.observation && (
+                          <div>
+                            <strong>Observações do Chef:</strong>
+                            <p>{selectedAppointment.observation}</p>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="appointment-observation-empty">
