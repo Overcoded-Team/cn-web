@@ -1,0 +1,50 @@
+name: Deploy cn-web to EC2
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: cn-web/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd cn-web
+          npm ci
+
+      - name: Create .env file for Vite
+        run: |
+          cd cn-web
+          echo "VITE_API_BASE_URL=${VITE_API_BASE_URL}" > .env
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+
+      - name: Build frontend
+        run: |
+          cd cn-web
+          npm run build
+
+      - name: Deploy dist to EC2 via SCP
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          port: ${{ secrets.EC2_PORT }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+
+          source: "cn-web/dist/*"
+          strip_components: 2
+          target: "/opt/cn-web"

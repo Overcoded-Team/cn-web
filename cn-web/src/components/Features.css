@@ -1,0 +1,106 @@
+.features {
+  padding: 4rem 2rem;
+  background: #f8f9fa;
+}
+
+.features-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.feature-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.feature-icon {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 1rem;
+  background: #f0f0f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.feature-icon.calendar {
+  background: none;
+  border-radius: 0;
+}
+
+.feature-icon.calendar img {
+  width: 60px;
+  height: 60px;
+}
+
+.feature-icon.payment {
+  background: none;
+  border-radius: 0;
+}
+
+.feature-icon.payment img {
+  width: 60px;
+  height: 60px;
+}
+
+.feature-icon.chef-icon {
+  background: none;
+  border-radius: 0;
+}
+
+.feature-icon.chef-icon img {
+  width: 70px;
+}
+
+.feature-card h3 {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.feature-card ul {
+  list-style: none;
+  margin-bottom: 1rem;
+}
+
+.feature-card li {
+  margin-bottom: 0.5rem;
+  color: #666;
+}
+
+.feature-card .highlight {
+  color: #ff6b35;
+  font-weight: 600;
+}
+
+@media (max-width: 1024px) {
+  .features-container {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .features {
+    padding: 3rem 1.5rem;
+  }
+
+  .features-container {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .features {
+    padding: 3rem 1rem;
+  }
+}
+

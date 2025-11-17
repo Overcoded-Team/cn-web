@@ -1,0 +1,484 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: flex-end;
+  align-items: stretch;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-container {
+  background: rgba(63, 63, 63, 0.267);
+  backdrop-filter: blur(40%);
+  -webkit-backdrop-filter: blur(90px);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 30px;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.3);
+  animation: slideInFromRight 0.4s ease-out;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.login-modal {
+  width: 30%;
+  min-width: 400px;
+  max-width: 500px;
+}
+
+.register-modal {
+  width: 45%;
+  min-width: 500px;
+  max-width: 700px;
+}
+
+.modal-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.logo-image {
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.modal-title {
+  color: white;
+  font-size: 1.8rem;
+  font-weight: 600;
+  text-align: center;
+  margin: 0;
+  font-family: "Krub", sans-serif;
+}
+
+.error-message {
+  color: #f44336;
+  margin-bottom: 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+  width: 100%;
+}
+
+.form-row .input-group {
+  flex: 1;
+}
+
+.input-group {
+  width: 100%;
+}
+
+.form-input {
+  width: 100%;
+  padding: 15px 20px;
+  border: none;
+  border-radius: 12px;
+  background-color: rgba(179, 179, 179, 0.8);
+  color: white;
+  font-size: 1rem;
+  font-family: "Krub", sans-serif;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.form-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.form-input:focus {
+  outline: none;
+  background-color: rgba(80, 80, 80, 0.9);
+  box-shadow: 0 0 0 2px rgba(255, 140, 0);
+}
+
+.login-button {
+  width: 100%;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #ff8c00, #ff6b00);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  font-family: "Krub", sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.login-button:hover {
+  background: linear-gradient(135deg, #ff6b00, #ff8c00);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
+}
+
+.login-button:active {
+  transform: translateY(0);
+}
+
+.forgot-password {
+  background: none;
+  border: none;
+  color: white;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-family: "Krub", sans-serif;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+  padding: 0;
+}
+
+.register-link {
+  background: none;
+  border: none;
+  color: #ff6b35;
+  text-decoration: none;
+  font-size: 1rem;
+  font-family: "Krub", sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 5px;
+}
+
+.login-text-link {
+  background: none;
+  border: none;
+  color: white;
+  text-decoration: none;
+  font-size: 1rem;
+  font-family: "Krub", sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.login-text-link:hover {
+  color: #ff6b35;
+  text-decoration: underline;
+}
+
+.step-indicator {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.step-number {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  font-family: "Krub", sans-serif;
+}
+
+.step-description {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  margin: 5px 0 0 0;
+  font-family: "Krub", sans-serif;
+}
+
+.form-label {
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 10px;
+  display: block;
+  font-family: "Krub", sans-serif;
+}
+
+.required-field {
+  color: #ff6b35;
+  font-weight: 600;
+}
+
+.upload-picture-button .required-field {
+  color: white;
+  font-weight: 700;
+}
+
+.profile-picture-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.profile-picture-preview {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  background-color: rgba(179, 179, 179, 0.3);
+}
+
+.profile-preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.upload-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.upload-spinner {
+  color: white;
+  font-size: 1.5rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.upload-picture-button {
+  padding: 10px 20px;
+  background-color: rgba(255, 140, 0, 0.8);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-family: "Krub", sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.upload-picture-button:hover:not(:disabled) {
+  background-color: rgba(255, 140, 0, 1);
+  transform: translateY(-2px);
+}
+
+.upload-picture-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cuisines-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 10px;
+  background-color: rgba(179, 179, 179, 0.2);
+  border-radius: 12px;
+}
+
+.cuisine-chip {
+  padding: 8px 16px;
+  background-color: rgba(179, 179, 179, 0.6);
+  color: white;
+  border: 2px solid transparent;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-family: "Krub", sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cuisine-chip:hover:not(:disabled) {
+  background-color: rgba(255, 140, 0, 0.6);
+  transform: translateY(-2px);
+}
+
+.cuisine-chip.selected {
+  background-color: rgba(255, 140, 0, 0.9);
+  border-color: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+}
+
+.cuisine-chip:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.step2-buttons {
+  display: flex;
+  gap: 15px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.step2-buttons .login-button {
+  flex: 1;
+  margin-top: 0;
+}
+
+.skip-button {
+  flex: 1;
+  padding: 15px 20px;
+  background-color: transparent;
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  font-family: "Krub", sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.skip-button:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+.skip-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .modal-overlay {
+    justify-content: flex-end;
+  }
+
+  .login-modal {
+    width: 50%;
+    min-width: 350px;
+    max-width: 450px;
+  }
+
+  .register-modal {
+    width: 70%;
+    min-width: 400px;
+    max-width: 550px;
+  }
+
+  .modal-container {
+    height: 100vh;
+    padding: 30px 20px;
+    margin-left: auto;
+    margin-right: 0;
+  }
+
+  .modal-title {
+    font-size: 1.5rem;
+  }
+
+  .logo-image {
+    width: 70px;
+    height: 70px;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .step2-buttons {
+    flex-direction: column;
+  }
+
+  .cuisines-grid {
+    max-height: 150px;
+  }
+
+  .profile-picture-preview {
+    width: 120px;
+    height: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-overlay {
+    justify-content: flex-end;
+  }
+
+  .login-modal,
+  .register-modal {
+    width: 100%;
+    height: 100vh;
+    padding: 25px 15px;
+    max-width: 100%;
+  }
+
+  .modal-container {
+    margin-left: auto;
+    margin-right: 0;
+  }
+
+  .modal-content {
+    gap: 25px;
+  }
+
+  .logo-image {
+    width: 60px;
+    height: 60px;
+  }
+
+  .form-input {
+    padding: 12px 15px;
+  }
+
+  .login-button {
+    padding: 12px 15px;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
