@@ -35,6 +35,7 @@ const AppointmentsPage: React.FC = () => {
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [pendingRequests, setPendingRequests] = useState<ServiceRequest[]>([]);
+  const [pendingClientApproval, setPendingClientApproval] = useState<ServiceRequest[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [modalError, setModalError] = useState<string>("");
@@ -95,6 +96,12 @@ const AppointmentsPage: React.FC = () => {
             req.status === ServiceRequestStatus.PENDING_CHEF_REVIEW
         );
         setPendingRequests(pending);
+
+        const pendingApproval = allRequests.filter(
+          (req: ServiceRequest) =>
+            req.status === ServiceRequestStatus.QUOTE_SENT
+        );
+        setPendingClientApproval(pendingApproval);
 
         const mappedAppointments: Appointment[] = filteredRequests.map(
           (req: ServiceRequest) => {
@@ -308,6 +315,12 @@ const AppointmentsPage: React.FC = () => {
       );
       setPendingRequests(pending);
 
+      const pendingApproval = allRequests.filter(
+        (req: ServiceRequest) =>
+          req.status === ServiceRequestStatus.QUOTE_SENT
+      );
+      setPendingClientApproval(pendingApproval);
+
       const mappedAppointments: Appointment[] = filteredRequests.map(
         (req: ServiceRequest) => {
           const requestedDate = new Date(req.requested_date);
@@ -369,11 +382,18 @@ const AppointmentsPage: React.FC = () => {
         1000
       );
 
-      const pending = response.items.filter(
+      const allRequests = response.items || [];
+      const pending = allRequests.filter(
         (req: ServiceRequest) =>
           req.status === ServiceRequestStatus.PENDING_CHEF_REVIEW
       );
       setPendingRequests(pending);
+
+      const pendingApproval = allRequests.filter(
+        (req: ServiceRequest) =>
+          req.status === ServiceRequestStatus.QUOTE_SENT
+      );
+      setPendingClientApproval(pendingApproval);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao rejeitar pedido");
     } finally {
@@ -444,6 +464,65 @@ const AppointmentsPage: React.FC = () => {
                             >
                               Rejeitar
                             </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {pendingClientApproval.length > 0 && (
+                <div className="pending-section">
+                  <h2 className="section-title-orange">Aguardando Cliente</h2>
+                  <div className="pending-requests-list">
+                    {pendingClientApproval.map((req) => {
+                      const requestedDate = new Date(req.requested_date);
+                      const clientName =
+                        req.client_profile?.user?.name || "Cliente";
+                      const clientProfilePicture =
+                        req.client_profile?.user?.profilePictureUrl;
+                      const priceCents = req.quote?.amount_cents || 0;
+                      const priceBRL = priceCents / 100;
+
+                      return (
+                        <div key={req.id} className="pending-request-card">
+                          <div className="pending-card-left">
+                            {clientProfilePicture ? (
+                              <img
+                                src={clientProfilePicture}
+                                alt={clientName}
+                                className="pending-client-avatar"
+                              />
+                            ) : (
+                              <div className="pending-client-avatar-placeholder">
+                                {clientName.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <div className="pending-info">
+                              <div className="pending-code">#{req.id}</div>
+                              <div className="pending-client">{clientName}</div>
+                              <div className="pending-service-type">
+                                {req.service_type}
+                              </div>
+                              <div className="pending-date">
+                                {formatDateTimeBR(requestedDate)}
+                              </div>
+                              <div className="pending-address">
+                                {req.location}
+                              </div>
+                              {priceBRL > 0 && (
+                                <div className="pending-price">
+                                  Valor: R${" "}
+                                  {priceBRL.toFixed(2).replace(".", ",")}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="pending-card-status">
+                            <div className="status-badge waiting">
+                              Aguardando aprovação
+                            </div>
                           </div>
                         </div>
                       );
