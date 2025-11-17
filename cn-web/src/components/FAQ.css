@@ -44,6 +44,10 @@
   min-width: 300px;
 }
 
+.faq-carousel-container .feature-card .highlight {
+  margin-top: 1rem;
+}
+
 .carousel-nav-button {
   position: absolute;
   top: 50%;
@@ -149,4 +153,3 @@
     right: 10px;
   }
 }
-
