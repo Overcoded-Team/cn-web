@@ -27,23 +27,35 @@ export const useChatSocket = ({
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const socketRef = useRef<Socket | null>(null);
+  const onErrorRef = useRef(onError);
+  
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
 
   const connect = useCallback(() => {
-    if (!enabled || !serviceRequestId || socketRef.current?.connected) {
+    if (!enabled || !serviceRequestId) {
       return;
+    }
+
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
     }
 
     const token = localStorage.getItem('access_token');
     if (!token) {
-      onError?.('Token de autenticação não encontrado');
+      onErrorRef.current?.('Token de autenticação não encontrado');
       return;
     }
 
-    const socketUrl = api.baseURL.replace(/^https?:\/\//, '').split('/')[0];
-    const protocol = api.baseURL.startsWith('https') ? 'wss' : 'ws';
-    const wsUrl = `${protocol}://${socketUrl}`;
-
-    const socket = io(`${wsUrl}/service-requests-chat`, {
+    const baseUrl = api.baseURL.replace(/\/$/, '');
+    const socketUrl = `${baseUrl}/service-requests-chat`;
+    
+    console.log('Connecting to WebSocket:', socketUrl);
+    console.log('Token exists:', !!token);
+    
+    const socket = io(socketUrl, {
       auth: {
         token: token,
       },
@@ -57,24 +69,28 @@ export const useChatSocket = ({
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      timeout: 20000,
     });
 
     socket.on('connect', () => {
       setIsConnected(true);
       setIsLoading(true);
       
-      // Join the room
       socket.emit('join', { serviceRequestId });
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
       setIsConnected(false);
+      setIsLoading(false);
     });
 
     socket.on('connect_error', (error) => {
       console.error('Socket connection error:', error);
       setIsConnected(false);
-      onError?.('Erro ao conectar ao chat');
+      setIsLoading(false);
+      const errorMessage = error.message || 'Erro ao conectar ao chat';
+      onErrorRef.current?.(errorMessage);
     });
 
     socket.on('chat_history', (history: ChatMessage[]) => {
@@ -84,7 +100,6 @@ export const useChatSocket = ({
 
     socket.on('message', (message: ChatMessage) => {
       setMessages((prev) => {
-        // Avoid duplicates
         if (prev.some((m) => m.id === message.id)) {
           return prev;
         }
@@ -93,11 +108,11 @@ export const useChatSocket = ({
     });
 
     socket.on('error', (error: { message: string }) => {
-      onError?.(error.message || 'Erro no chat');
+      onErrorRef.current?.(error.message || 'Erro no chat');
     });
 
     socketRef.current = socket;
-  }, [enabled, serviceRequestId, onError]);
+  }, [enabled, serviceRequestId]);
 
   const disconnect = useCallback(() => {
     if (socketRef.current) {
@@ -111,18 +126,18 @@ export const useChatSocket = ({
   const sendMessage = useCallback(
     (content: string) => {
       if (!socketRef.current?.connected || !serviceRequestId) {
-        onError?.('Não conectado ao chat');
+        onErrorRef.current?.('Não conectado ao chat');
         return;
       }
 
       const trimmedContent = content.trim();
       if (!trimmedContent) {
-        onError?.('Mensagem não pode estar vazia');
+        onErrorRef.current?.('Mensagem não pode estar vazia');
         return;
       }
 
       if (trimmedContent.length > 1000) {
-        onError?.('Mensagem excede o limite de 1000 caracteres');
+        onErrorRef.current?.('Mensagem excede o limite de 1000 caracteres');
         return;
       }
 
@@ -131,7 +146,7 @@ export const useChatSocket = ({
         content: trimmedContent,
       });
     },
-    [serviceRequestId, onError]
+    [serviceRequestId]
   );
 
   useEffect(() => {
@@ -144,7 +159,7 @@ export const useChatSocket = ({
     return () => {
       disconnect();
     };
-  }, [enabled, serviceRequestId, connect, disconnect]);
+  }, [enabled, serviceRequestId]);
 
   return {
     messages,
