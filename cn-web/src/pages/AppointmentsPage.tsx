@@ -5,11 +5,17 @@ import "./AppointmentsPage.css";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { ChatWindow } from "../components/ChatWindow";
 import { useAuth } from "../contexts/AuthContext";
+import chatIcon from "../assets/chat.svg";
 import {
   serviceRequestService,
   ServiceRequest,
   ServiceRequestStatus,
 } from "../services/serviceRequest.service";
+import {
+  isChatEnabled,
+  isChatReadOnly,
+  getChatStatusMessage,
+} from "../utils/chatUtils";
 
 type Appointment = {
   id: string;
@@ -25,6 +31,7 @@ type Appointment = {
   observation?: string;
   description?: string;
   serviceRequestId: number;
+  status: ServiceRequestStatus;
 };
 
 const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -53,14 +60,13 @@ const AppointmentsPage: React.FC = () => {
   const [showChatModal, setShowChatModal] = useState<boolean>(false);
   const { user } = useAuth();
 
-  // Função para calcular o valor com taxas (15% + R$ 0,80)
   const calculateValueWithFees = (value: string): string => {
     if (!value || value.trim() === "") return "0,00";
     const numericValue = parseFloat(value.replace(",", "."));
     if (isNaN(numericValue) || numericValue <= 0) return "0,00";
     
-    const feePercentage = 0.15; // 15%
-    const fixedFee = 0.80; // R$ 0,80
+    const feePercentage = 0.15;
+    const fixedFee = 0.80;
     const totalWithFees = numericValue + (numericValue * feePercentage) + fixedFee;
     
     return totalWithFees.toFixed(2).replace(".", ",");
@@ -131,6 +137,7 @@ const AppointmentsPage: React.FC = () => {
               priceBRL,
               observation: req.quote?.notes,
               description: req.description,
+              status: req.status,
             };
           }
         );
@@ -349,6 +356,7 @@ const AppointmentsPage: React.FC = () => {
             priceBRL,
             observation: req.quote?.notes,
             description: req.description,
+            status: req.status,
           };
         }
       );
@@ -734,12 +742,41 @@ const AppointmentsPage: React.FC = () => {
                     )}
 
                     <div className="appointment-actions">
-                      <button
-                        className="chat-button"
-                        onClick={() => setShowChatModal(true)}
-                      >
-                        💬 Abrir Chat
-                      </button>
+                      {(() => {
+                        const chatEnabled = isChatEnabled(selectedAppointment.status);
+                        const chatReadOnly = isChatReadOnly(selectedAppointment.status);
+                        const statusMessage = getChatStatusMessage(selectedAppointment.status);
+
+                        if (!chatEnabled) {
+                          return (
+                            <div className="chat-unavailable">
+                              <div className="chat-unavailable-icon">🔒</div>
+                              <div className="chat-unavailable-text">
+                                <strong>Chat Indisponível</strong>
+                                {statusMessage && <p>{statusMessage}</p>}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <>
+                            {statusMessage && (
+                              <div className="chat-info-message">
+                                <span className="chat-info-icon">ℹ️</span>
+                                <span>{statusMessage}</span>
+                              </div>
+                            )}
+                            <button
+                              className={`chat-button ${chatReadOnly ? "chat-readonly" : ""}`}
+                              onClick={() => setShowChatModal(true)}
+                            >
+                              <img src={chatIcon} alt="Chat" className="chat-icon" />
+                              {chatReadOnly ? "Ver Chat (Somente Leitura)" : "Abrir Chat"}
+                            </button>
+                          </>
+                        );
+                      })()}
                     </div>
                   </>
                 ) : (
@@ -890,6 +927,7 @@ const AppointmentsPage: React.FC = () => {
               serviceRequestId={selectedAppointment.serviceRequestId}
               currentUserId={user?.id}
               currentUserRole="CHEF"
+              status={selectedAppointment.status}
               onClose={() => setShowChatModal(false)}
             />
           </div>

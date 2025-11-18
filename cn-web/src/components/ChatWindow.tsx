@@ -1,11 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useChatSocket, ChatMessage } from '../hooks/useChatSocket';
+import { ServiceRequestStatus } from '../services/serviceRequest.service';
+import { isChatReadOnly } from '../utils/chatUtils';
 import './ChatWindow.css';
 
 interface ChatWindowProps {
   serviceRequestId: number;
   currentUserId?: number;
   currentUserRole?: 'CLIENT' | 'CHEF';
+  status: ServiceRequestStatus;
   onClose?: () => void;
 }
 
@@ -13,12 +16,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   serviceRequestId,
   currentUserId,
   currentUserRole,
+  status,
   onClose,
 }) => {
   const [messageInput, setMessageInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  const isReadOnly = isChatReadOnly(status);
 
   const { messages, isConnected, isLoading, sendMessage } = useChatSocket({
     serviceRequestId,
@@ -36,7 +42,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageInput.trim() || !isConnected) return;
+    if (!messageInput.trim() || !isConnected || isReadOnly) return;
 
     setError(null);
     sendMessage(messageInput);
@@ -79,6 +85,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         <div className="chat-header-content">
           <h3 className="chat-title">Chat do Pedido #{serviceRequestId}</h3>
           <div className="chat-status">
+            {isReadOnly && (
+              <span className="chat-readonly-badge">Somente Leitura</span>
+            )}
             <span
               className={`status-indicator ${isConnected ? 'connected' : 'disconnected'}`}
             />
@@ -125,30 +134,47 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
       {error && (
         <div className="chat-error">
-          {error}
+          <div className="chat-error-content">
+            <strong>Erro:</strong> {error}
+            {!isConnected && (
+              <div className="chat-error-hint">
+                Verifique sua conexão com a internet e tente novamente.
+              </div>
+            )}
+          </div>
           <button onClick={() => setError(null)}>×</button>
         </div>
       )}
 
-      <form className="chat-input-form" onSubmit={handleSendMessage}>
-        <input
-          type="text"
-          className="chat-input"
-          value={messageInput}
-          onChange={(e) => setMessageInput(e.target.value)}
-          placeholder={isConnected ? 'Digite sua mensagem...' : 'Conectando...'}
-          disabled={!isConnected}
-          maxLength={1000}
-        />
-        <button
-          type="submit"
-          className="chat-send-button"
-          disabled={!isConnected || !messageInput.trim()}
-        >
-          Enviar
-        </button>
-      </form>
+      {isReadOnly ? (
+        <div className="chat-readonly-notice">
+          <span className="chat-readonly-icon">🔒</span>
+          <span className="chat-readonly-text">
+            Este chat está em modo somente leitura. Você pode visualizar as mensagens, mas não pode enviar novas.
+          </span>
+        </div>
+      ) : (
+        <form className="chat-input-form" onSubmit={handleSendMessage}>
+          <input
+            type="text"
+            className="chat-input"
+            value={messageInput}
+            onChange={(e) => setMessageInput(e.target.value)}
+            placeholder={isConnected ? 'Digite sua mensagem...' : 'Conectando...'}
+            disabled={!isConnected}
+            maxLength={1000}
+          />
+          <button
+            type="submit"
+            className="chat-send-button"
+            disabled={!isConnected || !messageInput.trim()}
+          >
+            Enviar
+          </button>
+        </form>
+      )}
     </div>
   );
 };
+
 
