@@ -1,6 +1,7 @@
 import { ServiceRequestStatus } from '../services/serviceRequest.service';
 
 const CHAT_ENABLED_STATUSES: ServiceRequestStatus[] = [
+  ServiceRequestStatus.PENDING_CHEF_REVIEW,
   ServiceRequestStatus.ACCEPTED_BY_CHEF,
   ServiceRequestStatus.QUOTE_SENT,
   ServiceRequestStatus.QUOTE_ACCEPTED,

@@ -307,6 +307,7 @@
 	align-items: center;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 	border: 2px solid #fff3e0;
+	position: relative;
 }
 
 .pending-card-left {
@@ -395,6 +396,32 @@
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
+}
+
+.pending-chat-fab {
+	position: absolute;
+	right: 12px;
+	bottom: 12px;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	border: none;
+	background: #ff6b35;
+	box-shadow: 0 4px 10px rgba(255, 107, 53, 0.35);
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.pending-chat-fab:hover {
+	background: #e55a2b;
+}
+
+.pending-chat-fab .chat-icon {
+	width: 18px;
+	height: 18px;
+	filter: brightness(0) invert(1);
 }
 
 .status-badge {
@@ -850,6 +877,11 @@
 
 	.pending-card-actions {
 		width: 100%;
+	}
+
+	.pending-chat-fab {
+		right: 12px;
+		bottom: 12px;
 	}
 
 	.accept-button,

@@ -58,6 +58,10 @@ const AppointmentsPage: React.FC = () => {
   const [quoteNotes, setQuoteNotes] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [showChatModal, setShowChatModal] = useState<boolean>(false);
+  const [chatContext, setChatContext] = useState<{
+    serviceRequestId: number;
+    status: ServiceRequestStatus;
+  } | null>(null);
   const { user } = useAuth();
 
   const calculateValueWithFees = (value: string): string => {
@@ -477,6 +481,19 @@ const AppointmentsPage: React.FC = () => {
                               Rejeitar
                             </button>
                           </div>
+                          <button
+                            className="pending-chat-fab"
+                            aria-label="Abrir chat"
+                            onClick={() => {
+                              setChatContext({
+                                serviceRequestId: req.id,
+                                status: req.status,
+                              });
+                              setShowChatModal(true);
+                            }}
+                          >
+                            <img src={chatIcon} alt="" className="chat-icon" />
+                          </button>
                         </div>
                       );
                     })}
@@ -536,6 +553,19 @@ const AppointmentsPage: React.FC = () => {
                               Aguardando aprovação
                             </div>
                           </div>
+                          <button
+                            className="pending-chat-fab"
+                            aria-label="Abrir chat"
+                            onClick={() => {
+                              setChatContext({
+                                serviceRequestId: req.id,
+                                status: req.status,
+                              });
+                              setShowChatModal(true);
+                            }}
+                          >
+                            <img src={chatIcon} alt="" className="chat-icon" />
+                          </button>
                         </div>
                       );
                     })}
@@ -769,7 +799,15 @@ const AppointmentsPage: React.FC = () => {
                             )}
                             <button
                               className={`chat-button ${chatReadOnly ? "chat-readonly" : ""}`}
-                              onClick={() => setShowChatModal(true)}
+                              onClick={() => {
+                                if (selectedAppointment) {
+                                  setChatContext({
+                                    serviceRequestId: selectedAppointment.serviceRequestId,
+                                    status: selectedAppointment.status,
+                                  });
+                                  setShowChatModal(true);
+                                }
+                              }}
                             >
                               <img src={chatIcon} alt="Chat" className="chat-icon" />
                               {chatReadOnly ? "Ver Chat (Somente Leitura)" : "Abrir Chat"}
@@ -920,14 +958,14 @@ const AppointmentsPage: React.FC = () => {
         </div>
       )}
 
-      {showChatModal && selectedAppointment && (
+      {showChatModal && chatContext && (
         <div className="modal-overlay" onClick={() => setShowChatModal(false)}>
           <div className="chat-modal" onClick={(e) => e.stopPropagation()}>
             <ChatWindow
-              serviceRequestId={selectedAppointment.serviceRequestId}
+              serviceRequestId={chatContext.serviceRequestId}
               currentUserId={user?.id}
               currentUserRole="CHEF"
-              status={selectedAppointment.status}
+              status={chatContext.status}
               onClose={() => setShowChatModal(false)}
             />
           </div>
