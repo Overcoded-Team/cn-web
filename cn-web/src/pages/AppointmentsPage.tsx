@@ -3,6 +3,8 @@ import "../App.css";
 import "./Dashboard.css";
 import "./AppointmentsPage.css";
 import { DashboardSidebar } from "../components/DashboardSidebar";
+import { ChatWindow } from "../components/ChatWindow";
+import { useAuth } from "../contexts/AuthContext";
 import {
   serviceRequestService,
   ServiceRequest,
@@ -48,6 +50,8 @@ const AppointmentsPage: React.FC = () => {
   const [quoteAmount, setQuoteAmount] = useState<string>("");
   const [quoteNotes, setQuoteNotes] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [showChatModal, setShowChatModal] = useState<boolean>(false);
+  const { user } = useAuth();
 
   // Função para calcular o valor com taxas (15% + R$ 0,80)
   const calculateValueWithFees = (value: string): string => {
@@ -728,6 +732,15 @@ const AppointmentsPage: React.FC = () => {
                         <p>Nenhuma observação disponível.</p>
                       </div>
                     )}
+
+                    <div className="appointment-actions">
+                      <button
+                        className="chat-button"
+                        onClick={() => setShowChatModal(true)}
+                      >
+                        💬 Abrir Chat
+                      </button>
+                    </div>
                   </>
                 ) : (
                   <>
@@ -866,6 +879,19 @@ const AppointmentsPage: React.FC = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showChatModal && selectedAppointment && (
+        <div className="modal-overlay" onClick={() => setShowChatModal(false)}>
+          <div className="chat-modal" onClick={(e) => e.stopPropagation()}>
+            <ChatWindow
+              serviceRequestId={selectedAppointment.serviceRequestId}
+              currentUserId={user?.id}
+              currentUserRole="CHEF"
+              onClose={() => setShowChatModal(false)}
+            />
           </div>
         </div>
       )}
