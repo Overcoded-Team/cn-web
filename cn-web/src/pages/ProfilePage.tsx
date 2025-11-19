@@ -447,12 +447,22 @@ const ProfilePage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validação por tipo MIME e extensão do arquivo
     const validTypes = [
       "application/pdf",
       "application/msword",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ];
-    if (!validTypes.includes(file.type)) {
+    
+    const validExtensions = [".pdf", ".doc", ".docx"];
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf("."));
+    
+    // Verifica se o tipo MIME é válido OU se a extensão é válida
+    // Isso resolve o problema de alguns navegadores não detectarem corretamente o tipo MIME de PDFs
+    const isValidType = validTypes.includes(file.type);
+    const isValidExtension = validExtensions.includes(fileExtension);
+    
+    if (!isValidType && !isValidExtension) {
       setError("Formato de arquivo inválido. Use PDF ou DOCX.");
       return;
     }
@@ -463,17 +473,42 @@ const ProfilePage: React.FC = () => {
       return;
     }
 
+    // Verifica se o arquivo está vazio
+    if (file.size === 0) {
+      setError("O arquivo está vazio. Por favor, selecione um arquivo válido.");
+      return;
+    }
+
     try {
       setIsUploadingMenu(true);
       setError("");
+      
+      console.log("Iniciando upload do cardápio:", {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        fileSizeMB: (file.size / (1024 * 1024)).toFixed(2),
+      });
+      
       await chefService.uploadMenu(file);
 
       const updatedProfile = await chefService.getMyProfile();
       setProfile(updatedProfile as ChefProfileResponse);
+      
+      console.log("Upload do cardápio concluído com sucesso");
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erro ao fazer upload do cardápio"
-      );
+      console.error("Erro no upload do cardápio:", err);
+      const errorMessage = err instanceof Error ? err.message : "Erro ao fazer upload do cardápio";
+      setError(errorMessage);
+      
+      // Log adicional para debug
+      if (err instanceof Error) {
+        console.error("Detalhes do erro:", {
+          name: err.name,
+          message: err.message,
+          stack: err.stack,
+        });
+      }
     } finally {
       setIsUploadingMenu(false);
       if (menuFileInputRef.current) {

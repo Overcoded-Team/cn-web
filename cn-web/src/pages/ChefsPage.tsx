@@ -18,6 +18,7 @@ const ChefsPage: React.FC = () => {
   const [selectedCuisineId, setSelectedCuisineId] = useState<
     number | undefined
   >();
+  const [isCuisineManuallySelected, setIsCuisineManuallySelected] = useState(false);
   const [allChefs, setAllChefs] = useState<Chef[]>([]);
   const [cuisines, setCuisines] = useState<Cuisine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -258,6 +259,39 @@ const ChefsPage: React.FC = () => {
     loadChefs();
   }, []);
 
+  // Detecta quando o usuário digita uma categoria e seleciona automaticamente
+  useEffect(() => {
+    // Se a categoria foi selecionada manualmente, não interfere
+    if (isCuisineManuallySelected) {
+      return;
+    }
+
+    if (searchQuery.trim() && cuisines.length > 0) {
+      const query = searchQuery.toLowerCase().trim();
+      const matchedCuisine = cuisines.find((cuisine) =>
+        cuisine.title.toLowerCase().includes(query) ||
+        query.includes(cuisine.title.toLowerCase())
+      );
+      
+      if (matchedCuisine) {
+        // Se encontrou uma categoria correspondente, seleciona ela automaticamente
+        if (selectedCuisineId !== matchedCuisine.id) {
+          setSelectedCuisineId(matchedCuisine.id);
+        }
+      } else {
+        // Se não encontrou correspondência, limpa a seleção automática
+        if (selectedCuisineId) {
+          setSelectedCuisineId(undefined);
+        }
+      }
+    } else if (!searchQuery.trim()) {
+      // Se a busca foi limpa, limpa também a seleção automática
+      if (selectedCuisineId && !isCuisineManuallySelected) {
+        setSelectedCuisineId(undefined);
+      }
+    }
+  }, [searchQuery, cuisines, isCuisineManuallySelected]);
+
   const filteredChefs = useMemo(() => {
     let filtered = allChefs;
 
@@ -309,9 +343,9 @@ const ChefsPage: React.FC = () => {
   };
 
   const handleCuisineClick = (cuisineId: number) => {
-    setSelectedCuisineId(
-      selectedCuisineId === cuisineId ? undefined : cuisineId
-    );
+    const newSelectedId = selectedCuisineId === cuisineId ? undefined : cuisineId;
+    setSelectedCuisineId(newSelectedId);
+    setIsCuisineManuallySelected(newSelectedId !== undefined);
   };
 
   const scrollCategories = (direction: "left" | "right") => {
@@ -379,7 +413,13 @@ const ChefsPage: React.FC = () => {
                   type="text"
                   placeholder="Busque por uma categoria ou prato"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    // Quando o usuário digita, reseta a flag de seleção manual
+                    if (e.target.value.trim() === "") {
+                      setIsCuisineManuallySelected(false);
+                    }
+                  }}
                   className="chefs-search-input"
                 />
               </div>
