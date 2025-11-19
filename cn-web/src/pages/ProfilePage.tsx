@@ -71,8 +71,6 @@ const ProfilePage: React.FC = () => {
 
   const [availableCuisines, setAvailableCuisines] = useState<Cuisine[]>([]);
   const [isLoadingCuisines, setIsLoadingCuisines] = useState<boolean>(false);
-  const [isUploadingPicture, setIsUploadingPicture] = useState<boolean>(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [galleryPhotos, setGalleryPhotos] = useState<ChefGalleryPhoto[]>([]);
   const [isLoadingGallery, setIsLoadingGallery] = useState<boolean>(false);
   const [isUploadingGalleryPhoto, setIsUploadingGalleryPhoto] =
@@ -251,48 +249,6 @@ const ProfilePage: React.FC = () => {
       }
       return newSet;
     });
-  };
-
-  const handlePictureChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const validTypes = ["image/jpeg", "image/png", "image/webp", "image/avif"];
-    if (!validTypes.includes(file.type)) {
-      setError("Formato de arquivo inválido. Use JPEG, PNG, WebP ou AVIF.");
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Arquivo muito grande. O tamanho máximo é 5MB.");
-      return;
-    }
-
-    try {
-      setIsUploadingPicture(true);
-      setError("");
-      await chefService.uploadProfilePicture(file);
-
-      const updatedProfile = await chefService.getMyProfile();
-      setProfile(updatedProfile as ChefProfileResponse);
-
-      await checkAuth();
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erro ao fazer upload da foto"
-      );
-    } finally {
-      setIsUploadingPicture(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }
-  };
-
-  const handlePictureButtonClick = () => {
-    fileInputRef.current?.click();
   };
 
   const handleGalleryPhotoChange = async (
@@ -477,7 +433,6 @@ const ProfilePage: React.FC = () => {
 
   const handleDownloadMenu = () => {
     if (profile?.menuUrl) {
-      // Criar link temporário para download
       const link = document.createElement('a');
       link.href = profile.menuUrl;
       link.download = profile.menuOriginalName || 'cardapio.pdf';
@@ -1029,7 +984,6 @@ const ProfilePage: React.FC = () => {
         </div>
       </main>
 
-      {/* Modal de Prévia do Cardápio */}
       {showMenuPreview && profile?.menuUrl && (
         <div className="menu-preview-modal-overlay" onClick={() => setShowMenuPreview(false)}>
           <div className="menu-preview-modal" onClick={(e) => e.stopPropagation()}>
