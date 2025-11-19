@@ -1140,3 +1140,242 @@
     opacity: 1;
   }
 }
+
+/* ============================================
+   TEMA BRANCO (LIGHT) - ProfilePage
+   ============================================ */
+
+/* Tema Branco - Textos e Labels */
+.dashboard-light .profile-section-text {
+  color: #333333;
+}
+
+.dashboard-light .section-text {
+  color: #666666;
+}
+
+.dashboard-light .info-label {
+  color: #666666;
+}
+
+.dashboard-light .info-value {
+  color: #333333;
+}
+
+.dashboard-light .availability-label {
+  color: #333333;
+}
+
+.dashboard-light .availability-label-small {
+  color: #333333;
+}
+
+/* Tema Branco - Botões */
+.dashboard-light .cancel-button {
+  background: #f5f7fa;
+  color: #333333;
+  border: 1px solid #e0e0e0;
+}
+
+.dashboard-light .cancel-button:hover:not(:disabled) {
+  background: #e8e8e8;
+}
+
+.dashboard-light .profile-loading {
+  color: #666666;
+}
+
+.dashboard-light .profile-error {
+  color: #f44336;
+  background: rgba(244, 67, 54, 0.1);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+/* Tema Branco - Inputs e Textareas */
+.dashboard-light .profile-edit-input,
+.dashboard-light .profile-edit-textarea {
+  border: 2px solid #e0e0e0;
+  color: #333333;
+  background: #ffffff;
+}
+
+.dashboard-light .profile-edit-input::placeholder,
+.dashboard-light .profile-edit-textarea::placeholder {
+  color: #999999;
+}
+
+.dashboard-light .profile-edit-input:focus,
+.dashboard-light .profile-edit-textarea:focus {
+  border-color: #ff6b35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+/* Tema Branco - Categorias */
+.dashboard-light .category-tag {
+  color: #333333;
+  border-color: #ff6b35;
+}
+
+.dashboard-light .category-tag.selected {
+  background: #ff6b35;
+  color: white;
+}
+
+.dashboard-light .category-tag:not(.selected):hover {
+  background: rgba(255, 107, 53, 0.1);
+}
+
+.dashboard-light .categories-hint {
+  color: #666666;
+}
+
+/* Tema Branco - Menu */
+.dashboard-light .menu-info {
+  background: #f5f7fa;
+  border: 1px solid #e0e0e0;
+}
+
+.dashboard-light .menu-pdf-thumbnail {
+  border: 2px solid #e0e0e0;
+}
+
+.dashboard-light .menu-link,
+.dashboard-light .menu-link-button {
+  color: #333333;
+}
+
+.dashboard-light .menu-link:hover,
+.dashboard-light .menu-link-button:hover {
+  color: #ff6b35;
+}
+
+.dashboard-light .menu-file-size {
+  color: #666666;
+}
+
+/* Tema Branco - Galeria */
+.dashboard-light .add-photos-text {
+  color: #333333;
+}
+
+.dashboard-light .gallery-empty {
+  color: #666666;
+}
+
+/* Tema Branco - Redes Sociais */
+.dashboard-light .social-link-item {
+  background: #f5f7fa;
+  border: 1px solid #e0e0e0;
+}
+
+.dashboard-light .social-link-url {
+  color: #333333;
+}
+
+.dashboard-light .social-link-url:hover {
+  color: #ff6b35;
+}
+
+.dashboard-light .add-social-link-container select,
+.dashboard-light .add-social-link-container input {
+  background: #ffffff;
+  border: 2px solid #e0e0e0;
+  color: #333333;
+}
+
+.dashboard-light .add-social-link-container select:focus,
+.dashboard-light .add-social-link-container input:focus {
+  border-color: #ff6b35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.dashboard-light .add-social-link-container input::placeholder {
+  color: #999999;
+}
+
+/* Tema Branco - Modal de Prévia do Cardápio */
+.dashboard-light .menu-preview-modal-overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.dashboard-light .menu-preview-modal {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-light .menu-preview-modal-header {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dashboard-light .menu-preview-modal-title {
+  color: #333333;
+}
+
+.dashboard-light .menu-preview-modal-close {
+  color: #666666;
+}
+
+.dashboard-light .menu-preview-modal-close:hover {
+  background: #f0f0f0;
+}
+
+.dashboard-light .menu-preview-download {
+  color: #333333;
+}
+
+.dashboard-light .menu-preview-download p {
+  color: #666666;
+}
+
+/* Tema Branco - Botão de Editar */
+.dashboard-light .edit-button {
+  background: rgba(255, 107, 53, 0.1);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+}
+
+.dashboard-light .edit-button:hover {
+  background: rgba(255, 107, 53, 0.2);
+  border-color: #ff6b35;
+}
+
+/* Tema Branco - Menu File Name */
+.dashboard-light .menu-file-name {
+  color: #333333;
+}
+
+/* Foto de Perfil - Edição */
+.profile-picture-section {
+  margin-bottom: 1.5rem;
+}
+
+.profile-picture-edit-container {
+  display: flex;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.change-profile-picture-button {
+  padding: 0.75rem 2rem;
+  background: #ff6b35;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: "Comfortaa", sans-serif;
+}
+
+.change-profile-picture-button:hover:not(:disabled) {
+  background: #e65100;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.change-profile-picture-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}

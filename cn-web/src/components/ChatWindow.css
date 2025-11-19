@@ -303,3 +303,122 @@
   flex: 1;
   line-height: 1.5;
 }
+
+/* ============================================
+   TEMA BRANCO (LIGHT) - ChatWindow
+   ============================================ */
+
+/* Tema Branco - Chat Window */
+.dashboard-light .chat-window {
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-light .chat-header {
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dashboard-light .chat-title {
+  color: #333333;
+}
+
+.dashboard-light .chat-status {
+  color: #666666;
+}
+
+.dashboard-light .chat-close-button {
+  color: #666666;
+}
+
+.dashboard-light .chat-close-button:hover {
+  background: #f0f0f0;
+  color: #333333;
+}
+
+.dashboard-light .chat-messages {
+  background: #ffffff;
+}
+
+.dashboard-light .chat-loading,
+.dashboard-light .chat-empty {
+  color: #666666;
+}
+
+.dashboard-light .chat-message {
+  background: #f5f7fa;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  color: #333333;
+}
+
+.dashboard-light .chat-message.my-message {
+  background: #ff6b35;
+  color: #ffffff;
+}
+
+.dashboard-light .chat-message.system-message {
+  background: rgba(255, 107, 53, 0.1);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  color: #ff6b35;
+}
+
+.dashboard-light .message-sender {
+  color: #666666;
+}
+
+.dashboard-light .chat-message.my-message .message-sender {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.dashboard-light .message-time {
+  color: #999999;
+}
+
+.dashboard-light .chat-message.my-message .message-time {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.dashboard-light .chat-error {
+  background: rgba(244, 67, 54, 0.1);
+  border-top: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.dashboard-light .chat-error button:hover {
+  background: rgba(244, 67, 54, 0.2);
+}
+
+.dashboard-light .chat-input-form {
+  background: #ffffff;
+  border-top: 1px solid #e0e0e0;
+}
+
+.dashboard-light .chat-input {
+  border: 1px solid #e0e0e0;
+  background: #ffffff;
+  color: #333333;
+}
+
+.dashboard-light .chat-input::placeholder {
+  color: #999999;
+}
+
+.dashboard-light .chat-input:focus {
+  border-color: #ff6b35;
+}
+
+.dashboard-light .chat-input:disabled {
+  background: #f5f7fa;
+}
+
+/* Tema Branco - Scrollbar */
+.dashboard-light .chat-messages::-webkit-scrollbar-track {
+  background: #f5f7fa;
+}
+
+.dashboard-light .chat-messages::-webkit-scrollbar-thumb {
+  background: #e0e0e0;
+}
+
+.dashboard-light .chat-messages::-webkit-scrollbar-thumb:hover {
+  background: #cccccc;
+}

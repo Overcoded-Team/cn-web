@@ -694,3 +694,475 @@ body:has(.dashboard-dark-layout) {
   }
 }
 
+/* ============================================
+   TEMA BRANCO (LIGHT)
+   ============================================ */
+
+/* Toggle Switch de alternância de tema */
+.theme-toggle-switch {
+  position: relative;
+  width: 50px;
+  height: 26px;
+  background: #ccc;
+  border: none;
+  border-radius: 13px;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.3s ease;
+  outline: none;
+}
+
+.theme-toggle-switch:focus {
+  outline: 2px solid #ff6b35;
+  outline-offset: 2px;
+}
+
+.theme-toggle-switch:hover {
+  opacity: 0.9;
+}
+
+.theme-toggle-off {
+  background: #666666;
+}
+
+.theme-toggle-on {
+  background: #ff6b35;
+}
+
+.theme-toggle-slider {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: #ffffff;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.theme-toggle-on .theme-toggle-slider {
+  transform: translateX(24px);
+}
+
+.theme-toggle-off .theme-toggle-slider {
+  transform: translateX(0);
+}
+
+/* Layout base - funciona para ambos os temas */
+.dashboard-layout {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  font-family: "Comfortaa", sans-serif;
+  position: relative;
+}
+
+.dashboard-main {
+  flex: 1;
+  margin-left: 0;
+  min-height: 100vh;
+  padding: 2rem;
+  position: relative;
+}
+
+.dashboard-content {
+  max-width: 1600px;
+  margin: 0 auto;
+  background: transparent;
+  position: relative;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+}
+
+.dashboard-title {
+  font-size: 2.5rem;
+  color: #ff6b35;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.dashboard-nav {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.dashboard-nav-link {
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.3s;
+  font-family: "Comfortaa", sans-serif;
+}
+
+.dashboard-nav-profile {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+/* Tema Branco - Body */
+body:has(.dashboard-light) {
+  background: #f5f7fa !important;
+}
+
+/* Tema Branco - Layout */
+.dashboard-light {
+  background: #f5f7fa !important;
+  color: #333333;
+}
+
+.dashboard-light-main {
+  background: #f5f7fa !important;
+}
+
+.dashboard-light-content {
+  background: transparent;
+}
+
+.dashboard-light-header {
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.dashboard-light-title {
+  color: #ff6b35;
+}
+
+.dashboard-light-nav {
+  gap: 1.5rem;
+}
+
+.dashboard-light-nav-link {
+  color: #666666;
+}
+
+.dashboard-light-nav-link:hover {
+  color: #ff6b35;
+  background: rgba(255, 107, 53, 0.1);
+}
+
+.dashboard-light-nav-link.active {
+  color: #ff6b35;
+  background: rgba(255, 107, 53, 0.15);
+}
+
+.dashboard-light-nav-profile {
+  border: 2px solid #e0e0e0;
+}
+
+.dashboard-light-nav-profile:hover {
+  border-color: #ff6b35;
+  transform: scale(1.05);
+}
+
+/* Tema Branco - Cards */
+.dashboard-light .dashboard-dark-card {
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e8e8e8;
+}
+
+.dashboard-light .dashboard-dark-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  border-color: #ff6b35;
+}
+
+.dashboard-light .dashboard-dark-card-title {
+  color: #333333;
+}
+
+.dashboard-light .dashboard-dark-card-description {
+  color: #666666;
+}
+
+.dashboard-light .dashboard-dark-metric-large {
+  color: #ff6b35;
+}
+
+.dashboard-light .dashboard-dark-metric-label {
+  color: #666666;
+}
+
+/* Tema Branco - Tabelas */
+.dashboard-light .dashboard-dark-table th {
+  color: #666666;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dashboard-light .dashboard-dark-table td {
+  color: #333333;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dashboard-light .dashboard-dark-table tr:hover {
+  background: rgba(255, 107, 53, 0.05);
+}
+
+.dashboard-light .dashboard-dark-summary-row {
+  border-top: 1px solid #e0e0e0;
+}
+
+.dashboard-light .dashboard-dark-summary-value {
+  color: #ff6b35;
+}
+
+.dashboard-light .dashboard-dark-summary-label {
+  color: #666666;
+}
+
+/* Tema Branco - Progress Card */
+.dashboard-light .dashboard-dark-progress-card {
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e8e8e8;
+}
+
+.dashboard-light .dashboard-dark-progress-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  border-color: #ff6b35;
+}
+
+.dashboard-light .dashboard-dark-progress-title {
+  color: #333333;
+}
+
+.dashboard-light .dashboard-dark-progress-subtitle {
+  color: #666666;
+}
+
+.dashboard-light .dashboard-dark-progress-value {
+  color: #ff6b35;
+}
+
+.dashboard-light .dashboard-dark-progress-target {
+  color: #666666;
+}
+
+/* Tema Branco - Barras Horizontais */
+.dashboard-light .dashboard-dark-horizontal-bar-label {
+  color: #666666;
+}
+
+.dashboard-light .dashboard-dark-horizontal-bar-track {
+  background: #e8e8e8;
+}
+
+.dashboard-light .dashboard-dark-horizontal-bar-value {
+  color: #333333;
+}
+
+/* Tema Branco - Loading */
+.dashboard-light .dashboard-loading-container {
+  background: #f5f7fa;
+}
+
+.dashboard-light .dashboard-loading-text {
+  color: #666666;
+}
+
+.dashboard-light .loading-logo-image {
+  filter: none;
+  opacity: 0.6;
+}
+
+/* Tema Branco - Modal */
+.dashboard-light .wallet-modal-overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.dashboard-light .wallet-modal {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-light .wallet-modal-header {
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dashboard-light .wallet-modal-title {
+  color: #333333;
+}
+
+.dashboard-light .wallet-modal-close {
+  color: #666666;
+}
+
+.dashboard-light .wallet-modal-close:hover {
+  background: #f0f0f0;
+}
+
+.dashboard-light .wallet-loading,
+.dashboard-light .wallet-error {
+  color: #666666;
+}
+
+.dashboard-light .wallet-balance-section {
+  background: #f5f7fa;
+  border: 1px solid #e0e0e0;
+}
+
+.dashboard-light .wallet-balance-label {
+  color: #666666;
+}
+
+.dashboard-light .wallet-balance-value {
+  color: #333333;
+}
+
+.dashboard-light .wallet-section-title {
+  color: #333333;
+}
+
+.dashboard-light .wallet-empty {
+  color: #666666;
+}
+
+.dashboard-light .wallet-entry-item,
+.dashboard-light .wallet-payout-item {
+  background: #f5f7fa;
+  border: 1px solid #e0e0e0;
+}
+
+.dashboard-light .wallet-entry-item:hover,
+.dashboard-light .wallet-payout-item:hover {
+  border-color: #ff6b35;
+  background: #fafafa;
+}
+
+.dashboard-light .wallet-entry-description,
+.dashboard-light .wallet-payout-key {
+  color: #333333;
+}
+
+.dashboard-light .wallet-entry-date,
+.dashboard-light .wallet-payout-date {
+  color: #666666;
+}
+
+.dashboard-light .wallet-payout-amount {
+  color: #333333;
+}
+
+/* Tema Branco - Gráficos */
+.dashboard-light .dashboard-dark-chart-container svg line {
+  stroke: #e0e0e0;
+}
+
+.dashboard-light .dashboard-dark-chart-container svg text {
+  fill: #666666;
+}
+
+/* Tema Branco - Gauge */
+.dashboard-light .dashboard-dark-gauge svg use[stroke="#2d3139"] {
+  stroke: #e0e0e0;
+}
+
+/* Reviews - Tema Escuro */
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.review-item {
+  padding: 1.5rem;
+  background: #1a1d24;
+  border-radius: 12px;
+  border: 1px solid #2d3139;
+  border-left: 4px solid #ff6b35;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.review-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.review-stars {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.review-stars img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.review-rating-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ff6b35;
+}
+
+.review-date {
+  font-size: 0.9rem;
+  color: #b0b3b8;
+  margin: 0;
+}
+
+.review-client {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 0.5rem 0;
+}
+
+.review-comment {
+  font-size: 0.95rem;
+  color: #b0b3b8;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Tema Branco - Reviews */
+.dashboard-light .review-item {
+  background: #f5f7fa;
+  border: 1px solid #e0e0e0;
+}
+
+.dashboard-light .review-header {
+  color: #333333;
+}
+
+.dashboard-light .review-rating-value {
+  color: #ff6b35;
+}
+
+.dashboard-light .review-date {
+  color: #666666;
+}
+
+.dashboard-light .review-client {
+  color: #333333;
+}
+
+.dashboard-light .review-comment {
+  color: #666666;
+}
+

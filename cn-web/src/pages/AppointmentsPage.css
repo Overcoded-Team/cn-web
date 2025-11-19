@@ -952,3 +952,267 @@
     max-height: 95vh;
   }
 }
+
+/* ============================================
+   TEMA BRANCO (LIGHT) - AppointmentsPage
+   ============================================ */
+
+/* Tema Branco - Cards de Agendamento */
+.dashboard-light .appointment-card {
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 2px solid #e8e8e8;
+}
+
+.dashboard-light .appointment-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  border-color: #ff6b35;
+}
+
+.dashboard-light .appointment-card.selected {
+  border: 2px solid #ff6b35;
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.dashboard-light .appointment-card.selected:hover {
+  border: 2px solid #ff6b35;
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+}
+
+.dashboard-light .appt-client-avatar {
+  border: 2px solid #e0e0e0;
+}
+
+.dashboard-light .appt-client-avatar-placeholder {
+  border: 2px solid #e0e0e0;
+}
+
+.dashboard-light .appt-client {
+  color: #333333;
+}
+
+.dashboard-light .appt-service-type {
+  color: #666666;
+}
+
+.dashboard-light .appt-address {
+  color: #666666;
+}
+
+.dashboard-light .appt-duration {
+  color: #999999;
+}
+
+.dashboard-light .appt-date {
+  color: #999999;
+}
+
+.dashboard-light .empty-state {
+  color: #666666;
+}
+
+/* Tema Branco - Cards Pendentes */
+.dashboard-light .pending-request-card {
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 2px solid #e8e8e8;
+}
+
+.dashboard-light .pending-request-card:hover {
+  border-color: #ff6b35;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.dashboard-light .pending-client-avatar {
+  border: 2px solid #e0e0e0;
+}
+
+.dashboard-light .pending-client-avatar-placeholder {
+  border: 2px solid #e0e0e0;
+}
+
+.dashboard-light .pending-client {
+  color: #333333;
+}
+
+.dashboard-light .pending-service-type {
+  color: #666666;
+}
+
+.dashboard-light .pending-date {
+  color: #999999;
+}
+
+.dashboard-light .pending-address {
+  color: #666666;
+}
+
+/* Tema Branco - Calendário */
+.dashboard-light .calendar-card,
+.dashboard-light .notes-card {
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e8e8e8;
+}
+
+.dashboard-light .cal-title {
+  color: #333333;
+}
+
+.dashboard-light .cal-nav {
+  border: 1px solid #e0e0e0;
+  background: #f5f7fa;
+  color: #333333;
+}
+
+.dashboard-light .cal-nav:hover {
+  background: #e8e8e8;
+  border-color: #ff6b35;
+}
+
+.dashboard-light .cal-weekday {
+  color: #666666;
+}
+
+.dashboard-light .cal-day {
+  background: #f5f7fa;
+  color: #333333;
+}
+
+.dashboard-light .cal-day:hover {
+  background: #e8e8e8;
+}
+
+.dashboard-light .cal-day.selected {
+  background: #ff6b35;
+  color: #fff;
+}
+
+/* Tema Branco - Notes Card */
+.dashboard-light .notes-header {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dashboard-light .notes-date {
+  color: #666666;
+}
+
+.dashboard-light .appointment-details {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dashboard-light .detail-label {
+  color: #666666;
+}
+
+.dashboard-light .detail-value {
+  color: #333333;
+}
+
+.dashboard-light .appointment-observation {
+  background: #f5f7fa;
+  border-left: 3px solid #ff6b35;
+}
+
+.dashboard-light .appointment-observation strong {
+  color: #333333;
+}
+
+.dashboard-light .appointment-observation p {
+  color: #666666;
+}
+
+.dashboard-light .appointment-observation-empty {
+  background: #f5f7fa;
+  border-left: 3px solid #e0e0e0;
+}
+
+.dashboard-light .appointment-observation-empty p {
+  color: #999999;
+}
+
+.dashboard-light .appointment-actions {
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Tema Branco - Modal de Aceitar */
+.dashboard-light .accept-modal {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-light .accept-modal-header {
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dashboard-light .accept-modal-title {
+  color: #333333;
+}
+
+.dashboard-light .accept-modal-close {
+  color: #666666;
+}
+
+.dashboard-light .accept-modal-close:hover:not(:disabled) {
+  background: #f0f0f0;
+  color: #333333;
+}
+
+.dashboard-light .accept-request-info {
+  background: #f5f7fa;
+  border: 1px solid #e0e0e0;
+}
+
+.dashboard-light .accept-info-label {
+  color: #666666;
+}
+
+.dashboard-light .accept-info-value {
+  color: #333333;
+}
+
+.dashboard-light .accept-form-label {
+  color: #333333;
+}
+
+.dashboard-light .accept-form-input,
+.dashboard-light .accept-form-textarea {
+  border: 2px solid #e0e0e0;
+  color: #333333;
+  background: #ffffff;
+}
+
+.dashboard-light .accept-form-input::placeholder,
+.dashboard-light .accept-form-textarea::placeholder {
+  color: #999999;
+}
+
+.dashboard-light .accept-form-input:focus,
+.dashboard-light .accept-form-textarea:focus {
+  border-color: #ff6b35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.dashboard-light .accept-form-input:disabled,
+.dashboard-light .accept-form-textarea:disabled {
+  background: #f5f7fa;
+}
+
+.dashboard-light .accept-modal-cancel {
+  background: #f5f7fa;
+  color: #333333;
+  border: 1px solid #e0e0e0;
+}
+
+.dashboard-light .accept-modal-cancel:hover:not(:disabled) {
+  background: #e8e8e8;
+}
+
+/* Tema Branco - Chat Modal */
+.dashboard-light .chat-modal {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}

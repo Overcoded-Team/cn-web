@@ -165,3 +165,52 @@
     font-size: 0.9rem;
   }
 }
+
+/* ============================================
+   TEMA BRANCO (LIGHT) - Historico
+   ============================================ */
+
+/* Tema Branco - Entradas do Histórico */
+.dashboard-light .historico-entry {
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dashboard-light .historico-entry:hover {
+  background: #f5f7fa;
+}
+
+.dashboard-light .historico-empty p {
+  color: #666666;
+}
+
+.dashboard-light .historico-error p {
+  color: #f44336;
+}
+
+.dashboard-light .entry-date-time {
+  color: #666666;
+}
+
+.dashboard-light .entry-client-avatar {
+  border: 2px solid #e0e0e0;
+}
+
+.dashboard-light .entry-client-avatar-placeholder {
+  border: 2px solid #e0e0e0;
+}
+
+.dashboard-light .entry-service {
+  color: #333333;
+}
+
+.dashboard-light .entry-client {
+  color: #666666;
+}
+
+/* Tema Branco - Chat Modal */
+.dashboard-light .chat-modal {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}

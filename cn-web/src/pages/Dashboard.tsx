@@ -42,6 +42,14 @@ const Dashboard: React.FC = () => {
   const [walletError, setWalletError] = useState<string>("");
   const [profileImageError, setProfileImageError] = useState(false);
   const previousCompletedCountRef = useRef<number>(0);
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    const savedTheme = localStorage.getItem("dashboard-theme");
+    return (savedTheme as "dark" | "light") || "dark";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("dashboard-theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -529,9 +537,9 @@ const Dashboard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="dashboard-dark-layout">
-        <main className="dashboard-dark-main">
-          <div className="dashboard-dark-content">
+      <div className={`dashboard-layout ${theme === "light" ? "dashboard-light" : "dashboard-dark"}`}>
+        <main className={`dashboard-main ${theme === "light" ? "dashboard-light-main" : "dashboard-dark-main"}`}>
+          <div className={`dashboard-content ${theme === "light" ? "dashboard-light-content" : "dashboard-dark-content"}`}>
             <div className="dashboard-loading-container">
               <div className="dashboard-loading-logo">
                 <img
@@ -596,16 +604,20 @@ const Dashboard: React.FC = () => {
       ? user.profilePictureUrl
       : perfilVazio;
 
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
+
   return (
-    <div className="dashboard-dark-layout">
-      <main className="dashboard-dark-main">
-        <div className="dashboard-dark-content">
-          <div className="dashboard-dark-header">
-            <h1 className="dashboard-dark-title">Dashboard</h1>
-            <nav className="dashboard-dark-nav">
+    <div className={`dashboard-layout ${theme === "light" ? "dashboard-light" : "dashboard-dark"}`}>
+      <main className={`dashboard-main ${theme === "light" ? "dashboard-light-main" : "dashboard-dark-main"}`}>
+        <div className={`dashboard-content ${theme === "light" ? "dashboard-light-content" : "dashboard-dark-content"}`}>
+          <div className={`dashboard-header ${theme === "light" ? "dashboard-light-header" : "dashboard-dark-header"}`}>
+            <h1 className={`dashboard-title ${theme === "light" ? "dashboard-light-title" : "dashboard-dark-title"}`}>Dashboard</h1>
+            <nav className={`dashboard-nav ${theme === "light" ? "dashboard-light-nav" : "dashboard-dark-nav"}`}>
               <Link
                 to="/dashboard"
-                className={`dashboard-dark-nav-link ${
+                className={`dashboard-nav-link ${theme === "light" ? "dashboard-light-nav-link" : "dashboard-dark-nav-link"} ${
                   location.pathname === "/dashboard" ||
                   location.pathname === "/"
                     ? "active"
@@ -616,7 +628,7 @@ const Dashboard: React.FC = () => {
               </Link>
               <Link
                 to="/agendamentos"
-                className={`dashboard-dark-nav-link ${
+                className={`dashboard-nav-link ${theme === "light" ? "dashboard-light-nav-link" : "dashboard-dark-nav-link"} ${
                   location.pathname === "/agendamentos" ||
                   location.pathname === "/preview/agendamentos"
                     ? "active"
@@ -627,22 +639,33 @@ const Dashboard: React.FC = () => {
               </Link>
               <Link
                 to="/historico"
-                className={`dashboard-dark-nav-link ${
+                className={`dashboard-nav-link ${theme === "light" ? "dashboard-light-nav-link" : "dashboard-dark-nav-link"} ${
                   location.pathname === "/historico" ? "active" : ""
                 }`}
               >
                 Histórico
               </Link>
+              <button
+                className={`theme-toggle-switch ${theme === "light" ? "theme-toggle-on" : "theme-toggle-off"}`}
+                onClick={toggleTheme}
+                title={theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro"}
+                type="button"
+                role="switch"
+                aria-checked={theme === "light"}
+                aria-label={theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro"}
+              >
+                <span className="theme-toggle-slider"></span>
+              </button>
               <Link to="/perfil">
                 <img
                   src={profilePicture}
                   alt="Perfil"
-                  className="dashboard-dark-nav-profile"
+                  className={`dashboard-nav-profile ${theme === "light" ? "dashboard-light-nav-profile" : "dashboard-dark-nav-profile"}`}
                   onError={() => setProfileImageError(true)}
                 />
               </Link>
               <button
-                className="dashboard-dark-nav-link"
+                className={`dashboard-nav-link ${theme === "light" ? "dashboard-light-nav-link" : "dashboard-dark-nav-link"}`}
                 onClick={logout}
                 style={{
                   background: "none",
@@ -1194,7 +1217,7 @@ const Dashboard: React.FC = () => {
 
       {showReviewsModal && (
         <div
-          className="modal-overlay"
+          className="wallet-modal-overlay"
           onClick={() => setShowReviewsModal(false)}
         >
           <div className="wallet-modal" onClick={(e) => e.stopPropagation()}>

@@ -82,6 +82,12 @@ const ProfilePage: React.FC = () => {
   const [isUploadingMenu, setIsUploadingMenu] = useState<boolean>(false);
   const menuFileInputRef = useRef<HTMLInputElement>(null);
   const [showMenuPreview, setShowMenuPreview] = useState<boolean>(false);
+  const [isUploadingProfilePicture, setIsUploadingProfilePicture] = useState<boolean>(false);
+  const profilePictureFileInputRef = useRef<HTMLInputElement>(null);
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    const savedTheme = localStorage.getItem("dashboard-theme");
+    return (savedTheme as "dark" | "light") || "dark";
+  });
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -310,6 +316,48 @@ const ProfilePage: React.FC = () => {
     galleryFileInputRef.current?.click();
   };
 
+  const handleProfilePictureChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ["image/jpeg", "image/png", "image/webp", "image/avif"];
+    if (!validTypes.includes(file.type)) {
+      setError("Formato de arquivo inválido. Use JPEG, PNG, WebP ou AVIF.");
+      return;
+    }
+
+    if (file.size > 50 * 1024 * 1024) {
+      setError("Arquivo muito grande. O tamanho máximo é 50MB.");
+      return;
+    }
+
+    try {
+      setIsUploadingProfilePicture(true);
+      setError("");
+      await chefService.uploadProfilePicture(file);
+      
+      // Atualizar o contexto de autenticação
+      await checkAuth();
+      
+      // Limpar o input
+      if (profilePictureFileInputRef.current) {
+        profilePictureFileInputRef.current.value = "";
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Erro ao fazer upload da foto"
+      );
+    } finally {
+      setIsUploadingProfilePicture(false);
+    }
+  };
+
+  const handleChangeProfilePictureClick = () => {
+    profilePictureFileInputRef.current?.click();
+  };
+
   const handleAddSocialLink = async () => {
     if (!newSocialType || !newSocialUrl.trim()) {
       setError("Selecione uma rede social e informe a URL");
@@ -456,16 +504,24 @@ const ProfilePage: React.FC = () => {
   const [profileImageError, setProfileImageError] = useState(false);
   const profilePicture = (user?.profilePictureUrl && !profileImageError) ? user.profilePictureUrl : perfilVazio;
 
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
+
+  useEffect(() => {
+    localStorage.setItem("dashboard-theme", theme);
+  }, [theme]);
+
   return (
-    <div className="dashboard-dark-layout">
-      <main className="dashboard-dark-main">
-        <div className="dashboard-dark-content">
-          <div className="dashboard-dark-header">
-            <h1 className="dashboard-dark-title">Perfil</h1>
-            <nav className="dashboard-dark-nav">
+    <div className={`dashboard-layout ${theme === "light" ? "dashboard-light" : "dashboard-dark"}`}>
+      <main className={`dashboard-main ${theme === "light" ? "dashboard-light-main" : "dashboard-dark-main"}`}>
+        <div className={`dashboard-content ${theme === "light" ? "dashboard-light-content" : "dashboard-dark-content"}`}>
+          <div className={`dashboard-header ${theme === "light" ? "dashboard-light-header" : "dashboard-dark-header"}`}>
+            <h1 className={`dashboard-title ${theme === "light" ? "dashboard-light-title" : "dashboard-dark-title"}`}>Perfil</h1>
+            <nav className={`dashboard-nav ${theme === "light" ? "dashboard-light-nav" : "dashboard-dark-nav"}`}>
               <Link
                 to="/dashboard"
-                className={`dashboard-dark-nav-link ${
+                className={`dashboard-nav-link ${theme === "light" ? "dashboard-light-nav-link" : "dashboard-dark-nav-link"} ${
                   location.pathname === "/dashboard" || location.pathname === "/"
                     ? "active"
                     : ""
@@ -475,7 +531,7 @@ const ProfilePage: React.FC = () => {
               </Link>
               <Link
                 to="/agendamentos"
-                className={`dashboard-dark-nav-link ${
+                className={`dashboard-nav-link ${theme === "light" ? "dashboard-light-nav-link" : "dashboard-dark-nav-link"} ${
                   location.pathname === "/agendamentos" ||
                   location.pathname === "/preview/agendamentos"
                     ? "active"
@@ -486,22 +542,33 @@ const ProfilePage: React.FC = () => {
               </Link>
               <Link
                 to="/historico"
-                className={`dashboard-dark-nav-link ${
+                className={`dashboard-nav-link ${theme === "light" ? "dashboard-light-nav-link" : "dashboard-dark-nav-link"} ${
                   location.pathname === "/historico" ? "active" : ""
                 }`}
               >
                 Histórico
               </Link>
+              <button
+                className={`theme-toggle-switch ${theme === "light" ? "theme-toggle-on" : "theme-toggle-off"}`}
+                onClick={toggleTheme}
+                title={theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro"}
+                type="button"
+                role="switch"
+                aria-checked={theme === "light"}
+                aria-label={theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro"}
+              >
+                <span className="theme-toggle-slider"></span>
+              </button>
               <Link to="/perfil">
                 <img
                   src={profilePicture}
                   alt="Perfil"
-                  className="dashboard-dark-nav-profile"
+                  className={`dashboard-nav-profile ${theme === "light" ? "dashboard-light-nav-profile" : "dashboard-dark-nav-profile"}`}
                   onError={() => setProfileImageError(true)}
                 />
               </Link>
               <button
-                className="dashboard-dark-nav-link"
+                className={`dashboard-nav-link ${theme === "light" ? "dashboard-light-nav-link" : "dashboard-dark-nav-link"}`}
                 onClick={logout}
                 style={{
                   background: "none",
@@ -561,7 +628,31 @@ const ProfilePage: React.FC = () => {
           {isLoading ? (
             <div className="profile-loading">Carregando...</div>
           ) : (
-            <div className="profile-content">
+            <>
+              {isEditing && (
+                <div className="dashboard-dark-card profile-picture-section">
+                  <h2 className="dashboard-dark-card-title">Foto de Perfil</h2>
+                  <div className="profile-picture-edit-container">
+                    <input
+                      ref={profilePictureFileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/avif"
+                      onChange={handleProfilePictureChange}
+                      style={{ display: "none" }}
+                      disabled={isUploadingProfilePicture}
+                    />
+                    <button
+                      type="button"
+                      className="change-profile-picture-button"
+                      onClick={handleChangeProfilePictureClick}
+                      disabled={isUploadingProfilePicture}
+                    >
+                      {isUploadingProfilePicture ? "Enviando..." : "Alterar Foto"}
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div className="profile-content">
               <div className="profile-main-grid">
                 <div className="profile-left-column">
                   <div className="dashboard-dark-card">
@@ -979,7 +1070,8 @@ const ProfilePage: React.FC = () => {
                   </div>
                 </>
               )}
-            </div>
+              </div>
+            </>
           )}
         </div>
       </main>
