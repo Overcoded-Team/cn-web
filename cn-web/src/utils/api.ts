@@ -62,6 +62,7 @@ export const api = {
         else if (errorLower.includes("not found")) errorMessage = "Não encontrado";
         else if (errorLower.includes("internal server error")) errorMessage = "Erro interno do servidor";
         else if (errorLower.includes("bad request")) errorMessage = "Requisição inválida";
+        else if (errorLower.includes("chef has another accepted") || errorLower.includes("scheduled job around this time") || (errorLower.includes("another") && errorLower.includes("accepted/scheduled job") && errorLower.includes("time"))) errorMessage = "Você já possui outro serviço aceito ou agendado próximo a este horário";
 
         throw new Error(errorMessage);
       }
