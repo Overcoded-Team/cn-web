@@ -3,12 +3,13 @@ import { Link, useLocation } from "react-router-dom";
 import "./Historico.css";
 import "./Dashboard.css";
 import "./DashboardDark.css";
-import { DashboardSidebar } from "../components/DashboardSidebar";
 import {
   serviceRequestService,
   ServiceRequest,
   ServiceRequestStatus,
 } from "../services/serviceRequest.service";
+import { useAuth } from "../contexts/AuthContext";
+import perfilVazio from "../assets/perfilvazio.png";
 
 interface HistoricoEntry {
   valor: number;
@@ -23,6 +24,7 @@ interface HistoricoEntry {
 
 const Historico: React.FC = () => {
   const location = useLocation();
+  const { user, logout } = useAuth();
   const [historicoEntries, setHistoricoEntries] = useState<HistoricoEntry[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -84,10 +86,11 @@ const Historico: React.FC = () => {
     loadHistorico();
   }, []);
 
+  const [profileImageError, setProfileImageError] = useState(false);
+  const profilePicture = (user?.profilePictureUrl && !profileImageError) ? user.profilePictureUrl : perfilVazio;
+
   return (
     <div className="dashboard-dark-layout">
-      <DashboardSidebar className="historico-sidebar" />
-
       <main className="dashboard-dark-main">
         <div className="dashboard-dark-content">
           <div className="dashboard-dark-header">
@@ -102,14 +105,6 @@ const Historico: React.FC = () => {
                 }`}
               >
                 Dashboard
-              </Link>
-              <Link
-                to="/perfil"
-                className={`dashboard-dark-nav-link ${
-                  location.pathname === "/perfil" ? "active" : ""
-                }`}
-              >
-                Perfil
               </Link>
               <Link
                 to="/agendamentos"
@@ -130,6 +125,28 @@ const Historico: React.FC = () => {
               >
                 Histórico
               </Link>
+              <Link to="/perfil">
+                <img
+                  src={profilePicture}
+                  alt="Perfil"
+                  className="dashboard-dark-nav-profile"
+                  onError={() => setProfileImageError(true)}
+                />
+              </Link>
+              <button
+                className="dashboard-dark-nav-link"
+                onClick={logout}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontSize: "inherit",
+                  fontWeight: "inherit",
+                }}
+              >
+                Sair
+              </button>
             </nav>
           </div>
 

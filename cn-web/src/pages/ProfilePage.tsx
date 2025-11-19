@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 import "./Dashboard.css";
 import "./DashboardDark.css";
 import "./ProfilePage.css";
-import { DashboardSidebar } from "../components/DashboardSidebar";
 import {
   chefService,
   Cuisine,
@@ -14,6 +13,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { authService } from "../services/auth.service";
 import editIcon from "../assets/edit.svg";
+import perfilVazio from "../assets/perfilvazio.png";
 
 interface ChefCuisineRelation {
   id: number;
@@ -52,7 +52,7 @@ interface ChefProfileResponse {
 
 const ProfilePage: React.FC = () => {
   const location = useLocation();
-  const { user, checkAuth } = useAuth();
+  const { user, checkAuth, logout } = useAuth();
   const [profile, setProfile] = useState<ChefProfileResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
@@ -498,16 +498,11 @@ const ProfilePage: React.FC = () => {
       title: cc.cuisine.title,
     })) || [];
 
+  const [profileImageError, setProfileImageError] = useState(false);
+  const profilePicture = (user?.profilePictureUrl && !profileImageError) ? user.profilePictureUrl : perfilVazio;
+
   return (
     <div className="dashboard-dark-layout">
-      <DashboardSidebar
-        isEditing={isEditing}
-        onPictureChange={handlePictureChange}
-        fileInputRef={fileInputRef}
-        isUploadingPicture={isUploadingPicture}
-        onPictureButtonClick={handlePictureButtonClick}
-      />
-
       <main className="dashboard-dark-main">
         <div className="dashboard-dark-content">
           <div className="dashboard-dark-header">
@@ -522,14 +517,6 @@ const ProfilePage: React.FC = () => {
                 }`}
               >
                 Dashboard
-              </Link>
-              <Link
-                to="/perfil"
-                className={`dashboard-dark-nav-link ${
-                  location.pathname === "/perfil" ? "active" : ""
-                }`}
-              >
-                Perfil
               </Link>
               <Link
                 to="/agendamentos"
@@ -550,6 +537,28 @@ const ProfilePage: React.FC = () => {
               >
                 Histórico
               </Link>
+              <Link to="/perfil">
+                <img
+                  src={profilePicture}
+                  alt="Perfil"
+                  className="dashboard-dark-nav-profile"
+                  onError={() => setProfileImageError(true)}
+                />
+              </Link>
+              <button
+                className="dashboard-dark-nav-link"
+                onClick={logout}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontSize: "inherit",
+                  fontWeight: "inherit",
+                }}
+              >
+                Sair
+              </button>
             </nav>
           </div>
           <div className="profile-header">

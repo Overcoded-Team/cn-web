@@ -19,7 +19,7 @@ body:has(.dashboard-dark-layout) {
 
 .dashboard-dark-main {
   flex: 1;
-  margin-left: 280px;
+  margin-left: 0;
   background: #1a1d24 !important;
   min-height: 100vh;
   padding: 2rem;
@@ -53,6 +53,7 @@ body:has(.dashboard-dark-layout) {
 .dashboard-dark-nav {
   display: flex;
   gap: 1.5rem;
+  align-items: center;
 }
 
 .dashboard-dark-nav-link {
@@ -63,6 +64,7 @@ body:has(.dashboard-dark-layout) {
   padding: 0.5rem 1rem;
   border-radius: 8px;
   transition: all 0.3s;
+  font-family: "Comfortaa", sans-serif;
 }
 
 .dashboard-dark-nav-link:hover {
@@ -73,6 +75,38 @@ body:has(.dashboard-dark-layout) {
 .dashboard-dark-nav-link.active {
   color: #ff6b35;
   background: rgba(255, 107, 53, 0.15);
+}
+
+.dashboard-dark-nav-profile {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #2d3139;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.dashboard-dark-nav-profile:hover {
+  border-color: #ff6b35;
+  transform: scale(1.05);
+}
+
+.dashboard-dark-nav-logout {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: all 0.3s;
+  margin-left: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-dark-nav-logout:hover {
+  opacity: 1;
+  transform: scale(1.1);
 }
 
 .dashboard-dark-grid {
@@ -196,6 +230,13 @@ body:has(.dashboard-dark-layout) {
   padding: 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   border: 1px solid #2d3139;
+  transition: all 0.3s;
+}
+
+.dashboard-dark-progress-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.4);
+  border-color: #ff6b35;
 }
 
 .dashboard-dark-progress-title {

@@ -6,8 +6,9 @@ import estrelaInteira from "../assets/estrelainteira.png";
 import meiaEstrela from "../assets/meiaestrela.png";
 import estrelaVazia from "../assets/estrelavazia.png";
 import logoBranco from "../assets/iconebranco.png";
-import { DashboardSidebar } from "../components/DashboardSidebar";
 import { chefService, ChefReview } from "../services/chef.service";
+import { useAuth } from "../contexts/AuthContext";
+import perfilVazio from "../assets/perfilvazio.png";
 import {
   serviceRequestService,
   ServiceRequest,
@@ -22,14 +23,13 @@ import {
 
 const Dashboard: React.FC = () => {
   const location = useLocation();
+  const { user, logout } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [reviews, setReviews] = useState<ChefReview[]>([]);
   const [selectedYear] = useState(new Date().getFullYear());
-  const [selectedChartMonth] = useState<number | null>(
-    new Date().getMonth()
-  );
+  const [selectedChartMonth] = useState<number | null>(new Date().getMonth());
 
   const [walletBalance, setWalletBalance] = useState<WalletBalance | null>(
     null
@@ -40,13 +40,14 @@ const Dashboard: React.FC = () => {
   const [walletPayouts, setWalletPayouts] = useState<ChefPayout[]>([]);
   const [isLoadingWallet, setIsLoadingWallet] = useState<boolean>(false);
   const [walletError, setWalletError] = useState<string>("");
+  const [profileImageError, setProfileImageError] = useState(false);
   const previousCompletedCountRef = useRef<number>(0);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        
+
         // Timeout de segurança para garantir que o loading não fique infinito
         const timeoutId = setTimeout(() => {
           setIsLoading(false);
@@ -74,19 +75,20 @@ const Dashboard: React.FC = () => {
 
         try {
           while (hasMore && page <= maxPages) {
-          const requestsData =
-            await serviceRequestService.listChefServiceRequests(page, 1000);
-          allRequests = [...allRequests, ...requestsData.items];
+            const requestsData =
+              await serviceRequestService.listChefServiceRequests(page, 1000);
+            allRequests = [...allRequests, ...requestsData.items];
 
-          if (
-            requestsData.items.length < 1000 ||
+            if (
+              requestsData.items.length < 1000 ||
               allRequests.length >= requestsData.total ||
-              !requestsData.items || requestsData.items.length === 0
-          ) {
-            hasMore = false;
-          } else {
-            page++;
-          }
+              !requestsData.items ||
+              requestsData.items.length === 0
+            ) {
+              hasMore = false;
+            } else {
+              page++;
+            }
           }
         } catch (error) {
           console.error("Erro ao carregar solicitações:", error);
@@ -351,34 +353,44 @@ const Dashboard: React.FC = () => {
       return Math.round(avgMs / (1000 * 60 * 60)); // horas
     })();
 
-    const lastMonthEarnings = (() => {
-      const lastMonth = chartMonth === 0 ? 11 : chartMonth - 1;
-      const lastMonthYear = chartMonth === 0 ? selectedYear - 1 : selectedYear;
-      const lastMonthStart = new Date(lastMonthYear, lastMonth, 1);
-      const lastMonthEnd = new Date(lastMonthYear, lastMonth + 1, 0, 23, 59, 59);
+    const lastMonthEarnings =
+      (() => {
+        const lastMonth = chartMonth === 0 ? 11 : chartMonth - 1;
+        const lastMonthYear =
+          chartMonth === 0 ? selectedYear - 1 : selectedYear;
+        const lastMonthStart = new Date(lastMonthYear, lastMonth, 1);
+        const lastMonthEnd = new Date(
+          lastMonthYear,
+          lastMonth + 1,
+          0,
+          23,
+          59,
+          59
+        );
 
-      return serviceRequests
-        .filter((sr) => {
-          if (
-            (sr.status !== ServiceRequestStatus.PAYMENT_CONFIRMED &&
-              sr.status !== ServiceRequestStatus.SCHEDULED &&
-              sr.status !== ServiceRequestStatus.COMPLETED) ||
-            !sr.quote
-          )
-            return false;
-          const paymentDate = new Date(sr.updated_at);
-          return paymentDate >= lastMonthStart && paymentDate <= lastMonthEnd;
-        })
-        .reduce((sum, sr) => {
-          if (!sr.quote) return sum;
-          return sum + (sr.quote.amount_cents || 0);
-        }, 0);
-    })() / 100;
+        return serviceRequests
+          .filter((sr) => {
+            if (
+              (sr.status !== ServiceRequestStatus.PAYMENT_CONFIRMED &&
+                sr.status !== ServiceRequestStatus.SCHEDULED &&
+                sr.status !== ServiceRequestStatus.COMPLETED) ||
+              !sr.quote
+            )
+              return false;
+            const paymentDate = new Date(sr.updated_at);
+            return paymentDate >= lastMonthStart && paymentDate <= lastMonthEnd;
+          })
+          .reduce((sum, sr) => {
+            if (!sr.quote) return sum;
+            return sum + (sr.quote.amount_cents || 0);
+          }, 0);
+      })() / 100;
 
     const earningsGrowth =
       lastMonthEarnings > 0
         ? Math.round(
-            ((monthEarnings / 100 - lastMonthEarnings) / lastMonthEarnings) * 100
+            ((monthEarnings / 100 - lastMonthEarnings) / lastMonthEarnings) *
+              100
           )
         : monthEarnings / 100 > 0
         ? 100
@@ -482,13 +494,18 @@ const Dashboard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="dashboard-layout">
-        <DashboardSidebar />
-        <main className="dashboard-main">
-          <div className="main-content">
-            <h1 className="dashboard-title">Dashboard</h1>
-            <div style={{ textAlign: "center", padding: "2rem" }}>
-              <p>Carregando dados...</p>
+      <div className="dashboard-dark-layout">
+        <main className="dashboard-dark-main">
+          <div className="dashboard-dark-content">
+            <div className="dashboard-loading-container">
+              <div className="dashboard-loading-logo">
+                <img
+                  src={logoBranco}
+                  alt="Logo"
+                  className="loading-logo-image"
+                />
+              </div>
+              <p className="dashboard-loading-text">Carregando dados...</p>
             </div>
           </div>
         </main>
@@ -539,28 +556,13 @@ const Dashboard: React.FC = () => {
     return stars;
   };
 
-  if (isLoading) {
-  return (
-      <div className="dashboard-dark-layout">
-      <DashboardSidebar />
-        <main className="dashboard-dark-main">
-          <div className="dashboard-dark-content">
-            <div className="dashboard-loading-container">
-              <div className="dashboard-loading-logo">
-                <img src={logoBranco} alt="Logo" className="loading-logo-image" />
-              </div>
-              <p className="dashboard-loading-text">Carregando dados...</p>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
+  const profilePicture =
+    user?.profilePictureUrl && !profileImageError
+      ? user.profilePictureUrl
+      : perfilVazio;
 
   return (
     <div className="dashboard-dark-layout">
-      <DashboardSidebar />
-
       <main className="dashboard-dark-main">
         <div className="dashboard-dark-content">
           <div className="dashboard-dark-header">
@@ -569,20 +571,13 @@ const Dashboard: React.FC = () => {
               <Link
                 to="/dashboard"
                 className={`dashboard-dark-nav-link ${
-                  location.pathname === "/dashboard" || location.pathname === "/"
+                  location.pathname === "/dashboard" ||
+                  location.pathname === "/"
                     ? "active"
                     : ""
                 }`}
               >
                 Dashboard
-              </Link>
-              <Link
-                to="/perfil"
-                className={`dashboard-dark-nav-link ${
-                  location.pathname === "/perfil" ? "active" : ""
-                }`}
-              >
-                Perfil
               </Link>
               <Link
                 to="/agendamentos"
@@ -603,147 +598,250 @@ const Dashboard: React.FC = () => {
               >
                 Histórico
               </Link>
+              <Link to="/perfil">
+                <img
+                  src={profilePicture}
+                  alt="Perfil"
+                  className="dashboard-dark-nav-profile"
+                  onError={() => setProfileImageError(true)}
+                />
+              </Link>
+              <button
+                className="dashboard-dark-nav-link"
+                onClick={logout}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontSize: "inherit",
+                  fontWeight: "inherit",
+                }}
+              >
+                Sair
+              </button>
             </nav>
           </div>
 
           {/* Cards Topo - Ganhos e Avaliações lado a lado */}
-          <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "1.5rem",
+              marginBottom: "1.5rem",
+              flexWrap: "wrap",
+            }}
+          >
             {/* Card de Ganhos Laranja */}
-            <div className="card ganhos-card" style={{ maxWidth: '350px', width: '100%', flex: '0 0 auto', maxHeight: '280px', height: '280px', position: 'relative' }}>
+            <div
+              className="card ganhos-card"
+              style={{
+                maxWidth: "350px",
+                width: "100%",
+                flex: "0 0 auto",
+                maxHeight: "280px",
+                height: "280px",
+                position: "relative",
+              }}
+            >
               <button
                 className="ver-carteira-button"
                 onClick={handleOpenWallet}
                 style={{
-                  position: 'absolute',
-                  top: '1rem',
-                  right: '1rem',
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  color: 'white',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '20px',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  transition: 'all 0.3s',
-                  fontFamily: '"Comfortaa", sans-serif'
+                  position: "absolute",
+                  top: "1rem",
+                  right: "1rem",
+                  background: "rgba(255, 255, 255, 0.2)",
+                  border: "1px solid rgba(255, 255, 255, 0.3)",
+                  color: "white",
+                  padding: "0.5rem 1rem",
+                  borderRadius: "20px",
+                  cursor: "pointer",
+                  fontSize: "0.9rem",
+                  fontWeight: "600",
+                  transition: "all 0.3s",
+                  fontFamily: '"Comfortaa", sans-serif',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
                 }}
               >
                 Ver Carteira
               </button>
-              <div className="saldo-disponivel-section" style={{ borderTop: 'none', paddingTop: '0' }}>
-                <p className="saldo-disponivel-label" style={{ fontSize: '1.2rem' }}>Saldo Disponível</p>
-                <p className="saldo-disponivel-value" style={{ fontSize: '2.5rem' }}>
-                      R${" "}
-                      {(
-                        walletBalance?.available_cents && walletBalance.available_cents > 0
-                          ? walletBalance.available_cents / 100
-                          : metrics.totalEarnings
-                      ).toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </p>
-                  </div>
-              <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.2)', marginTop: '1rem', marginBottom: '1rem', paddingTop: '1rem' }}>
-                <h3 className="card-title-white" style={{ fontSize: '1.2rem' }}>Ganhos</h3>
-                <p className="card-value-white" style={{ fontSize: '1.5rem' }}>
+              <div
+                className="saldo-disponivel-section"
+                style={{ borderTop: "none", paddingTop: "0" }}
+              >
+                <p
+                  className="saldo-disponivel-label"
+                  style={{ fontSize: "1.2rem" }}
+                >
+                  Saldo Disponível
+                </p>
+                <p
+                  className="saldo-disponivel-value"
+                  style={{ fontSize: "2.5rem" }}
+                >
+                  R${" "}
+                  {(walletBalance?.available_cents &&
+                  walletBalance.available_cents > 0
+                    ? walletBalance.available_cents / 100
+                    : metrics.totalEarnings
+                  ).toLocaleString("pt-BR", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </p>
+              </div>
+              <div
+                style={{
+                  borderTop: "1px solid rgba(255, 255, 255, 0.2)",
+                  marginTop: "1rem",
+                  marginBottom: "1rem",
+                  paddingTop: "1rem",
+                }}
+              >
+                <h3 className="card-title-white" style={{ fontSize: "1.2rem" }}>
+                  Ganhos
+                </h3>
+                <p className="card-value-white" style={{ fontSize: "1.5rem" }}>
                   R${" "}
                   {metrics.monthEarnings.toLocaleString("pt-BR", {
                     minimumFractionDigits: 2,
-                      })}
-                    </p>
-                  </div>
-                </div>
+                  })}
+                </p>
+              </div>
+            </div>
 
             {/* Card de Avaliações */}
-            <div className="dashboard-dark-card" style={{ maxWidth: '300px', width: '100%', flex: '0 0 auto', position: 'relative', overflow: 'hidden', maxHeight: '280px', height: '280px' }}>
-                  <button
-                    className="ver-avaliacoes-button"
-                    onClick={() => setShowReviewsModal(true)}
+            <div
+              className="dashboard-dark-card"
+              style={{
+                maxWidth: "300px",
+                width: "100%",
+                flex: "0 0 auto",
+                position: "relative",
+                overflow: "hidden",
+                maxHeight: "280px",
+                height: "280px",
+              }}
+            >
+              <button
+                className="ver-avaliacoes-button"
+                onClick={() => setShowReviewsModal(true)}
                 style={{
-                  position: 'absolute',
-                  top: '1rem',
-                  right: '1rem',
-                  padding: '0.5rem 1rem',
-                  background: '#ff6b35',
-                  color: '#ffffff',
-                  border: '2px solid rgba(255, 107, 53, 0.3)',
-                  borderRadius: '20px',
-                  fontSize: '0.85rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s',
+                  position: "absolute",
+                  top: "1rem",
+                  right: "1rem",
+                  padding: "0.5rem 1rem",
+                  background: "#ff6b35",
+                  color: "#ffffff",
+                  border: "2px solid rgba(255, 107, 53, 0.3)",
+                  borderRadius: "20px",
+                  fontSize: "0.85rem",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: "all 0.3s",
                   fontFamily: '"Comfortaa", sans-serif',
-                  zIndex: 10
+                  zIndex: 10,
                 }}
-                  >
-                    Ver Avaliações
-                  </button>
+              >
+                Ver Avaliações
+              </button>
               <h3 className="dashboard-dark-card-title">Avaliações</h3>
-              
+
               {/* Informações à esquerda */}
-              <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column',
-                gap: '0.5rem',
-                position: 'absolute',
-                left: '1rem',
-                bottom: '6rem'
-              }}>
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.75rem'
-                }}>
-                  <div className="dashboard-dark-metric-large" style={{ margin: 0 }}>
-                      {metrics.avgRating.toLocaleString("pt-BR", {
-                        minimumFractionDigits: 1,
-                      })}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.5rem",
+                  position: "absolute",
+                  left: "1rem",
+                  bottom: "6rem",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.75rem",
+                  }}
+                >
+                  <div
+                    className="dashboard-dark-metric-large"
+                    style={{ margin: 0 }}
+                  >
+                    {metrics.avgRating.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 1,
+                    })}
                   </div>
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center',
-                    gap: '0.2rem'
-                  }}>
-                      {renderStars(metrics.avgRating)}
-                    </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.2rem",
+                    }}
+                  >
+                    {renderStars(metrics.avgRating)}
                   </div>
-                <div className="dashboard-dark-metric-label" style={{ margin: 0, opacity: 1 }}>
-                  {reviews.length} {reviews.length === 1 ? "avaliação" : "avaliações"}
+                </div>
+                <div
+                  className="dashboard-dark-metric-label"
+                  style={{ margin: 0, opacity: 1 }}
+                >
+                  {reviews.length}{" "}
+                  {reviews.length === 1 ? "avaliação" : "avaliações"}
                 </div>
               </div>
 
               {/* Logo fixa */}
-              <div style={{ 
-                position: 'absolute',
-                bottom: '-1rem',
-                left: '10.5rem'
-              }}>
-                <img 
-                  src={logoBranco} 
-                  alt="Logo" 
-                  style={{ 
-                    width: '190px', 
-                    height: '150px',
-                    filter: 'brightness(0) invert(1)',
-                    objectFit: 'contain',
-                    opacity: 0.3
-                  }} 
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "-1rem",
+                  left: "10.5rem",
+                }}
+              >
+                <img
+                  src={logoBranco}
+                  alt="Logo"
+                  style={{
+                    width: "190px",
+                    height: "150px",
+                    filter: "brightness(0) invert(1)",
+                    objectFit: "contain",
+                    opacity: 0.3,
+                  }}
                 />
-                </div>
               </div>
+            </div>
 
             {/* Card Progresso de Vendas */}
-            <div className="dashboard-dark-progress-card" style={{ maxHeight: '280px', height: '280px', flex: '1 1 auto', minWidth: '400px', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '2rem', overflow: 'visible' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', flex: '1' }}>
-                <h3 className="dashboard-dark-progress-title">Progresso de Vendas</h3>
+            <div
+              className="dashboard-dark-progress-card"
+              style={{
+                maxHeight: "280px",
+                height: "280px",
+                flex: "1 1 auto",
+                minWidth: "400px",
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "2rem",
+                overflow: "visible",
+              }}
+            >
+              <div
+                style={{ display: "flex", flexDirection: "column", flex: "1" }}
+              >
+                <h3 className="dashboard-dark-progress-title">
+                  Progresso de Vendas
+                </h3>
                 <p className="dashboard-dark-progress-subtitle">Mês atual</p>
                 <div>
                   <span className="dashboard-dark-progress-value">
@@ -752,29 +850,42 @@ const Dashboard: React.FC = () => {
                   <span className="dashboard-dark-progress-target">
                     / R$ {(metrics.totalEarnings / 1000).toFixed(2)}K
                   </span>
-                  </div>
                 </div>
-              <div className="dashboard-dark-gauge" style={{ flex: '0 0 auto', width: '200px', height: '120px', marginTop: '0' }}>
-                <svg viewBox="0 0 200 100" style={{ width: '100%', height: '100%' }}>
+              </div>
+              <div
+                className="dashboard-dark-gauge"
+                style={{
+                  flex: "0 0 auto",
+                  width: "200px",
+                  height: "120px",
+                  marginTop: "0",
+                }}
+              >
+                <svg
+                  viewBox="0 0 200 100"
+                  style={{ width: "100%", height: "100%" }}
+                >
                   <defs>
                     <path
                       id="gauge-arc"
                       d="M 20 80 A 80 80 0 0 1 180 80"
-                                fill="none"
+                      fill="none"
                     />
                   </defs>
                   <use href="#gauge-arc" stroke="#2d3139" strokeWidth="20" />
-                  <use 
-                    href="#gauge-arc" 
-                    stroke="#ff6b35" 
-                                strokeWidth="20"
+                  <use
+                    href="#gauge-arc"
+                    stroke="#ff6b35"
+                    strokeWidth="20"
                     strokeLinecap="round"
-                    strokeDasharray={`${(metrics.progressAtendidos / 100) * (Math.PI * 80)} ${Math.PI * 80}`}
+                    strokeDasharray={`${
+                      (metrics.progressAtendidos / 100) * (Math.PI * 80)
+                    } ${Math.PI * 80}`}
                   />
-                          </svg>
-                    </div>
-                      </div>
-                      </div>
+                </svg>
+              </div>
+            </div>
+          </div>
 
           <div className="dashboard-dark-grid">
             {/* Primeiro Card - Ganhos com Tabela */}
@@ -783,20 +894,24 @@ const Dashboard: React.FC = () => {
                 <div className="dashboard-dark-summary-item">
                   <div className="dashboard-dark-summary-label">Ganhos</div>
                   <div className="dashboard-dark-summary-value">
-                    R$ {metrics.monthEarnings.toLocaleString("pt-BR", {
-                      minimumFractionDigits: 2,
-                    })}
-                      </div>
-                    </div>
-                <div className="dashboard-dark-summary-item">
-                  <div className="dashboard-dark-summary-label">Ganhos Totais</div>
-                  <div className="dashboard-dark-summary-value">
-                    R$ {metrics.totalEarnings.toLocaleString("pt-BR", {
+                    R${" "}
+                    {metrics.monthEarnings.toLocaleString("pt-BR", {
                       minimumFractionDigits: 2,
                     })}
                   </div>
-                      </div>
-                    </div>
+                </div>
+                <div className="dashboard-dark-summary-item">
+                  <div className="dashboard-dark-summary-label">
+                    Ganhos Totais
+                  </div>
+                  <div className="dashboard-dark-summary-value">
+                    R${" "}
+                    {metrics.totalEarnings.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </div>
+                </div>
+              </div>
               <table className="dashboard-dark-table">
                 <thead>
                   <tr>
@@ -808,22 +923,37 @@ const Dashboard: React.FC = () => {
                 <tbody>
                   <tr>
                     <td>Concluídos</td>
-                    <td>R$ {(metrics.totalEarnings * 0.4).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                    <td>
+                      R${" "}
+                      {(metrics.totalEarnings * 0.4).toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </td>
                     <td>{metrics.totalCompleted}</td>
                   </tr>
                   <tr>
                     <td>Pendentes</td>
-                    <td>R$ {(metrics.totalEarnings * 0.3).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                    <td>
+                      R${" "}
+                      {(metrics.totalEarnings * 0.3).toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </td>
                     <td>{metrics.totalPending}</td>
                   </tr>
                   <tr>
                     <td>Cancelados</td>
-                    <td>R$ {(metrics.totalEarnings * 0.1).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                    <td>
+                      R${" "}
+                      {(metrics.totalEarnings * 0.1).toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </td>
                     <td>{metrics.totalCancelled}</td>
                   </tr>
                 </tbody>
               </table>
-                      </div>
+            </div>
 
             {/* Coluna Direita */}
             <div>
@@ -833,41 +963,63 @@ const Dashboard: React.FC = () => {
                   Distribuição dos ganhos durante a semana
                 </p>
                 <div className="dashboard-dark-horizontal-bars">
-                  {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, index) => {
-                    const earning = metrics.monthlyEarnings[index] || 0;
-                    const maxEarning = Math.max(...metrics.monthlyEarnings, 1);
-                    const percentage = (earning / maxEarning) * 100;
-                    return (
-                      <div key={day} className="dashboard-dark-horizontal-bar-item">
-                        <span className="dashboard-dark-horizontal-bar-label">{day}</span>
-                        <div className="dashboard-dark-horizontal-bar-track">
-                          <div
-                            className="dashboard-dark-horizontal-bar-fill"
-                            style={{ width: `${percentage}%` }}
-                          ></div>
-                                </div>
-                        <span className="dashboard-dark-horizontal-bar-value">
-                          R$ {(earning / 1000).toFixed(1)}K
-                                  </span>
-                                </div>
-                    );
-                  })}
-                              </div>
-                            </div>
+                  {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map(
+                    (day, index) => {
+                      const earning = metrics.monthlyEarnings[index] || 0;
+                      const maxEarning = Math.max(
+                        ...metrics.monthlyEarnings,
+                        1
+                      );
+                      const percentage = (earning / maxEarning) * 100;
+                      return (
+                        <div
+                          key={day}
+                          className="dashboard-dark-horizontal-bar-item"
+                        >
+                          <span className="dashboard-dark-horizontal-bar-label">
+                            {day}
+                          </span>
+                          <div className="dashboard-dark-horizontal-bar-track">
+                            <div
+                              className="dashboard-dark-horizontal-bar-fill"
+                              style={{ width: `${percentage}%` }}
+                            ></div>
+                          </div>
+                          <span className="dashboard-dark-horizontal-bar-value">
+                            R$ {(earning / 1000).toFixed(1)}K
+                          </span>
                         </div>
-                    </div>
+                      );
+                    }
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Card Ganhos Mensais - Parte Inferior, Largura Total */}
-          <div className="dashboard-dark-card" style={{ marginTop: '1.5rem', gridColumn: '1 / -1' }}>
+          <div
+            className="dashboard-dark-card"
+            style={{ marginTop: "1.5rem", gridColumn: "1 / -1" }}
+          >
             <h3 className="dashboard-dark-card-title">Ganhos Mensais</h3>
             <p className="dashboard-dark-card-description">
               Descrição dos ganhos do período selecionado
             </p>
-            
+
             <div className="dashboard-dark-chart-container">
-              <svg viewBox="0 0 800 200" style={{ width: '100%', height: '100%' }}>
+              <svg
+                viewBox="0 0 800 200"
+                style={{ width: "100%", height: "100%" }}
+              >
                 <defs>
-                  <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <linearGradient
+                    id="lineGradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="0%"
+                    y2="100%"
+                  >
                     <stop offset="0%" stopColor="#ff6b35" stopOpacity="0.3" />
                     <stop offset="100%" stopColor="#ff6b35" stopOpacity="0" />
                   </linearGradient>
@@ -889,11 +1041,14 @@ const Dashboard: React.FC = () => {
                   points={metrics.monthlyEarnings
                     .map((earning, index) => {
                       const x = 40 + (index / 11) * 720;
-                      const maxEarning = Math.max(...metrics.monthlyEarnings, 1);
+                      const maxEarning = Math.max(
+                        ...metrics.monthlyEarnings,
+                        1
+                      );
                       const y = 160 - (earning / maxEarning) * 120;
                       return `${x},${y}`;
                     })
-                    .join(' ')}
+                    .join(" ")}
                   fill="none"
                   stroke="#ff6b35"
                   strokeWidth="3"
@@ -905,11 +1060,14 @@ const Dashboard: React.FC = () => {
                   points={`40,160 ${metrics.monthlyEarnings
                     .map((earning, index) => {
                       const x = 40 + (index / 11) * 720;
-                      const maxEarning = Math.max(...metrics.monthlyEarnings, 1);
+                      const maxEarning = Math.max(
+                        ...metrics.monthlyEarnings,
+                        1
+                      );
                       const y = 160 - (earning / maxEarning) * 120;
                       return `${x},${y}`;
                     })
-                    .join(' ')} 760,160`}
+                    .join(" ")} 760,160`}
                   fill="url(#lineGradient)"
                 />
                 {/* Data points */}
@@ -930,7 +1088,20 @@ const Dashboard: React.FC = () => {
                   );
                 })}
                 {/* Month labels */}
-                {['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'].map((month, index) => {
+                {[
+                  "Jan",
+                  "Fev",
+                  "Mar",
+                  "Abr",
+                  "Mai",
+                  "Jun",
+                  "Jul",
+                  "Ago",
+                  "Set",
+                  "Out",
+                  "Nov",
+                  "Dez",
+                ].map((month, index) => {
                   const x = 40 + (index / 11) * 720;
                   return (
                     <text
@@ -946,25 +1117,29 @@ const Dashboard: React.FC = () => {
                   );
                 })}
               </svg>
-              </div>
+            </div>
 
             <div className="dashboard-dark-summary-row">
               <div className="dashboard-dark-summary-item">
                 <div className="dashboard-dark-summary-label">Ganhos</div>
                 <div className="dashboard-dark-summary-value">
-                  R$ {metrics.monthEarnings.toLocaleString("pt-BR", {
+                  R${" "}
+                  {metrics.monthEarnings.toLocaleString("pt-BR", {
                     minimumFractionDigits: 2,
                   })}
+                </div>
               </div>
-            </div>
               <div className="dashboard-dark-summary-item">
-                <div className="dashboard-dark-summary-label">Ganhos Totais</div>
+                <div className="dashboard-dark-summary-label">
+                  Ganhos Totais
+                </div>
                 <div className="dashboard-dark-summary-value">
-                  R$ {metrics.totalEarnings.toLocaleString("pt-BR", {
+                  R${" "}
+                  {metrics.totalEarnings.toLocaleString("pt-BR", {
                     minimumFractionDigits: 2,
                   })}
-          </div>
-        </div>
+                </div>
+              </div>
             </div>
 
             <table className="dashboard-dark-table">
@@ -979,13 +1154,23 @@ const Dashboard: React.FC = () => {
               <tbody>
                 <tr>
                   <td>Este Mês</td>
-                  <td>R$ {metrics.monthEarnings.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                  <td>
+                    R${" "}
+                    {metrics.monthEarnings.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </td>
                   <td>{metrics.totalRequests}</td>
                   <td>{metrics.conversionRate}%</td>
                 </tr>
                 <tr>
                   <td>Este Ano</td>
-                  <td>R$ {metrics.totalEarnings.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                  <td>
+                    R${" "}
+                    {metrics.totalEarnings.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </td>
                   <td>{metrics.yearTotal}</td>
                   <td>{metrics.conversionRate}%</td>
                 </tr>
@@ -1055,7 +1240,10 @@ const Dashboard: React.FC = () => {
 
       {/* Modal da Carteira */}
       {showWalletModal && (
-        <div className="wallet-modal-overlay" onClick={() => setShowWalletModal(false)}>
+        <div
+          className="wallet-modal-overlay"
+          onClick={() => setShowWalletModal(false)}
+        >
           <div className="wallet-modal" onClick={(e) => e.stopPropagation()}>
             <div className="wallet-modal-header">
               <h2 className="wallet-modal-title">Carteira</h2>
@@ -1094,13 +1282,17 @@ const Dashboard: React.FC = () => {
                 <>
                   <div className="wallet-balance-section">
                     <div className="wallet-balance-item">
-                      <span className="wallet-balance-label">Saldo Disponível</span>
+                      <span className="wallet-balance-label">
+                        Saldo Disponível
+                      </span>
                       <span className="wallet-balance-value">
                         {formatCurrency(walletBalance?.available_cents || 0)}
                       </span>
                     </div>
                     <div className="wallet-balance-item">
-                      <span className="wallet-balance-label">Saldo Bloqueado</span>
+                      <span className="wallet-balance-label">
+                        Saldo Bloqueado
+                      </span>
                       <span className="wallet-balance-value">
                         {formatCurrency(walletBalance?.blocked_cents || 0)}
                       </span>
@@ -1110,13 +1302,17 @@ const Dashboard: React.FC = () => {
                   <div className="wallet-section">
                     <h3 className="wallet-section-title">Últimas Transações</h3>
                     {walletEntries.length === 0 ? (
-                      <p className="wallet-empty">Nenhuma transação encontrada.</p>
+                      <p className="wallet-empty">
+                        Nenhuma transação encontrada.
+                      </p>
                     ) : (
                       <div className="wallet-entries-list">
                         {walletEntries.map((entry) => (
                           <div key={entry.id} className="wallet-entry-item">
                             <div className="wallet-entry-info">
-                              <span className={`wallet-entry-type ${entry.type.toLowerCase()}`}>
+                              <span
+                                className={`wallet-entry-type ${entry.type.toLowerCase()}`}
+                              >
                                 {entry.type === "CREDIT" ? "Crédito" : "Débito"}
                               </span>
                               <span className="wallet-entry-description">
@@ -1126,7 +1322,9 @@ const Dashboard: React.FC = () => {
                                 {formatDate(entry.created_at)}
                               </span>
                             </div>
-                            <span className={`wallet-entry-amount ${entry.type.toLowerCase()}`}>
+                            <span
+                              className={`wallet-entry-amount ${entry.type.toLowerCase()}`}
+                            >
                               {entry.type === "CREDIT" ? "+" : "-"}
                               {formatCurrency(Math.abs(entry.amount_cents))}
                             </span>
@@ -1157,7 +1355,9 @@ const Dashboard: React.FC = () => {
                             </div>
                             <span
                               className="wallet-payout-status"
-                              style={{ color: getPayoutStatusColor(payout.status) }}
+                              style={{
+                                color: getPayoutStatusColor(payout.status),
+                              }}
                             >
                               {getPayoutStatusLabel(payout.status)}
                             </span>
