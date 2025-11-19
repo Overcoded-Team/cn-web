@@ -56,7 +56,6 @@ const Dashboard: React.FC = () => {
     localStorage.setItem("dashboard-theme", theme);
   }, [theme]);
 
-  // Carregar meta quando o mês/ano selecionado mudar
   useEffect(() => {
     const loadGoalForMonth = async () => {
       if (selectedChartMonth === null) return;
@@ -87,7 +86,6 @@ const Dashboard: React.FC = () => {
           setIsLoading(false);
         }, 5000);
 
-        // Formatar o mês atual no formato YYYY-MM
         const now = new Date();
         const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
@@ -469,12 +467,9 @@ const Dashboard: React.FC = () => {
         ? 100
         : 0;
 
-    // Calcular progresso baseado na meta mensal se definida
-    // monthEarnings está em centavos, monthlyGoal também está em centavos
-    // Se não houver meta, usar o total de vendas do mês como referência (100%)
     const salesProgress = monthlyGoal > 0
       ? Math.min(Math.round((monthEarnings / monthlyGoal) * 100), 100)
-      : (monthEarnings > 0 ? 100 : 0); // Se não há meta, mostra 100% quando há vendas
+      : (monthEarnings > 0 ? 100 : 0);
 
     return {
       avgRating: avgRating5,
@@ -666,7 +661,6 @@ const Dashboard: React.FC = () => {
     }
     const goalInCents = Math.round(goalValue * 100);
     
-    // Validar mínimo de 100 centavos (R$ 1,00) conforme backend
     if (goalInCents < 100) {
       alert("A meta mínima é de R$ 1,00");
       return;
@@ -674,7 +668,6 @@ const Dashboard: React.FC = () => {
     
     try {
       setIsLoadingGoal(true);
-      // Usar o mês/ano selecionado no formato YYYY-MM
       const monthToSave = selectedChartMonth !== null ? selectedChartMonth : new Date().getMonth();
       const monthKey = `${selectedYear}-${String(monthToSave + 1).padStart(2, '0')}`;
       
@@ -720,16 +713,14 @@ const Dashboard: React.FC = () => {
       setPayoutError("");
       
       const amountCents = Math.round(amountValue * 100);
-      const payout = await chefWalletService.requestPayout({
+      await chefWalletService.requestPayout({
         amount_cents: amountCents,
         pix_key: pixKey.trim(),
         pix_key_type: pixKeyType,
       });
 
-      // Atualizar saldo e lista de saques
       await loadWalletData();
       
-      // Fechar modal e limpar campos
       setShowPayoutModal(false);
       setPayoutAmount("");
       setPixKey("");
@@ -1558,7 +1549,6 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Modal da Carteira */}
       {showWalletModal && (
         <div
           className="wallet-modal-overlay"
@@ -1752,7 +1742,6 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Modal de Solicitar Saque */}
       {showPayoutModal && (
         <div className="wallet-modal-overlay" onClick={handleClosePayoutModal}>
           <div className="goal-modal" onClick={(e) => e.stopPropagation()}>
