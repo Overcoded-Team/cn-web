@@ -1,8 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap");
 
-/* Tema Escuro Moderno - Estilo FIESTA ANALYTICS */
-
-/* Garantir que o body tenha fundo escuro quando dashboard estiver ativo */
 body:has(.dashboard-dark-layout),
 body:has(.dashboard-light),
 body:has(.dashboard-dark) {
@@ -10,12 +7,26 @@ body:has(.dashboard-dark) {
   overflow-x: hidden !important;
   width: 100% !important;
   max-width: 100vw !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+body:has(.dashboard-dark-layout)::-webkit-scrollbar,
+body:has(.dashboard-light)::-webkit-scrollbar,
+body:has(.dashboard-dark)::-webkit-scrollbar {
+  display: none;
 }
 
 html {
   overflow-x: hidden !important;
   width: 100% !important;
   max-width: 100vw !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
 }
 
 .dashboard-dark-layout {
@@ -47,6 +58,13 @@ html {
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.dashboard-dark-main::-webkit-scrollbar,
+.dashboard-light-main::-webkit-scrollbar {
+  display: none;
 }
 
 .dashboard-dark-content {
@@ -412,7 +430,6 @@ html {
   display: block;
 }
 
-/* Tema Branco - Botão Defina uma Meta */
 .dashboard-light .define-goal-button {
   background: rgba(255, 107, 53, 0.1);
   border: 1px solid rgba(255, 107, 53, 0.3);
@@ -525,7 +542,6 @@ html {
   object-fit: contain;
 }
 
-/* Estrelas maiores no card de avaliações do topo */
 .dashboard-dark-card .review-stars-top .star-image {
   width: 1.5rem;
   height: 1.5rem;
@@ -639,7 +655,6 @@ html {
   }
 }
 
-/* Modal da Carteira */
 .wallet-modal-overlay {
   position: fixed;
   top: 0;
@@ -713,6 +728,12 @@ html {
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.wallet-modal-content::-webkit-scrollbar {
+  display: none;
 }
 
 .wallet-loading,
@@ -910,11 +931,6 @@ html {
   }
 }
 
-/* ============================================
-   TEMA BRANCO (LIGHT)
-   ============================================ */
-
-/* Toggle Switch de alternância de tema */
 .theme-toggle-switch {
   position: relative;
   width: 50px;
@@ -965,7 +981,6 @@ html {
   transform: translateX(0);
 }
 
-/* Layout base - funciona para ambos os temas */
 .dashboard-layout {
   display: flex;
   width: 100%;
@@ -1039,12 +1054,10 @@ html {
   cursor: pointer;
 }
 
-/* Tema Branco - Body */
 body:has(.dashboard-light) {
   background: #f5f7fa !important;
 }
 
-/* Tema Branco - Layout */
 .dashboard-light {
   background: #f5f7fa !important;
   color: #333333;
@@ -1060,11 +1073,15 @@ body:has(.dashboard-light) {
   width: calc(100vw - 280px) !important;
   max-width: calc(100vw - 280px) !important;
   box-sizing: border-box;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   min-height: 100vh;
   padding: 1.5rem;
   position: relative;
   overflow-x: hidden;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   z-index: 1;
   display: flex;
   justify-content: center;
@@ -1135,7 +1152,6 @@ body:has(.dashboard-light) {
   transform: scale(1.05);
 }
 
-/* Tema Escuro - Sidebar */
 .dashboard-dark .dashboard-sidebar {
   background: #1a1d24 !important;
   border-right: 1px solid #2d3139 !important;
@@ -1151,7 +1167,6 @@ body:has(.dashboard-light) {
   height: calc(100vh / 0.8) !important;
 }
 
-/* Tema Branco - Sidebar */
 .dashboard-light .dashboard-sidebar {
   background: #ffffff;
   border-right: 1px solid #e0e0e0;
@@ -1224,7 +1239,6 @@ body:has(.dashboard-light) {
   color: #666666;
 }
 
-/* Tema Branco - Cards */
 .dashboard-light .dashboard-dark-card {
   background: #ffffff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -1257,7 +1271,6 @@ body:has(.dashboard-light) {
   color: #666666;
 }
 
-/* Tema Branco - Tabelas */
 .dashboard-light .dashboard-dark-table th {
   color: #666666;
   border-bottom: 1px solid #e0e0e0;
@@ -1284,7 +1297,6 @@ body:has(.dashboard-light) {
   color: #666666;
 }
 
-/* Tema Branco - Progress Card */
 .dashboard-light .dashboard-dark-progress-card {
   background: #ffffff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -1343,7 +1355,6 @@ body:has(.dashboard-light) {
   display: block;
 }
 
-/* Tema Branco - Grid */
 .dashboard-light .dashboard-dark-grid {
   width: 100%;
   max-width: 100%;
@@ -1352,7 +1363,6 @@ body:has(.dashboard-light) {
   padding-top: 2px;
 }
 
-/* Tema Branco - Barras Horizontais */
 .dashboard-light .dashboard-dark-horizontal-bar-label {
   color: #666666;
 }
@@ -1365,7 +1375,6 @@ body:has(.dashboard-light) {
   color: #333333;
 }
 
-/* Tema Branco - Loading */
 .dashboard-light .dashboard-loading-container {
   background: #f5f7fa;
 }
@@ -1379,7 +1388,6 @@ body:has(.dashboard-light) {
   opacity: 0.6;
 }
 
-/* Tema Branco - Modal */
 .dashboard-light .wallet-modal-overlay {
   background-color: rgba(0, 0, 0, 0.5);
 }
@@ -1459,7 +1467,6 @@ body:has(.dashboard-light) {
   color: #333333;
 }
 
-/* Tema Branco - Gráficos */
 .dashboard-light .dashboard-dark-chart-container svg line {
   stroke: #e0e0e0;
 }
@@ -1468,12 +1475,10 @@ body:has(.dashboard-light) {
   fill: #666666;
 }
 
-/* Tema Branco - Gauge */
 .dashboard-light .dashboard-dark-gauge svg use[stroke="#2d3139"] {
   stroke: #e0e0e0;
 }
 
-/* Reviews - Tema Escuro */
 .reviews-list {
   display: flex;
   flex-direction: column;
@@ -1568,7 +1573,6 @@ body:has(.dashboard-light) {
   margin: 0;
 }
 
-/* Tema Branco - Reviews */
 .dashboard-light .review-item {
   background: #f5f7fa;
   border: 1px solid #e0e0e0;
@@ -1602,7 +1606,6 @@ body:has(.dashboard-light) {
   color: #666666;
 }
 
-/* Modal de Meta */
 .goal-modal {
   background: #242831;
   border-radius: 16px;
@@ -1730,7 +1733,6 @@ body:has(.dashboard-light) {
   transform: none;
 }
 
-/* Tema Branco - Modal de Meta */
 .dashboard-light .goal-modal {
   background: #ffffff;
   border: 1px solid #e8e8e8;
@@ -1783,7 +1785,6 @@ body:has(.dashboard-light) {
   background: #e8e8e8;
 }
 
-/* Tema Branco - Botão de Editar Meta */
 .dashboard-light .edit-goal-button {
   background: rgba(255, 107, 53, 0.1);
   border: 1px solid rgba(255, 107, 53, 0.3);
@@ -1795,7 +1796,6 @@ body:has(.dashboard-light) {
   border-color: #ff6b35;
 }
 
-/* Tema Branco - Label de Meta */
 .dashboard-light .dashboard-dark-progress-goal-label {
   color: #ff6b35;
 }

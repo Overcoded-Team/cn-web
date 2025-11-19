@@ -895,9 +895,9 @@ const Dashboard: React.FC = () => {
             <div
               className="dashboard-dark-card"
               style={{
-                maxWidth: "360px",
+                maxWidth: "380px",
                 width: "100%",
-                flex: "0 0 auto",
+                flex: "1 1 350px",
                 position: "relative",
                 overflow: "hidden",
                 maxHeight: "320px",
@@ -942,7 +942,6 @@ const Dashboard: React.FC = () => {
               </button>
               <h3 className="dashboard-dark-card-title" style={{ 
                 fontSize: "1.2rem", 
-                color: "#ffffff",
                 marginBottom: "1.5rem", 
                 letterSpacing: "0.3px",
                 fontWeight: "700",
@@ -1004,7 +1003,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div
                   className="dashboard-dark-metric-label"
-                  style={{ margin: 0, opacity: 1, fontSize: "1rem", fontWeight: "500", color: "rgba(255, 255, 255, 0.9)", fontFamily: '"Comfortaa", sans-serif' }}
+                  style={{ margin: 0, opacity: 1, fontSize: "1rem", fontWeight: "500", fontFamily: '"Comfortaa", sans-serif' }}
                 >
                   {reviews.length}{" "}
                   {reviews.length === 1 ? "avaliação" : "avaliações"}
@@ -1015,7 +1014,7 @@ const Dashboard: React.FC = () => {
                 style={{
                   position: "absolute",
                   bottom: "-1rem",
-                  left: "10.5rem",
+                  right: "-3rem",
                 }}
               >
                 <img
@@ -1035,10 +1034,9 @@ const Dashboard: React.FC = () => {
             <div
               className="dashboard-dark-progress-card"
               style={{
-                maxHeight: "280px",
-                height: "280px",
-                flex: "1 1 auto",
-                minWidth: "500px",
+                maxHeight: "320px",
+                height: "320px",
+                flex: "1",
                 display: "flex",
                 flexDirection: "row",
                 alignItems: "flex-start",
@@ -1071,11 +1069,6 @@ const Dashboard: React.FC = () => {
                 <div>
                   <span className="dashboard-dark-progress-value">
                     {formatCurrencyFromReais(metrics.monthEarnings)}
-                  </span>
-                  <span className="dashboard-dark-progress-target">
-                    {monthlyGoal > 0 
-                      ? ` / ${formatCurrency(monthlyGoal)}`
-                      : ` / ${formatCurrencyFromReais(metrics.totalEarnings)}`}
                   </span>
                 </div>
                 <div style={{ flex: 1, display: "flex", alignItems: "center" }}>

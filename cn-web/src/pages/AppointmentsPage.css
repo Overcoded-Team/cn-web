@@ -18,12 +18,12 @@
   overflow: auto;
   padding-right: 4px;
   padding-top: 2px;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .appointments-list::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none;
 }
 .appointment-card {
   position: relative;
@@ -616,6 +616,12 @@
   border: 1px solid #2d3139;
   position: relative;
   animation: slideInModal 0.3s ease-out;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.accept-modal::-webkit-scrollbar {
+  display: none;
 }
 
 @keyframes slideInModal {
@@ -1066,11 +1072,6 @@
   }
 }
 
-/* ============================================
-   TEMA BRANCO (LIGHT) - AppointmentsPage
-   ============================================ */
-
-/* Tema Branco - Cards de Agendamento */
 .dashboard-light .appointment-card {
   background: #ffffff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -1124,7 +1125,6 @@
   color: #666666;
 }
 
-/* Tema Branco - Cards Pendentes */
 .dashboard-light .pending-request-card {
   background: #ffffff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -1172,7 +1172,6 @@
   color: #666666;
 }
 
-/* Tema Branco - Calendário */
 .dashboard-light .calendar-card,
 .dashboard-light .notes-card {
   background: #ffffff;
@@ -1213,7 +1212,6 @@
   color: #fff;
 }
 
-/* Tema Branco - Notes Card */
 .dashboard-light .notes-header {
   border-bottom: 1px solid #e0e0e0;
 }
@@ -1273,7 +1271,6 @@
   border-top: 1px solid #e0e0e0;
 }
 
-/* Tema Branco - Modal de Aceitar */
 .dashboard-light .accept-modal {
   background: #ffffff;
   border: 1px solid #e8e8e8;
@@ -1348,7 +1345,6 @@
   background: #e8e8e8;
 }
 
-/* Tema Branco - Chat Modal */
 .dashboard-light .chat-modal {
   background: #ffffff;
   border: 1px solid #e8e8e8;

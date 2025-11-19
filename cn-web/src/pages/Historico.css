@@ -6,8 +6,6 @@
   box-sizing: border-box;
 }
 
-/* Estilos antigos da sidebar removidos - agora usando DashboardSidebar compartilhado */
-
 .historico-list {
   display: flex;
   flex-direction: column;
@@ -127,7 +125,8 @@
 .pending-chat-fab {
   position: absolute;
   right: 12px;
-  bottom: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -166,11 +165,6 @@
   }
 }
 
-/* ============================================
-   TEMA BRANCO (LIGHT) - Historico
-   ============================================ */
-
-/* Tema Branco - Entradas do Histórico */
 .dashboard-light .historico-entry {
   background: #ffffff;
   border-bottom: 1px solid #e0e0e0;
@@ -208,7 +202,6 @@
   color: #666666;
 }
 
-/* Tema Branco - Chat Modal */
 .dashboard-light .chat-modal {
   background: #ffffff;
   border: 1px solid #e8e8e8;

@@ -8,15 +8,26 @@
 
 html {
   scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
 }
 
 body {
   font-family: "Inter", sans-serif;
   line-height: 1.6;
   color: #333;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-/* Fundo escuro para páginas do dashboard */
+body::-webkit-scrollbar {
+  display: none;
+}
+
 .App:has(.dashboard-dark-layout),
 body:has(.dashboard-dark-layout) {
   background: #1a1d24 !important;
