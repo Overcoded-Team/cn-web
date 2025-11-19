@@ -7,9 +7,9 @@ export const api = {
   async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const token = localStorage.getItem("access_token");
 
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     if (token) {
