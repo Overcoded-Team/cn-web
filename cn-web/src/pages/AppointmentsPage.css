@@ -868,6 +868,34 @@
   }
 }
 
+.quote-toggle-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #2d3139;
+  display: flex;
+  justify-content: center;
+}
+
+.show-quote-button {
+  width: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  color: #ff6b35;
+  border: 2px solid #ff6b35;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: "Comfortaa", sans-serif;
+}
+
+.show-quote-button:hover {
+  background: rgba(255, 107, 53, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 107, 53, 0.2);
+}
+
 .appointment-actions {
   margin-top: 16px;
   padding-top: 16px;
@@ -1226,6 +1254,19 @@
 
 .dashboard-light .appointment-observation-empty p {
   color: #999999;
+}
+
+.dashboard-light .quote-toggle-section {
+  border-top: 1px solid #e0e0e0;
+}
+
+.dashboard-light .show-quote-button {
+  color: #ff6b35;
+  border-color: #ff6b35;
+}
+
+.dashboard-light .show-quote-button:hover {
+  background: rgba(255, 107, 53, 0.1);
 }
 
 .dashboard-light .appointment-actions {

@@ -438,6 +438,20 @@ const AppointmentsPage: React.FC = () => {
 
       setAppointments(mappedAppointments);
       handleCloseAcceptModal();
+      
+      // Abrir chat automaticamente após aceitar a solicitação
+      const acceptedRequest = allRequests.find((req: ServiceRequest) => req.id === selectedPendingRequest.id);
+      if (acceptedRequest) {
+        const clientName = acceptedRequest.client_profile?.user?.name || "Cliente";
+        const clientProfilePicture = acceptedRequest.client_profile?.user?.profilePictureUrl;
+        setChatContext({
+          serviceRequestId: acceptedRequest.id,
+          status: acceptedRequest.status,
+          participantName: clientName,
+          participantAvatarUrl: clientProfilePicture,
+        });
+        setShowChatModal(true);
+      }
     } catch (err) {
       setModalError(
         err instanceof Error
@@ -615,21 +629,6 @@ const AppointmentsPage: React.FC = () => {
                               Rejeitar
                             </button>
                           </div>
-                          <button
-                            className="pending-chat-fab"
-                            aria-label="Abrir chat"
-                            onClick={() => {
-                              setChatContext({
-                                serviceRequestId: req.id,
-                                status: req.status,
-                                participantName: clientName,
-                                participantAvatarUrl: clientProfilePicture,
-                              });
-                              setShowChatModal(true);
-                            }}
-                          >
-                            <img src={chatIcon} alt="" className="chat-icon" />
-                          </button>
                         </div>
                       );
                     })}
@@ -974,15 +973,17 @@ const AppointmentsPage: React.FC = () => {
                         </div>
                       )}
 
-                      <div className="detail-item">
-                        <span className="detail-label">Valor:</span>
-                        <span className="detail-value price">
-                          R${" "}
-                          {selectedAppointment.priceBRL
-                            .toFixed(2)
-                            .replace(".", ",")}
-                        </span>
-                      </div>
+                      {selectedAppointment.priceBRL > 0 && (
+                        <div className="detail-item">
+                          <span className="detail-label">Valor:</span>
+                          <span className="detail-value price">
+                            R${" "}
+                            {selectedAppointment.priceBRL
+                              .toFixed(2)
+                              .replace(".", ",")}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {(selectedAppointment.description ||

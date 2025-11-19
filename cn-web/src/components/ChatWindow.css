@@ -18,6 +18,12 @@
   border-bottom: 1px solid #2d3139;
 }
 
+.chat-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .chat-header-content {
   display: flex;
   flex-direction: column;
@@ -103,6 +109,25 @@
 .chat-close-button:hover {
   background: #2d3139;
   color: #ffffff;
+}
+
+.chat-send-quote-button {
+  padding: 8px 16px;
+  background: #ff6b35;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.chat-send-quote-button:hover {
+  background: #e55a2b;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(255, 107, 53, 0.3);
 }
 
 .chat-messages {
@@ -282,7 +307,6 @@
   cursor: not-allowed;
 }
 
-/* Scrollbar styling */
 .chat-messages::-webkit-scrollbar {
   width: 6px;
 }
@@ -333,11 +357,6 @@
   line-height: 1.5;
 }
 
-/* ============================================
-   TEMA BRANCO (LIGHT) - ChatWindow
-   ============================================ */
-
-/* Tema Branco - Chat Window */
 .dashboard-light .chat-window {
   background: #ffffff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -445,7 +464,6 @@
   background: #f5f7fa;
 }
 
-/* Tema Branco - Scrollbar */
 .dashboard-light .chat-messages::-webkit-scrollbar-track {
   background: #f5f7fa;
 }
@@ -456,4 +474,309 @@
 
 .dashboard-light .chat-messages::-webkit-scrollbar-thumb:hover {
   background: #cccccc;
+}
+
+.quote-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 2rem;
+}
+
+.quote-modal {
+  background: #242831;
+  border-radius: 16px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.quote-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #2d3139;
+}
+
+.quote-modal-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+  font-family: "Comfortaa", sans-serif;
+}
+
+.quote-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ffffff;
+  padding: 0.5rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  transition: all 0.2s;
+  width: 32px;
+  height: 32px;
+}
+
+.quote-modal-close:hover:not(:disabled) {
+  background: #2d3139;
+}
+
+.quote-modal-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quote-modal-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.quote-modal-content .accept-request-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 1rem;
+  background: #1a1d24;
+  border-radius: 8px;
+  border: 1px solid #2d3139;
+}
+
+.quote-modal-content .accept-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.quote-modal-content .accept-info-label {
+  color: #b0b3b8;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.quote-modal-content .accept-info-value {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.quote-modal-content .accept-value-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.quote-modal-content .accept-value-with-fees {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 107, 53, 0.1);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  border-radius: 8px;
+}
+
+.quote-modal-content .accept-fees-label {
+  color: #b0b3b8;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.quote-modal-content .accept-fees-value {
+  color: #ff6b35;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.quote-modal-error {
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 14px;
+}
+
+.quote-form-group {
+  margin-bottom: 1.5rem;
+}
+
+.quote-form-label {
+  display: block;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.quote-form-input,
+.quote-form-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #2d3139;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #1a1d24;
+  color: #ffffff;
+  font-family: "Comfortaa", sans-serif;
+  transition: all 0.3s;
+}
+
+.quote-form-input:focus,
+.quote-form-textarea:focus {
+  outline: none;
+  border-color: #ff6b35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.quote-form-input:disabled,
+.quote-form-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.quote-form-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.quote-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-top: 1px solid #2d3139;
+}
+
+.quote-modal-cancel,
+.quote-modal-submit {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: "Comfortaa", sans-serif;
+}
+
+.quote-modal-cancel {
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid #2d3139;
+}
+
+.quote-modal-cancel:hover:not(:disabled) {
+  background: #2d3139;
+  border-color: #3d4149;
+}
+
+.quote-modal-submit {
+  background: #ff6b35;
+  color: #ffffff;
+}
+
+.quote-modal-submit:hover:not(:disabled) {
+  background: #e55a2b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.quote-modal-cancel:disabled,
+.quote-modal-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.dashboard-light .quote-modal {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-light .quote-modal-header {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dashboard-light .quote-modal-title {
+  color: #333333;
+}
+
+.dashboard-light .quote-modal-close {
+  color: #666666;
+}
+
+.dashboard-light .quote-modal-close:hover:not(:disabled) {
+  background: #f0f0f0;
+  color: #333333;
+}
+
+.dashboard-light .quote-form-label {
+  color: #333333;
+}
+
+.dashboard-light .quote-form-input,
+.dashboard-light .quote-form-textarea {
+  background: #ffffff;
+  border-color: #e0e0e0;
+  color: #333333;
+}
+
+.dashboard-light .quote-form-input:focus,
+.dashboard-light .quote-form-textarea:focus {
+  border-color: #ff6b35;
+}
+
+.dashboard-light .quote-modal-actions {
+  border-top: 1px solid #e0e0e0;
+}
+
+.dashboard-light .quote-modal-cancel {
+  color: #333333;
+  border-color: #e0e0e0;
+}
+
+.dashboard-light .quote-modal-cancel:hover:not(:disabled) {
+  background: #f5f5f5;
+  border-color: #d0d0d0;
+}
+
+.dashboard-light .quote-modal-content .accept-request-info {
+  background: #f5f7fa;
+  border: 1px solid #e0e0e0;
+}
+
+.dashboard-light .quote-modal-content .accept-info-label {
+  color: #666666;
+}
+
+.dashboard-light .quote-modal-content .accept-info-value {
+  color: #333333;
+}
+
+.dashboard-light .quote-modal-content .accept-fees-label {
+  color: #666666;
 }
