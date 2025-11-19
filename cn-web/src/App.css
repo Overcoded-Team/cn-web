@@ -16,6 +16,12 @@ body {
   color: #333;
 }
 
+/* Fundo escuro para páginas do dashboard */
+.App:has(.dashboard-dark-layout),
+body:has(.dashboard-dark-layout) {
+  background: #1a1d24 !important;
+}
+
 section[id] {
   scroll-margin-top: 100px;
 }

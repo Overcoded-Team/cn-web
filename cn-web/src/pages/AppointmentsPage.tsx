@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import "../App.css";
 import "./Dashboard.css";
+import "./DashboardDark.css";
 import "./AppointmentsPage.css";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { ChatWindow } from "../components/ChatWindow";
@@ -37,6 +39,7 @@ type Appointment = {
 const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 const AppointmentsPage: React.FC = () => {
+  const location = useLocation();
   const today = useMemo(() => new Date(), []);
   const [currentMonth, setCurrentMonth] = useState<number>(today.getMonth());
   const [currentYear, setCurrentYear] = useState<number>(today.getFullYear());
@@ -418,17 +421,58 @@ const AppointmentsPage: React.FC = () => {
   };
 
   return (
-    <div className="dashboard-layout">
+    <div className="dashboard-dark-layout">
       <DashboardSidebar />
 
-      <main className="dashboard-main">
-        <div className="main-content">
-          <h1 className="dashboard-title">Agendamentos</h1>
+      <main className="dashboard-dark-main">
+        <div className="dashboard-dark-content">
+          <div className="dashboard-dark-header">
+            <h1 className="dashboard-dark-title">Agendamentos</h1>
+            <nav className="dashboard-dark-nav">
+              <Link
+                to="/dashboard"
+                className={`dashboard-dark-nav-link ${
+                  location.pathname === "/dashboard" || location.pathname === "/"
+                    ? "active"
+                    : ""
+                }`}
+              >
+                Dashboard
+              </Link>
+              <Link
+                to="/perfil"
+                className={`dashboard-dark-nav-link ${
+                  location.pathname === "/perfil" ? "active" : ""
+                }`}
+              >
+                Perfil
+              </Link>
+              <Link
+                to="/agendamentos"
+                className={`dashboard-dark-nav-link ${
+                  location.pathname === "/agendamentos" ||
+                  location.pathname === "/preview/agendamentos"
+                    ? "active"
+                    : ""
+                }`}
+              >
+                Agendamentos
+              </Link>
+              <Link
+                to="/historico"
+                className={`dashboard-dark-nav-link ${
+                  location.pathname === "/historico" ? "active" : ""
+                }`}
+              >
+                Histórico
+              </Link>
+            </nav>
+          </div>
           <div className="appointments-grid">
             <section className="appointments-list-section">
               {pendingRequests.length > 0 && (
-                <div className="pending-section">
-                  <h2 className="section-title-orange">Pendentes</h2>
+                <div className="dashboard-dark-card pending-section">
+                  <h2 className="dashboard-dark-card-title">Pendentes</h2>
                   <div className="pending-requests-list">
                     {pendingRequests.map((req) => {
                       const requestedDate = new Date(req.requested_date);
@@ -502,8 +546,8 @@ const AppointmentsPage: React.FC = () => {
               )}
 
               {pendingClientApproval.length > 0 && (
-                <div className="pending-section">
-                  <h2 className="section-title-orange">Aguardando Cliente</h2>
+                <div className="dashboard-dark-card pending-section">
+                  <h2 className="dashboard-dark-card-title">Aguardando Cliente</h2>
                   <div className="pending-requests-list">
                     {pendingClientApproval.map((req) => {
                       const requestedDate = new Date(req.requested_date);
@@ -573,18 +617,19 @@ const AppointmentsPage: React.FC = () => {
                 </div>
               )}
 
-              <h2 className="section-title">Confirmados</h2>
+              <div className="dashboard-dark-card">
+                <h2 className="dashboard-dark-card-title">Confirmados</h2>
 
-              {isLoading ? (
-                <div className="empty-state">Carregando...</div>
-              ) : error ? (
-                <div className="empty-state">{error}</div>
-              ) : confirmedSorted.length === 0 ? (
-                <div className="empty-state">
-                  Nenhum agendamento confirmado.
-                </div>
-              ) : (
-                <ul className="appointments-list">
+                {isLoading ? (
+                  <div className="empty-state">Carregando...</div>
+                ) : error ? (
+                  <div className="empty-state">{error}</div>
+                ) : confirmedSorted.length === 0 ? (
+                  <div className="empty-state">
+                    Nenhum agendamento confirmado.
+                  </div>
+                ) : (
+                  <ul className="appointments-list">
                   {confirmedSorted.map((a) => (
                     <li
                       key={a.id}
@@ -637,12 +682,13 @@ const AppointmentsPage: React.FC = () => {
                       </div>
                     </li>
                   ))}
-                </ul>
-              )}
+                  </ul>
+                )}
+              </div>
             </section>
 
             <section className="appointments-right-panel">
-              <div className="calendar-card">
+              <div className="dashboard-dark-card calendar-card">
                 <div className="calendar-header">
                   <button
                     type="button"
@@ -692,7 +738,7 @@ const AppointmentsPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="notes-card">
+              <div className="dashboard-dark-card notes-card">
                 {selectedAppointment ? (
                   <>
                     <div className="notes-header">

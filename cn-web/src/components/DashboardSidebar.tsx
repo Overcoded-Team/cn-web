@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useEffect, useState, useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import perfilVazio from "../assets/perfilvazio.png";
 import facebookIcon from "../assets/facebook.svg";
@@ -28,7 +27,6 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   isUploadingPicture = false,
   onPictureButtonClick,
 }) => {
-  const location = useLocation();
   const { user, logout } = useAuth();
 
   const chefName = user?.name || "Chef";
@@ -63,8 +61,9 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     }
   }, [user, isEditing]);
 
-  const imageSrc =
-    profilePicture && !imageError ? profilePicture : fallbackImage;
+  const imageSrc = useMemo(() => {
+    return profilePicture && !imageError ? profilePicture : fallbackImage;
+  }, [profilePicture, imageError]);
 
   const getSocialIcon = (type: string) => {
     switch (type) {
@@ -108,12 +107,12 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     return link.url;
   };
 
-  const renderSocialLinks = () => {
+  const renderSocialLinks = useMemo(() => {
     if (!socialLinks || socialLinks.length === 0) {
       return null;
     }
 
-    return socialLinks.map((link, index) => {
+    return socialLinks.map((link) => {
       const icon = getSocialIcon(link.type);
       if (!icon) return null;
 
@@ -121,18 +120,18 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
       return (
         <a
-          key={index}
+          key={link.type}
           href={url}
           target="_blank"
           rel="noopener noreferrer"
           className="social-icon"
           aria-label={link.type}
         >
-          <img src={icon} alt={link.type} />
+          <img src={icon} alt={link.type} style={{ display: 'block' }} />
         </a>
       );
     });
-  };
+  }, [socialLinks]);
 
   return (
     <aside className={`dashboard-sidebar ${className}`}>
@@ -181,48 +180,8 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             <p className="chef-label">Chef</p>
             <p className="chef-name">{chefName}</p>
           </div>
-          <div className="social-media-icons">{renderSocialLinks()}</div>
+          <div className="social-media-icons">{renderSocialLinks}</div>
         </div>
-
-        <nav className="sidebar-nav">
-          <Link
-            to="/dashboard"
-            className={`nav-item ${
-              location.pathname === "/dashboard" || location.pathname === "/"
-                ? "active"
-                : ""
-            }`}
-          >
-            Dashboard
-          </Link>
-          <Link
-            to="/perfil"
-            className={`nav-item ${
-              location.pathname === "/perfil" ? "active" : ""
-            }`}
-          >
-            Perfil
-          </Link>
-          <Link
-            to="/agendamentos"
-            className={`nav-item ${
-              location.pathname === "/agendamentos" ||
-              location.pathname === "/preview/agendamentos"
-                ? "active"
-                : ""
-            }`}
-          >
-            Agendamentos
-          </Link>
-          <Link
-            to="/historico"
-            className={`nav-item ${
-              location.pathname === "/historico" ? "active" : ""
-            }`}
-          >
-            Histórico
-          </Link>
-        </nav>
 
         <button className="logout-button" onClick={logout} aria-label="Sair">
           <img src={sairIcon} alt="Sair" className="logout-icon" />

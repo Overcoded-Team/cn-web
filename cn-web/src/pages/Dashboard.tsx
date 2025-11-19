@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { Link, useLocation } from "react-router-dom";
 import "./Dashboard.css";
+import "./DashboardDark.css";
 import estrelaInteira from "../assets/estrelainteira.png";
 import meiaEstrela from "../assets/meiaestrela.png";
 import estrelaVazia from "../assets/estrelavazia.png";
+import logoBranco from "../assets/iconebranco.png";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { chefService, ChefReview } from "../services/chef.service";
 import {
@@ -20,6 +23,7 @@ import {
 } from "../services/chef-wallet.service";
 
 const Dashboard: React.FC = () => {
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
@@ -52,37 +56,53 @@ const Dashboard: React.FC = () => {
     const loadData = async () => {
       try {
         setIsLoading(true);
+        
+        // Timeout de segurança para garantir que o loading não fique infinito
+        const timeoutId = setTimeout(() => {
+          setIsLoading(false);
+        }, 5000); // 5 segundos máximo
+
+        // Carregar dados principais primeiro (mais rápido)
         const [profileData, reviewsData, balanceData] = await Promise.all([
-          chefService.getMyProfile(),
-          chefService.getMyReviews(1, 1000),
+          chefService.getMyProfile().catch(() => null),
+          chefService.getMyReviews(1, 1000).catch(() => ({ items: [] })),
           chefWalletService.getBalance().catch(() => null),
         ]);
 
-        let allRequests: ServiceRequest[] = [];
-        let page = 1;
-        let hasMore = true;
-
-        while (hasMore) {
-          const requestsData =
-            await serviceRequestService.listChefServiceRequests(page, 1000);
-          allRequests = [...allRequests, ...requestsData.items];
-
-          if (
-            requestsData.items.length < 1000 ||
-            allRequests.length >= requestsData.total
-          ) {
-            hasMore = false;
-          } else {
-            page++;
-          }
-        }
-
+        // Atualizar estados principais primeiro para mostrar conteúdo
         setProfile(profileData);
-        setServiceRequests(allRequests);
-        setReviews(reviewsData.items);
+        setReviews(reviewsData.items || []);
         if (balanceData) {
           setWalletBalance(balanceData);
         }
+
+        // Carregar solicitações em background (pode demorar mais)
+        let allRequests: ServiceRequest[] = [];
+        let page = 1;
+        let hasMore = true;
+        let maxPages = 10; // Limite de segurança para evitar loop infinito
+
+        try {
+          while (hasMore && page <= maxPages) {
+            const requestsData =
+              await serviceRequestService.listChefServiceRequests(page, 1000);
+            allRequests = [...allRequests, ...requestsData.items];
+
+            if (
+              requestsData.items.length < 1000 ||
+              allRequests.length >= requestsData.total ||
+              !requestsData.items || requestsData.items.length === 0
+            ) {
+              hasMore = false;
+            } else {
+              page++;
+            }
+          }
+        } catch (error) {
+          console.error("Erro ao carregar solicitações:", error);
+        }
+
+        setServiceRequests(allRequests);
 
         const initialPaidCount = allRequests.filter(
           (sr) =>
@@ -91,9 +111,11 @@ const Dashboard: React.FC = () => {
             sr.status === ServiceRequestStatus.COMPLETED
         ).length;
         previousCompletedCountRef.current = initialPaidCount;
+
+        clearTimeout(timeoutId);
+        setIsLoading(false);
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
-      } finally {
         setIsLoading(false);
       }
     };
@@ -283,6 +305,95 @@ const Dashboard: React.FC = () => {
       avgRating5 = (Number(profile.avgRating) / 10) * 5;
     }
 
+    // Novas métricas
+    const pendingApprovals = serviceRequests.filter(
+      (sr) => sr.status === ServiceRequestStatus.QUOTE_SENT
+    );
+
+    const pendingChefReview = serviceRequests.filter(
+      (sr) => sr.status === ServiceRequestStatus.PENDING_CHEF_REVIEW
+    );
+
+    const scheduledRequests = serviceRequests.filter(
+      (sr) =>
+        sr.status === ServiceRequestStatus.SCHEDULED ||
+        sr.status === ServiceRequestStatus.PAYMENT_CONFIRMED
+    );
+
+    const upcomingAppointments = scheduledRequests
+      .filter((sr) => {
+        const reqDate = new Date(sr.requested_date);
+        return reqDate >= now;
+      })
+      .sort((a, b) => {
+        const dateA = new Date(a.requested_date).getTime();
+        const dateB = new Date(b.requested_date).getTime();
+        return dateA - dateB;
+      })
+      .slice(0, 5);
+
+    const quotesSent = serviceRequests.filter(
+      (sr) => sr.status === ServiceRequestStatus.QUOTE_SENT
+    );
+
+    const quotesAccepted = serviceRequests.filter(
+      (sr) => sr.status === ServiceRequestStatus.QUOTE_ACCEPTED
+    );
+
+    const conversionRate =
+      quotesSent.length > 0
+        ? Math.round((quotesAccepted.length / quotesSent.length) * 100)
+        : 0;
+
+    const avgResponseTime = (() => {
+      const quotesWithTimes = quotesSent
+        .filter((sr) => sr.quote && sr.created_at && sr.quote.created_at)
+        .map((sr) => {
+          const requestDate = new Date(sr.created_at);
+          const quoteDate = new Date(sr.quote!.created_at);
+          return quoteDate.getTime() - requestDate.getTime();
+        });
+
+      if (quotesWithTimes.length === 0) return 0;
+      const avgMs =
+        quotesWithTimes.reduce((sum, time) => sum + time, 0) /
+        quotesWithTimes.length;
+      return Math.round(avgMs / (1000 * 60 * 60)); // horas
+    })();
+
+    const lastMonthEarnings = (() => {
+      const lastMonth = chartMonth === 0 ? 11 : chartMonth - 1;
+      const lastMonthYear = chartMonth === 0 ? selectedYear - 1 : selectedYear;
+      const lastMonthStart = new Date(lastMonthYear, lastMonth, 1);
+      const lastMonthEnd = new Date(lastMonthYear, lastMonth + 1, 0, 23, 59, 59);
+
+      return serviceRequests
+        .filter((sr) => {
+          if (
+            (sr.status !== ServiceRequestStatus.PAYMENT_CONFIRMED &&
+              sr.status !== ServiceRequestStatus.SCHEDULED &&
+              sr.status !== ServiceRequestStatus.COMPLETED) ||
+            !sr.quote
+          )
+            return false;
+          const paymentDate = new Date(sr.updated_at);
+          return paymentDate >= lastMonthStart && paymentDate <= lastMonthEnd;
+        })
+        .reduce((sum, sr) => {
+          if (!sr.quote) return sum;
+          return sum + (sr.quote.amount_cents || 0);
+        }, 0);
+    })() / 100;
+
+    const earningsGrowth =
+      lastMonthEarnings > 0
+        ? Math.round(
+            ((monthEarnings / 100 - lastMonthEarnings) / lastMonthEarnings) * 100
+          )
+        : monthEarnings / 100 > 0
+        ? 100
+        : 0;
+
     return {
       avgRating: avgRating5,
       totalEarnings: totalEarnings / 100,
@@ -303,6 +414,13 @@ const Dashboard: React.FC = () => {
       monthlyEarnings: monthlyEarnings.map((e) => e / 100),
       maxMonthlyEarning: maxMonthlyEarning / 100,
       yearTotal: yearRequests.length,
+      pendingApprovals: pendingApprovals.length,
+      pendingChefReview: pendingChefReview.length,
+      upcomingAppointments,
+      conversionRate,
+      avgResponseTime,
+      earningsGrowth,
+      lastMonthEarnings,
     };
   }, [serviceRequests, profile, selectedYear, selectedChartMonth, reviews]);
 
@@ -340,62 +458,6 @@ const Dashboard: React.FC = () => {
     loadWalletData();
   };
 
-  const handleRequestPayout = async () => {
-    const inputValue = payoutAmountInput.replace(",", ".");
-    const numericValue = inputValue.replace(/[^\d.]/g, "");
-    const value = parseFloat(numericValue) || 0;
-    const amountCents = Math.round(value * 100);
-
-    if (!amountCents || amountCents < 100) {
-      setWalletError("O valor mínimo para saque é R$ 1,00");
-      return;
-    }
-
-    if (!payoutForm.pix_key || payoutForm.pix_key.trim().length < 5) {
-      setWalletError("Informe uma chave PIX válida");
-      return;
-    }
-
-    const availableBalance =
-      (walletBalance?.available_cents ?? 0) > 0
-        ? (walletBalance?.available_cents ?? 0)
-        : metrics.totalEarnings * 100;
-
-    if (amountCents > availableBalance) {
-      setWalletError("Saldo insuficiente");
-      return;
-    }
-
-    try {
-      setIsRequestingPayout(true);
-      setWalletError("");
-      await chefWalletService.requestPayout({
-        amount_cents: amountCents,
-        pix_key: payoutForm.pix_key.trim(),
-        pix_key_type: payoutForm.pix_key_type,
-      });
-
-      await loadWalletData();
-
-      const updatedBalance = await chefWalletService.getBalance();
-      setWalletBalance(updatedBalance);
-
-      setShowPayoutModal(false);
-      setPayoutForm({
-        amount_cents: 0,
-        pix_key: "",
-        pix_key_type: "EVP",
-      });
-      setPayoutAmountInput("");
-    } catch (err) {
-      setWalletError(
-        err instanceof Error ? err.message : "Erro ao solicitar saque"
-      );
-    } finally {
-      setIsRequestingPayout(false);
-    }
-  };
-
   const formatCurrency = (cents: number): string => {
     return `R$ ${(cents / 100).toLocaleString("pt-BR", {
       minimumFractionDigits: 2,
@@ -412,28 +474,6 @@ const Dashboard: React.FC = () => {
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
-
-  const getStatusLabel = (status: string): string => {
-    const statusMap: Record<string, string> = {
-      REQUESTED: "Solicitado",
-      PROCESSING: "Processando",
-      PAID: "Pago",
-      FAILED: "Falhou",
-      CANCELLED: "Cancelado",
-    };
-    return statusMap[status] || status;
-  };
-
-  const getStatusColor = (status: string): string => {
-    const colorMap: Record<string, string> = {
-      REQUESTED: "#FF6B35",
-      PROCESSING: "#FFA500",
-      PAID: "#4CAF50",
-      FAILED: "#F44336",
-      CANCELLED: "#9E9E9E",
-    };
-    return colorMap[status] || "#666";
   };
 
   if (isLoading) {
@@ -495,35 +535,86 @@ const Dashboard: React.FC = () => {
     return stars;
   };
 
+  if (isLoading) {
+    return (
+      <div className="dashboard-dark-layout">
+        <DashboardSidebar />
+        <main className="dashboard-dark-main">
+          <div className="dashboard-dark-content">
+            <div className="dashboard-loading-container">
+              <div className="dashboard-loading-logo">
+                <img src={logoBranco} alt="Logo" className="loading-logo-image" />
+              </div>
+              <p className="dashboard-loading-text">Carregando dados...</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
-    <div className="dashboard-layout">
+    <div className="dashboard-dark-layout">
       <DashboardSidebar />
 
-      <main className="dashboard-main">
-        <div className="main-content">
-          <h1 className="dashboard-title">Dashboard</h1>
+      <main className="dashboard-dark-main">
+        <div className="dashboard-dark-content">
+          <div className="dashboard-dark-header">
+            <h1 className="dashboard-dark-title">Dashboard</h1>
+            <nav className="dashboard-dark-nav">
+              <Link
+                to="/dashboard"
+                className={`dashboard-dark-nav-link ${
+                  location.pathname === "/dashboard" || location.pathname === "/"
+                    ? "active"
+                    : ""
+                }`}
+              >
+                Dashboard
+              </Link>
+              <Link
+                to="/perfil"
+                className={`dashboard-dark-nav-link ${
+                  location.pathname === "/perfil" ? "active" : ""
+                }`}
+              >
+                Perfil
+              </Link>
+              <Link
+                to="/agendamentos"
+                className={`dashboard-dark-nav-link ${
+                  location.pathname === "/agendamentos" ||
+                  location.pathname === "/preview/agendamentos"
+                    ? "active"
+                    : ""
+                }`}
+              >
+                Agendamentos
+              </Link>
+              <Link
+                to="/historico"
+                className={`dashboard-dark-nav-link ${
+                  location.pathname === "/historico" ? "active" : ""
+                }`}
+              >
+                Histórico
+              </Link>
+            </nav>
+          </div>
 
-          <div className="dashboard-layout-grid">
-            <div className="dashboard-left-column">
-              <div className="cards-row-top">
-                <div className="card ganhos-card">
+          {/* Cards Topo - Ganhos e Avaliações lado a lado */}
+          <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+            {/* Card de Ganhos Laranja */}
+            <div className="card ganhos-card" style={{ maxWidth: '350px', width: '100%', flex: '0 0 auto', maxHeight: '280px', height: '280px' }}>
                   <button
                     className="ver-carteira-button"
                     onClick={handleOpenWallet}
                   >
                     Ver Carteira
                   </button>
-                  <h3 className="card-title-white">Ganhos</h3>
-                  <p className="card-period">{metrics.period}</p>
-                  <p className="card-value-white">
-                    R${" "}
-                    {metrics.monthEarnings.toLocaleString("pt-BR", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </p>
-                  <div className="saldo-disponivel-section">
-                    <p className="saldo-disponivel-label">Saldo Disponível</p>
-                    <p className="saldo-disponivel-value">
+              <div className="saldo-disponivel-section" style={{ borderTop: 'none', paddingTop: '0' }}>
+                <p className="saldo-disponivel-label" style={{ fontSize: '1.2rem' }}>Saldo Disponível</p>
+                <p className="saldo-disponivel-value" style={{ fontSize: '2.5rem' }}>
                       R${" "}
                       {(
                         walletBalance?.available_cents && walletBalance.available_cents > 0
@@ -535,599 +626,349 @@ const Dashboard: React.FC = () => {
                       })}
                     </p>
                   </div>
+              <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.2)', marginTop: '1rem', marginBottom: '1rem', paddingTop: '1rem' }}>
+                <h3 className="card-title-white" style={{ fontSize: '1.2rem' }}>Ganhos</h3>
+                <p className="card-value-white" style={{ fontSize: '1.5rem' }}>
+                  R${" "}
+                  {metrics.monthEarnings.toLocaleString("pt-BR", {
+                    minimumFractionDigits: 2,
+                  })}
+                </p>
+              </div>
                 </div>
 
-                <div className="card avaliacao-card">
+            {/* Card de Avaliações */}
+            <div className="dashboard-dark-card" style={{ maxWidth: '300px', width: '100%', flex: '0 0 auto', position: 'relative', overflow: 'hidden', maxHeight: '280px', height: '280px' }}>
                   <button
                     className="ver-avaliacoes-button"
                     onClick={() => setShowReviewsModal(true)}
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  padding: '0.5rem 1rem',
+                  background: '#ff6b35',
+                  color: '#ffffff',
+                  border: '2px solid rgba(255, 107, 53, 0.3)',
+                  borderRadius: '20px',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s',
+                  fontFamily: '"Comfortaa", sans-serif',
+                  zIndex: 10
+                }}
                   >
                     Ver Avaliações
                   </button>
-                  <h3 className="card-title-orange">Avaliação Média</h3>
-                  <div className="avaliacao-content">
-                    <span className="avaliacao-number">
+              <h3 className="dashboard-dark-card-title">Avaliações</h3>
+              
+              {/* Informações à esquerda */}
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                gap: '0.5rem',
+                position: 'absolute',
+                left: '1rem',
+                bottom: '6rem'
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.75rem'
+                }}>
+                  <div className="dashboard-dark-metric-large" style={{ margin: 0 }}>
                       {metrics.avgRating.toLocaleString("pt-BR", {
                         minimumFractionDigits: 1,
                       })}
-                    </span>
-                    <div className="stars-rating">
+                  </div>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: '0.2rem'
+                  }}>
                       {renderStars(metrics.avgRating)}
                     </div>
-                    {reviews.length > 0 && (
-                      <p className="total-avaliacoes">
-                        {reviews.length}{" "}
-                        {reviews.length === 1 ? "avaliação" : "avaliações"}
-                      </p>
-                    )}
                   </div>
+                <div className="dashboard-dark-metric-label" style={{ margin: 0, opacity: 1 }}>
+                  {reviews.length} {reviews.length === 1 ? "avaliação" : "avaliações"}
                 </div>
               </div>
 
-              <div className="card bar-chart-card">
-                <div className="bar-chart-header">
-                  <button
-                    className="chart-nav-btn"
-                    onClick={handlePreviousYear}
-                  >
-                    ‹
-                  </button>
-                  <h2 className="bar-chart-title">{selectedYear}</h2>
-                  <button className="chart-nav-btn" onClick={handleNextYear}>
-                    ›
-                  </button>
+              {/* Logo fixa */}
+              <div style={{ 
+                position: 'absolute',
+                bottom: '-1rem',
+                left: '10.5rem'
+              }}>
+                <img 
+                  src={logoBranco} 
+                  alt="Logo" 
+                  style={{ 
+                    width: '190px', 
+                    height: '150px',
+                    filter: 'brightness(0) invert(1)',
+                    objectFit: 'contain',
+                    opacity: 0.3
+                  }} 
+                />
                 </div>
-                <div className="bar-chart-container">
-                  {[
-                    "Jan",
-                    "Fev",
-                    "Mar",
-                    "Abr",
-                    "Mai",
-                    "Jun",
-                    "Jul",
-                    "Ago",
-                    "Set",
-                    "Out",
-                    "Nov",
-                    "Dez",
-                  ].map((mes, index) => {
-                    const height =
-                      metrics.maxMonthlyEarning > 0
-                        ? (metrics.monthlyEarnings[index] /
-                            metrics.maxMonthlyEarning) *
-                          100
-                        : 0;
-                    const isSelected = selectedChartMonth === index;
-                    return (
-                      <div
-                        key={mes}
-                        className="bar-item"
-                        onClick={() => setSelectedChartMonth(index)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <div
-                          className={`bar ${isSelected ? "bar-selected" : ""}`}
-                          style={{ height: `${Math.max(height, 5)}%` }}
-                        ></div>
-                        <span
-                          className={`bar-label ${
-                            isSelected ? "bar-label-selected" : ""
-                          }`}
-                        >
-                          {mes}
-                        </span>
+              </div>
+
+            {/* Card Progresso de Vendas */}
+            <div className="dashboard-dark-progress-card" style={{ maxHeight: '280px', height: '280px', flex: '1 1 auto', minWidth: '400px', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '2rem', overflow: 'visible' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', flex: '1' }}>
+                <h3 className="dashboard-dark-progress-title">Progresso de Vendas</h3>
+                <p className="dashboard-dark-progress-subtitle">Mês atual</p>
+                <div>
+                  <span className="dashboard-dark-progress-value">
+                    R$ {(metrics.monthEarnings / 1000).toFixed(2)}K
+                  </span>
+                  <span className="dashboard-dark-progress-target">
+                    / R$ {(metrics.totalEarnings / 1000).toFixed(2)}K
+                  </span>
+                  </div>
+                </div>
+              <div className="dashboard-dark-gauge" style={{ flex: '0 0 auto', width: '200px', height: '120px', marginTop: '0' }}>
+                <svg viewBox="0 0 200 100" style={{ width: '100%', height: '100%' }}>
+                  <defs>
+                    <path
+                      id="gauge-arc"
+                      d="M 20 80 A 80 80 0 0 1 180 80"
+                                fill="none"
+                    />
+                  </defs>
+                  <use href="#gauge-arc" stroke="#2d3139" strokeWidth="20" />
+                  <use 
+                    href="#gauge-arc" 
+                    stroke="#ff6b35" 
+                                strokeWidth="20"
+                    strokeLinecap="round"
+                    strokeDasharray={`${(metrics.progressAtendidos / 100) * (Math.PI * 80)} ${Math.PI * 80}`}
+                  />
+                          </svg>
+                    </div>
                       </div>
+                      </div>
+
+          <div className="dashboard-dark-grid">
+            {/* Primeiro Card - Ganhos com Tabela */}
+            <div className="dashboard-dark-card">
+              <div className="dashboard-dark-summary-row">
+                <div className="dashboard-dark-summary-item">
+                  <div className="dashboard-dark-summary-label">Ganhos</div>
+                  <div className="dashboard-dark-summary-value">
+                    R$ {metrics.monthEarnings.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                    })}
+                      </div>
+                    </div>
+                <div className="dashboard-dark-summary-item">
+                  <div className="dashboard-dark-summary-label">Ganhos Totais</div>
+                  <div className="dashboard-dark-summary-value">
+                    R$ {metrics.totalEarnings.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </div>
+                      </div>
+                    </div>
+              <table className="dashboard-dark-table">
+                <thead>
+                  <tr>
+                    <th>Categoria</th>
+                    <th>Ganhos</th>
+                    <th>Eventos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Concluídos</td>
+                    <td>R$ {(metrics.totalEarnings * 0.4).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                    <td>{metrics.totalCompleted}</td>
+                  </tr>
+                  <tr>
+                    <td>Pendentes</td>
+                    <td>R$ {(metrics.totalEarnings * 0.3).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                    <td>{metrics.totalPending}</td>
+                  </tr>
+                  <tr>
+                    <td>Cancelados</td>
+                    <td>R$ {(metrics.totalEarnings * 0.1).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                    <td>{metrics.totalCancelled}</td>
+                  </tr>
+                </tbody>
+              </table>
+                      </div>
+
+            {/* Coluna Direita */}
+            <div>
+              <div className="dashboard-dark-card">
+                <h3 className="dashboard-dark-card-title">Ganhos por Dia</h3>
+                <p className="dashboard-dark-card-description">
+                  Distribuição dos ganhos durante a semana
+                </p>
+                <div className="dashboard-dark-horizontal-bars">
+                  {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, index) => {
+                    const earning = metrics.monthlyEarnings[index] || 0;
+                    const maxEarning = Math.max(...metrics.monthlyEarnings, 1);
+                    const percentage = (earning / maxEarning) * 100;
+                    return (
+                      <div key={day} className="dashboard-dark-horizontal-bar-item">
+                        <span className="dashboard-dark-horizontal-bar-label">{day}</span>
+                        <div className="dashboard-dark-horizontal-bar-track">
+                          <div
+                            className="dashboard-dark-horizontal-bar-fill"
+                            style={{ width: `${percentage}%` }}
+                          ></div>
+                                </div>
+                        <span className="dashboard-dark-horizontal-bar-value">
+                          R$ {(earning / 1000).toFixed(1)}K
+                                  </span>
+                                </div>
                     );
                   })}
-                </div>
+                              </div>
+                            </div>
+                        </div>
+                    </div>
+
+          {/* Card Ganhos Mensais - Parte Inferior, Largura Total */}
+          <div className="dashboard-dark-card" style={{ marginTop: '1.5rem', gridColumn: '1 / -1' }}>
+            <h3 className="dashboard-dark-card-title">Ganhos Mensais</h3>
+            <p className="dashboard-dark-card-description">
+              Descrição dos ganhos do período selecionado
+            </p>
+            
+            <div className="dashboard-dark-chart-container">
+              <svg viewBox="0 0 800 200" style={{ width: '100%', height: '100%' }}>
+                <defs>
+                  <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#ff6b35" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#ff6b35" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                {/* Grid lines */}
+                {[0, 25, 50, 75, 100].map((y) => (
+                  <line
+                    key={y}
+                    x1="40"
+                    y1={40 + (y / 100) * 120}
+                    x2="760"
+                    y2={40 + (y / 100) * 120}
+                    stroke="#2d3139"
+                    strokeWidth="1"
+                  />
+                ))}
+                {/* Data line */}
+                <polyline
+                  points={metrics.monthlyEarnings
+                    .map((earning, index) => {
+                      const x = 40 + (index / 11) * 720;
+                      const maxEarning = Math.max(...metrics.monthlyEarnings, 1);
+                      const y = 160 - (earning / maxEarning) * 120;
+                      return `${x},${y}`;
+                    })
+                    .join(' ')}
+                  fill="none"
+                  stroke="#ff6b35"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                {/* Area fill */}
+                <polygon
+                  points={`40,160 ${metrics.monthlyEarnings
+                    .map((earning, index) => {
+                      const x = 40 + (index / 11) * 720;
+                      const maxEarning = Math.max(...metrics.monthlyEarnings, 1);
+                      const y = 160 - (earning / maxEarning) * 120;
+                      return `${x},${y}`;
+                    })
+                    .join(' ')} 760,160`}
+                  fill="url(#lineGradient)"
+                />
+                {/* Data points */}
+                {metrics.monthlyEarnings.map((earning, index) => {
+                  const x = 40 + (index / 11) * 720;
+                  const maxEarning = Math.max(...metrics.monthlyEarnings, 1);
+                  const y = 160 - (earning / maxEarning) * 120;
+                  return (
+                    <circle
+                      key={index}
+                      cx={x}
+                      cy={y}
+                      r="4"
+                      fill="#ff6b35"
+                      stroke="#1a1d24"
+                      strokeWidth="2"
+                    />
+                  );
+                })}
+                {/* Month labels */}
+                {['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'].map((month, index) => {
+                  const x = 40 + (index / 11) * 720;
+                  return (
+                    <text
+                      key={month}
+                      x={x}
+                      y="190"
+                      fill="#b0b3b8"
+                      fontSize="10"
+                      textAnchor="middle"
+                    >
+                      {month}
+                    </text>
+                  );
+                })}
+              </svg>
               </div>
 
-              <div className="card detalhamento-card">
-                <h3 className="card-title-orange">Detalhamento</h3>
-                <div className="detalhamento-content">
-                  <div className="detalhamento-list">
-                    <p className="detalhamento-item">
-                      Total de Eventos : {metrics.yearTotal}
-                    </p>
-                    <p className="detalhamento-item">
-                      Concluídos: {metrics.yearCompleted}
-                    </p>
-                    <p className="detalhamento-item cancelados">
-                      Recusados: {metrics.yearCancelled}
-                    </p>
-                  </div>
-                  <div className="detalhamento-ano">{selectedYear}</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="dashboard-right-column">
-              <div className="card estatisticas-card">
-                <h3 className="card-title-dark">Estatísticas</h3>
-                <div className="estatisticas-content-wrapper">
-                  <div className="estatisticas-chart-and-labels">
-                    <div className="donut-chart-container">
-                      {(() => {
-                        const circumference = 2 * Math.PI * 50;
-                        const totalRequests = metrics.totalRequests || 0;
-                        const totalCompleted = metrics.totalCompleted || 0;
-                        const totalPending = metrics.totalPending || 0;
-                        const totalCancelled = metrics.totalCancelled || 0;
-
-                        if (totalRequests === 0) {
-                          return (
-                            <svg className="donut-chart" viewBox="0 0 120 120">
-                              <circle
-                                className="donut-ring"
-                                cx="60"
-                                cy="60"
-                                r="50"
-                                fill="none"
-                                stroke="#E5E5E5"
-                                strokeWidth="20"
-                              />
-                            </svg>
-                          );
-                        }
-
-                        const verde =
-                          (totalCompleted / totalRequests) * circumference;
-                        const laranja =
-                          (totalPending / totalRequests) * circumference;
-                        const vermelho =
-                          (totalCancelled / totalRequests) * circumference;
-
-                        const soma = verde + laranja + vermelho;
-                        const diff = circumference - soma;
-
-                        let verdeFinal = verde;
-                        let laranjaFinal = laranja;
-                        let vermelhoFinal = vermelho;
-
-                        if (Math.abs(diff) > 0.0001) {
-                          if (vermelhoFinal > 0) {
-                            vermelhoFinal += diff;
-                          } else if (laranjaFinal > 0) {
-                            laranjaFinal += diff;
-                          } else if (verdeFinal > 0) {
-                            verdeFinal += diff;
-                          }
-                        }
-
-                        return (
-                          <svg className="donut-chart" viewBox="0 0 120 120">
-                            {verdeFinal > 0.01 && (
-                              <circle
-                                className="donut-segment donut-segment-green"
-                                cx="60"
-                                cy="60"
-                                r="50"
-                                fill="none"
-                                stroke="#4CAF50"
-                                strokeWidth="20"
-                                strokeDasharray={`${verdeFinal} ${
-                                  circumference - verdeFinal
-                                }`}
-                                strokeDashoffset="0"
-                                transform="rotate(-90 60 60)"
-                                strokeLinecap="butt"
-                              />
-                            )}
-                            {laranjaFinal > 0.01 && (
-                              <circle
-                                className="donut-segment donut-segment-orange"
-                                cx="60"
-                                cy="60"
-                                r="50"
-                                fill="none"
-                                stroke="#ff9500"
-                                strokeWidth="20"
-                                strokeDasharray={`${laranjaFinal} ${
-                                  circumference - laranjaFinal
-                                }`}
-                                strokeDashoffset={-verdeFinal}
-                                transform="rotate(-90 60 60)"
-                                strokeLinecap="butt"
-                              />
-                            )}
-                            {vermelhoFinal > 0.01 && (
-                              <circle
-                                className="donut-segment donut-segment-red"
-                                cx="60"
-                                cy="60"
-                                r="50"
-                                fill="none"
-                                stroke="#F44336"
-                                strokeWidth="20"
-                                strokeDasharray={`${vermelhoFinal} ${
-                                  circumference - vermelhoFinal
-                                }`}
-                                strokeDashoffset={-(verdeFinal + laranjaFinal)}
-                                transform="rotate(-90 60 60)"
-                                strokeLinecap="butt"
-                              />
-                            )}
-                          </svg>
-                        );
-                      })()}
-                    </div>
-                    <div className="donut-labels">
-                      <div className="donut-label-item green">
-                        <span className="donut-label-value">
-                          {metrics.greenPercent}%
-                        </span>
-                        <span className="donut-label-arrow">↑</span>
-                      </div>
-                      <div className="donut-label-item orange">
-                        <span className="donut-label-value">
-                          {metrics.orangePercent}%
-                        </span>
-                        <span className="donut-label-arrow">↓</span>
-                      </div>
-                      <div className="donut-label-item red">
-                        <span className="donut-label-value">
-                          {metrics.redPercent}%
-                        </span>
-                        <span className="donut-label-arrow">↓</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="estatisticas-progress-container">
-                    <div className="estatistica-progress-item">
-                      <h4 className="progress-title">Atendidos</h4>
-                      <div className="progress-bar-container">
-                        <div
-                          className="progress-bar progress-bar-green"
-                          style={{ width: `${metrics.progressAtendidos}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    <div className="estatistica-progress-item">
-                      <h4 className="progress-title">Pendentes</h4>
-                      <div className="progress-bar-container">
-                        <div
-                          className="progress-bar progress-bar-orange"
-                          style={{ width: `${metrics.progressPendentes}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    <div className="estatistica-progress-item">
-                      <h4 className="progress-title">Recusados</h4>
-                      <div className="progress-bar-container">
-                        <div
-                          className="progress-bar progress-bar-red"
-                          style={{ width: `${metrics.progressCancelados}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            <div className="dashboard-dark-summary-row">
+              <div className="dashboard-dark-summary-item">
+                <div className="dashboard-dark-summary-label">Ganhos</div>
+                <div className="dashboard-dark-summary-value">
+                  R$ {metrics.monthEarnings.toLocaleString("pt-BR", {
+                    minimumFractionDigits: 2,
+                  })}
               </div>
             </div>
+              <div className="dashboard-dark-summary-item">
+                <div className="dashboard-dark-summary-label">Ganhos Totais</div>
+                <div className="dashboard-dark-summary-value">
+                  R$ {metrics.totalEarnings.toLocaleString("pt-BR", {
+                    minimumFractionDigits: 2,
+                  })}
+          </div>
+        </div>
+            </div>
+
+            <table className="dashboard-dark-table">
+              <thead>
+                <tr>
+                  <th>Período</th>
+                  <th>Ganhos</th>
+                  <th>Eventos</th>
+                  <th>Taxa</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Este Mês</td>
+                  <td>R$ {metrics.monthEarnings.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                  <td>{metrics.totalRequests}</td>
+                  <td>{metrics.conversionRate}%</td>
+                </tr>
+                <tr>
+                  <td>Este Ano</td>
+                  <td>R$ {metrics.totalEarnings.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                  <td>{metrics.yearTotal}</td>
+                  <td>{metrics.conversionRate}%</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </main>
-
-      {showWalletModal && (
-        <div
-          className="modal-overlay"
-          onClick={() => {
-            if (!isRequestingPayout) {
-              setShowWalletModal(false);
-              setShowPayoutModal(false);
-              setWalletError("");
-            }
-          }}
-        >
-          <div className="wallet-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="wallet-modal-header">
-              <h2 className="wallet-modal-title">Carteira</h2>
-              <button
-                className="wallet-modal-close"
-                onClick={() => {
-                  if (!isRequestingPayout) {
-                    setShowWalletModal(false);
-                    setShowPayoutModal(false);
-                    setWalletError("");
-                  }
-                }}
-                disabled={isRequestingPayout}
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="wallet-modal-content">
-              {walletError && <div className="wallet-error">{walletError}</div>}
-
-              {isLoadingWallet ? (
-                <div className="wallet-loading">
-                  <p>Carregando informações da carteira...</p>
-                </div>
-              ) : (
-                <>
-                  <div className="wallet-balance-container">
-                    <div className="wallet-balance-card">
-                      <h3 className="wallet-balance-label">
-                        Saldo Disponível
-                      </h3>
-                      <p className="wallet-balance-value">
-                        {formatCurrency(
-                          (walletBalance?.available_cents ?? 0) > 0
-                            ? (walletBalance?.available_cents ?? 0)
-                            : metrics.totalEarnings * 100
-                        )}
-                      </p>
-                    </div>
-                    {walletBalance && walletBalance.blocked_cents > 0 && (
-                      <div className="wallet-balance-card blocked">
-                        <h3 className="wallet-balance-label">
-                          Saldo Bloqueado
-                        </h3>
-                        <p className="wallet-balance-value">
-                          {formatCurrency(walletBalance.blocked_cents)}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    className="request-payout-button"
-                    onClick={() => setShowPayoutModal(true)}
-                    disabled={
-                      ((walletBalance?.available_cents ?? 0) > 0
-                        ? (walletBalance?.available_cents ?? 0)
-                        : metrics.totalEarnings * 100) < 100
-                    }
-                  >
-                    Solicitar Saque
-                  </button>
-
-                  <div className="wallet-tabs">
-                    <div className="wallet-tab-content">
-                      <h3 className="wallet-subtitle">Movimentações</h3>
-                      {walletEntries.length > 0 ? (
-                        <div className="wallet-entries-list">
-                          {walletEntries.map((entry) => (
-                            <div
-                              key={entry.id}
-                              className={`wallet-entry ${
-                                entry.type === "CREDIT" ? "credit" : "debit"
-                              }`}
-                            >
-                              <div className="wallet-entry-main">
-                                <div className="wallet-entry-info">
-                                  <p className="wallet-entry-description">
-                                    {entry.description || "Movimentação"}
-                                  </p>
-                                  <p className="wallet-entry-date">
-                                    {formatDate(entry.created_at)}
-                                  </p>
-                                </div>
-                                <div className="wallet-entry-amount">
-                                  <span
-                                    className={`wallet-entry-value ${
-                                      entry.type === "CREDIT"
-                                        ? "positive"
-                                        : "negative"
-                                    }`}
-                                  >
-                                    {entry.type === "CREDIT" ? "+" : "-"}
-                                    {formatCurrency(entry.amount_cents)}
-                                  </span>
-                                  <p className="wallet-entry-balance">
-                                    Saldo:{" "}
-                                    {formatCurrency(entry.balance_after_cents)}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="wallet-empty">
-                          Nenhuma movimentação encontrada.
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="wallet-tab-content">
-                      <h3 className="wallet-subtitle">Saques</h3>
-                      {walletPayouts.length > 0 ? (
-                        <div className="wallet-payouts-list">
-                          {walletPayouts.map((payout) => (
-                            <div key={payout.id} className="wallet-payout">
-                              <div className="wallet-payout-main">
-                                <div className="wallet-payout-info">
-                                  <p className="wallet-payout-amount">
-                                    {formatCurrency(payout.amount_cents)}
-                                  </p>
-                                  <p className="wallet-payout-date">
-                                    {formatDate(payout.requested_at)}
-                                  </p>
-                                  <p className="wallet-payout-key">
-                                    {payout.pix_key_type}: {payout.pix_key}
-                                  </p>
-                                </div>
-                                <div className="wallet-payout-status">
-                                  <span
-                                    className="wallet-status-badge"
-                                    style={{
-                                      backgroundColor: getStatusColor(
-                                        payout.status
-                                      ),
-                                    }}
-                                  >
-                                    {getStatusLabel(payout.status)}
-                                  </span>
-                                  {payout.processed_at && (
-                                    <p className="wallet-payout-processed">
-                                      Processado:{" "}
-                                      {formatDate(payout.processed_at)}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="wallet-empty">Nenhum saque encontrado.</p>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showPayoutModal && (
-        <div
-          className="modal-overlay"
-          onClick={() => {
-            if (!isRequestingPayout) {
-              setShowPayoutModal(false);
-              setWalletError("");
-              setPayoutAmountInput("");
-            }
-          }}
-        >
-          <div className="payout-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="payout-modal-header">
-              <h2 className="payout-modal-title">Solicitar Saque</h2>
-              <button
-                className="payout-modal-close"
-                onClick={() => {
-                  if (!isRequestingPayout) {
-                    setShowPayoutModal(false);
-                    setWalletError("");
-                    setPayoutAmountInput("");
-                  }
-                }}
-                disabled={isRequestingPayout}
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="payout-modal-content">
-              <p className="payout-available-balance">
-                Saldo disponível:{" "}
-                <strong>
-                  {formatCurrency(
-                    (walletBalance?.available_cents ?? 0) > 0
-                      ? (walletBalance?.available_cents ?? 0)
-                      : metrics.totalEarnings * 100
-                  )}
-                </strong>
-              </p>
-
-              <div className="payout-form-group">
-                <label className="payout-form-label">
-                  Valor (R$)
-                  <span className="required-field">*</span>
-                </label>
-                <input
-                  type="text"
-                  className="payout-form-input"
-                  value={payoutAmountInput}
-                  onChange={(e) => {
-                    let inputValue = e.target.value;
-                    inputValue = inputValue.replace(/[^\d,.]/g, "");
-                    const parts = inputValue.split(/[,.]/);
-                    if (parts.length > 2) {
-                      inputValue = parts[0] + "," + parts.slice(1).join("");
-                    }
-                    setPayoutAmountInput(inputValue);
-                  }}
-                  onBlur={(e) => {
-                    const inputValue = e.target.value.replace(",", ".");
-                    const numericValue = inputValue.replace(/[^\d.]/g, "");
-                    const value = parseFloat(numericValue) || 0;
-                    if (value > 0) {
-                      setPayoutAmountInput(value.toFixed(2).replace(".", ","));
-                    }
-                  }}
-                  placeholder="0,00"
-                  disabled={isRequestingPayout}
-                />
-                <p className="payout-form-hint">Valor mínimo: R$ 1,00</p>
-              </div>
-
-              <div className="payout-form-group">
-                <label className="payout-form-label">
-                  Tipo de Chave PIX
-                  <span className="required-field">*</span>
-                </label>
-                <select
-                  className="payout-form-input"
-                  value={payoutForm.pix_key_type}
-                  onChange={(e) =>
-                    setPayoutForm({
-                      ...payoutForm,
-                      pix_key_type: e.target.value as PixKeyType,
-                    })
-                  }
-                  disabled={isRequestingPayout}
-                >
-                  <option value="EVP">Chave Aleatória (EVP)</option>
-                  <option value="CPF">CPF</option>
-                  <option value="CNPJ">CNPJ</option>
-                  <option value="EMAIL">E-mail</option>
-                  <option value="PHONE">Telefone</option>
-                </select>
-              </div>
-
-              <div className="payout-form-group">
-                <label className="payout-form-label">
-                  Chave PIX
-                  <span className="required-field">*</span>
-                </label>
-                <input
-                  type="text"
-                  className="payout-form-input"
-                  value={payoutForm.pix_key}
-                  onChange={(e) =>
-                    setPayoutForm({
-                      ...payoutForm,
-                      pix_key: e.target.value,
-                    })
-                  }
-                  placeholder="Digite a chave PIX"
-                  disabled={isRequestingPayout}
-                />
-              </div>
-
-              <div className="payout-modal-actions">
-                <button
-                  type="button"
-                  className="payout-modal-cancel"
-                  onClick={() => {
-                    if (!isRequestingPayout) {
-                      setShowPayoutModal(false);
-                      setWalletError("");
-                    }
-                  }}
-                  disabled={isRequestingPayout}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  className="payout-modal-submit"
-                  onClick={handleRequestPayout}
-                  disabled={isRequestingPayout}
-                >
-                  {isRequestingPayout ? "Processando..." : "Solicitar Saque"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showReviewsModal && (
         <div

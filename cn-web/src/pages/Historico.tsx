@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import "./Historico.css";
 import "./Dashboard.css";
+import "./DashboardDark.css";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import {
   serviceRequestService,
@@ -20,6 +22,7 @@ interface HistoricoEntry {
 }
 
 const Historico: React.FC = () => {
+  const location = useLocation();
   const [historicoEntries, setHistoricoEntries] = useState<HistoricoEntry[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -82,43 +85,77 @@ const Historico: React.FC = () => {
   }, []);
 
   return (
-    <div className="historico-layout">
+    <div className="dashboard-dark-layout">
       <DashboardSidebar className="historico-sidebar" />
 
-      <main className="historico-main">
-        <div className="main-content">
-          <div className="historico-title-wrapper">
-            <h1 className="historico-title">Histórico</h1>
+      <main className="dashboard-dark-main">
+        <div className="dashboard-dark-content">
+          <div className="dashboard-dark-header">
+            <h1 className="dashboard-dark-title">Histórico</h1>
+            <nav className="dashboard-dark-nav">
+              <Link
+                to="/dashboard"
+                className={`dashboard-dark-nav-link ${
+                  location.pathname === "/dashboard" || location.pathname === "/"
+                    ? "active"
+                    : ""
+                }`}
+              >
+                Dashboard
+              </Link>
+              <Link
+                to="/perfil"
+                className={`dashboard-dark-nav-link ${
+                  location.pathname === "/perfil" ? "active" : ""
+                }`}
+              >
+                Perfil
+              </Link>
+              <Link
+                to="/agendamentos"
+                className={`dashboard-dark-nav-link ${
+                  location.pathname === "/agendamentos" ||
+                  location.pathname === "/preview/agendamentos"
+                    ? "active"
+                    : ""
+                }`}
+              >
+                Agendamentos
+              </Link>
+              <Link
+                to="/historico"
+                className={`dashboard-dark-nav-link ${
+                  location.pathname === "/historico" ? "active" : ""
+                }`}
+              >
+                Histórico
+              </Link>
+            </nav>
           </div>
 
           {isLoading ? (
-            <div className="historico-list">
-              <div className="historico-entry">
-                <p style={{ textAlign: "center", padding: "2rem", color: "#666" }}>
-                  Carregando histórico...
-                </p>
+            <div className="dashboard-dark-card">
+              <div className="historico-empty">
+                <p>Carregando histórico...</p>
               </div>
             </div>
           ) : error ? (
-            <div className="historico-list">
-              <div className="historico-entry">
-                <p style={{ textAlign: "center", padding: "2rem", color: "#f44336" }}>
-                  {error}
-                </p>
+            <div className="dashboard-dark-card">
+              <div className="historico-error">
+                <p>{error}</p>
               </div>
             </div>
           ) : historicoEntries.length === 0 ? (
-            <div className="historico-list">
-              <div className="historico-entry">
-                <p style={{ textAlign: "center", padding: "2rem", color: "#666" }}>
-                  Nenhum serviço concluído encontrado.
-                </p>
+            <div className="dashboard-dark-card">
+              <div className="historico-empty">
+                <p>Nenhum serviço concluído encontrado.</p>
               </div>
             </div>
           ) : (
-            <div className="historico-list">
-              {historicoEntries.map((entry, index) => (
-                <div key={index} className="historico-entry">
+            <div className="dashboard-dark-card">
+              <div className="historico-list">
+                {historicoEntries.map((entry, index) => (
+                  <div key={index} className="historico-entry">
                   <div className="entry-header">
                     <span className="entry-value">
                       R${" "}
@@ -153,9 +190,10 @@ const Historico: React.FC = () => {
                         {entry.contato && ` - Contato: ${entry.contato}`}
                       </p>
                     </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </div>

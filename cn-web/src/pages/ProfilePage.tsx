@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
+import { Link, useLocation } from "react-router-dom";
 import "./Dashboard.css";
+import "./DashboardDark.css";
 import "./ProfilePage.css";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import {
@@ -49,6 +51,7 @@ interface ChefProfileResponse {
 }
 
 const ProfilePage: React.FC = () => {
+  const location = useLocation();
   const { user, checkAuth } = useAuth();
   const [profile, setProfile] = useState<ChefProfileResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -478,7 +481,7 @@ const ProfilePage: React.FC = () => {
     })) || [];
 
   return (
-    <div className="dashboard-layout">
+    <div className="dashboard-dark-layout">
       <DashboardSidebar
         isEditing={isEditing}
         onPictureChange={handlePictureChange}
@@ -487,11 +490,52 @@ const ProfilePage: React.FC = () => {
         onPictureButtonClick={handlePictureButtonClick}
       />
 
-      <main className="dashboard-main">
-        <div className="main-content">
+      <main className="dashboard-dark-main">
+        <div className="dashboard-dark-content">
+          <div className="dashboard-dark-header">
+            <h1 className="dashboard-dark-title">Perfil</h1>
+            <nav className="dashboard-dark-nav">
+              <Link
+                to="/dashboard"
+                className={`dashboard-dark-nav-link ${
+                  location.pathname === "/dashboard" || location.pathname === "/"
+                    ? "active"
+                    : ""
+                }`}
+              >
+                Dashboard
+              </Link>
+              <Link
+                to="/perfil"
+                className={`dashboard-dark-nav-link ${
+                  location.pathname === "/perfil" ? "active" : ""
+                }`}
+              >
+                Perfil
+              </Link>
+              <Link
+                to="/agendamentos"
+                className={`dashboard-dark-nav-link ${
+                  location.pathname === "/agendamentos" ||
+                  location.pathname === "/preview/agendamentos"
+                    ? "active"
+                    : ""
+                }`}
+              >
+                Agendamentos
+              </Link>
+              <Link
+                to="/historico"
+                className={`dashboard-dark-nav-link ${
+                  location.pathname === "/historico" ? "active" : ""
+                }`}
+              >
+                Histórico
+              </Link>
+            </nav>
+          </div>
           <div className="profile-header">
             <div className="profile-title-section">
-              <h1 className="dashboard-title">Perfil</h1>
               {!isEditing && (
                 <span
                   className={`availability-badge-header ${
@@ -538,64 +582,64 @@ const ProfilePage: React.FC = () => {
             <div className="profile-content">
               <div className="profile-main-grid">
                 <div className="profile-left-column">
-                  <section className="profile-section">
-                    <h2 className="section-title-orange">Nome</h2>
+                  <div className="dashboard-dark-card">
+                    <h2 className="dashboard-dark-card-title">Nome</h2>
                     {isEditing ? (
                       <input
                         type="text"
-                        className="edit-input"
+                        className="profile-edit-input"
                         value={editedName}
                         onChange={(e) => setEditedName(e.target.value)}
                         placeholder="Seu nome"
                         maxLength={120}
                       />
                     ) : (
-                      <p className="section-text">
+                      <p className="profile-section-text">
                         {user?.name || "Nome não informado"}
                       </p>
                     )}
-                  </section>
+                  </div>
 
-                  <section className="profile-section">
-                    <h2 className="section-title-orange">Biografia</h2>
+                  <div className="dashboard-dark-card">
+                    <h2 className="dashboard-dark-card-title">Biografia</h2>
                     {isEditing ? (
                       <textarea
-                        className="edit-textarea"
+                        className="profile-edit-textarea"
                         value={editedBio}
                         onChange={(e) => setEditedBio(e.target.value)}
                         placeholder="Escreva sua biografia..."
                         rows={4}
                       />
                     ) : (
-                      <p className="section-text">
+                      <p className="profile-section-text">
                         {bio || "Nenhuma biografia cadastrada."}
                       </p>
                     )}
-                  </section>
+                  </div>
 
-                  <section className="profile-section">
-                    <h2 className="section-title-orange">Especialidade</h2>
+                  <div className="dashboard-dark-card">
+                    <h2 className="dashboard-dark-card-title">Especialidade</h2>
                     {isEditing ? (
                       <textarea
-                        className="edit-textarea"
+                        className="profile-edit-textarea"
                         value={editedSpecialty}
                         onChange={(e) => setEditedSpecialty(e.target.value)}
                         placeholder="Descreva sua especialidade..."
                         rows={3}
                       />
                     ) : (
-                      <p className="section-text">
+                      <p className="profile-section-text">
                         {specialty || "Nenhuma especialidade cadastrada."}
                       </p>
                     )}
-                  </section>
+                  </div>
 
-                  <section className="profile-section">
-                    <h2 className="section-title-orange">Categorias</h2>
+                  <div className="dashboard-dark-card">
+                    <h2 className="dashboard-dark-card-title">Categorias</h2>
                     {isEditing ? (
                       <div className="categories-edit-container">
                         {isLoadingCuisines ? (
-                          <p className="section-text">Carregando categorias...</p>
+                          <p className="profile-section-text">Carregando categorias...</p>
                         ) : (
                           <>
                             <p className="categories-hint">
@@ -617,7 +661,7 @@ const ProfilePage: React.FC = () => {
                                   >
                                     {cuisine.title}
                                     {isSelected && (
-                                      <span className="category-check"></span>
+                                      <span className="category-check">✓</span>
                                     )}
                                   </button>
                                 );
@@ -635,25 +679,25 @@ const ProfilePage: React.FC = () => {
                             </span>
                           ))
                         ) : (
-                          <p className="section-text">
+                          <p className="profile-section-text">
                             Nenhuma categoria cadastrada.
                           </p>
                         )}
                       </div>
                     )}
-                  </section>
+                  </div>
                 </div>
 
                 <div className="profile-right-column">
-                  <section className="profile-section">
-                    <h2 className="section-title-orange">Informações</h2>
-                    <div className="info-card">
+                  <div className="dashboard-dark-card">
+                    <h2 className="dashboard-dark-card-title">Informações</h2>
+                    <div className="profile-info-card">
                       <div className="info-item">
                         <span className="info-label">Anos de Experiência</span>
                         {isEditing ? (
                           <input
                             type="number"
-                            className="edit-input"
+                            className="profile-edit-input"
                             value={editedYearsOfExperience}
                             onChange={(e) =>
                               setEditedYearsOfExperience(parseInt(e.target.value) || 0)
@@ -694,11 +738,11 @@ const ProfilePage: React.FC = () => {
                         </div>
                       )}
                     </div>
-                  </section>
+                  </div>
 
                   {isEditing && (
-                    <section className="profile-section">
-                      <h2 className="section-title-orange">Redes Sociais</h2>
+                    <div className="dashboard-dark-card">
+                      <h2 className="dashboard-dark-card-title">Redes Sociais</h2>
                       <div className="social-links-edit-container">
                         {socialLinks.length > 0 && (
                           <div className="social-links-list">
@@ -773,12 +817,12 @@ const ProfilePage: React.FC = () => {
                             </p>
                           )}
                       </div>
-                    </section>
+                    </div>
                   )}
 
                   {!isEditing && (
-                    <section className="profile-section">
-                      <h2 className="section-title-orange">Cardápio</h2>
+                    <div className="dashboard-dark-card">
+                      <h2 className="dashboard-dark-card-title">Cardápio</h2>
                       <div className="menu-section">
                         <input
                           ref={menuFileInputRef}
@@ -837,14 +881,15 @@ const ProfilePage: React.FC = () => {
                           </div>
                         )}
                       </div>
-                    </section>
+                    </div>
                   )}
                 </div>
               </div>
 
               {!isEditing && (
                 <>
-                  <div className="add-photos-section">
+                  <div className="dashboard-dark-card">
+                    <div className="add-photos-section">
                     <input
                       ref={galleryFileInputRef}
                       type="file"
@@ -883,16 +928,19 @@ const ProfilePage: React.FC = () => {
                         </svg>
                       )}
                     </button>
-                    <span className="add-photos-text">
-                      {isUploadingGalleryPhoto
-                        ? "Enviando..."
-                        : galleryPhotos.length >= 12
-                        ? "Limite de 12 fotos atingido"
-                        : "Adicione mais fotos"}
-                    </span>
+                      <span className="add-photos-text">
+                        {isUploadingGalleryPhoto
+                          ? "Enviando..."
+                          : galleryPhotos.length >= 12
+                          ? "Limite de 12 fotos atingido"
+                          : "Adicione mais fotos"}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="gallery-section">
+                  <div className="dashboard-dark-card">
+                    <h2 className="dashboard-dark-card-title">Galeria</h2>
+                    <div className="gallery-section">
                     {isLoadingGallery ? (
                       <div className="gallery-empty">
                         <p>Carregando galeria...</p>
@@ -940,6 +988,7 @@ const ProfilePage: React.FC = () => {
                         <p>Nenhuma foto adicionada ainda.</p>
                       </div>
                     )}
+                    </div>
                   </div>
                 </>
               )}
