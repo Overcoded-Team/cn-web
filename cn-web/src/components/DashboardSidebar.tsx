@@ -219,6 +219,8 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         const icon = getSocialIcon(link.type);
         const url = getSocialUrl(link);
 
+        if (!icon) return null;
+
         return (
           <a
             key={link.type}

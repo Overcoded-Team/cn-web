@@ -12,11 +12,6 @@ import {
   ServiceRequest,
   ServiceRequestStatus,
 } from "../services/serviceRequest.service";
-import {
-  isChatEnabled,
-  isChatReadOnly,
-  getChatStatusMessage,
-} from "../utils/chatUtils";
 
 type Appointment = {
   id: string;
