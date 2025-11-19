@@ -839,7 +839,7 @@ const ProfilePage: React.FC = () => {
                     </div>
                   )}
 
-                  {!isEditing && (
+                  {isEditing && (
                     <div className="dashboard-dark-card">
                       <h2 className="dashboard-dark-card-title">Cardápio</h2>
                       <div className="menu-section">
@@ -904,6 +904,46 @@ const ProfilePage: React.FC = () => {
                             </div>
                           </div>
                         )}
+                      </div>
+                    </div>
+                  )}
+
+                  {!isEditing && profile?.menuUrl && (
+                    <div className="dashboard-dark-card">
+                      <h2 className="dashboard-dark-card-title">Cardápio</h2>
+                      <div className="menu-section">
+                        <div className="menu-info">
+                          <div className="menu-thumbnail-container">
+                            {(profile.menuUrl.endsWith('.pdf') || profile.menuMimeType === 'application/pdf') ? (
+                              <div className="menu-pdf-thumbnail" onClick={handleMenuThumbnailClick}>
+                                <iframe
+                                  src={`${profile.menuUrl}#page=1&zoom=50`}
+                                  className="menu-pdf-thumbnail-iframe"
+                                  title="Prévia do Cardápio"
+                                  scrolling="no"
+                                />
+                                <div className="menu-thumbnail-overlay">
+                                  <span className="menu-thumbnail-text">Clique para visualizar</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                className="menu-link-button"
+                                onClick={() => window.open(profile.menuUrl, '_blank')}
+                              >
+                                <span className="menu-file-name">
+                                  {profile.menuOriginalName || "Cardápio"}
+                                </span>
+                                {profile.menuSizeBytes && (
+                                  <span className="menu-file-size">
+                                    ({formatFileSize(profile.menuSizeBytes)})
+                                  </span>
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
