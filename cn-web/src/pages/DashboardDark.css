@@ -63,7 +63,24 @@ html {
   align-items: center;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
+  padding-right: 0.5rem;
   border-bottom: 2px solid #2d3139;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.theme-toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.theme-toggle-label {
+  font-size: 0.9rem;
+  color: #b0b3b8;
+  font-weight: 500;
 }
 
 .dashboard-dark-title {
@@ -72,6 +89,8 @@ html {
   font-weight: 700;
   margin: 0;
   letter-spacing: 1px;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .dashboard-dark-nav {
@@ -138,6 +157,10 @@ html {
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
   margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .dashboard-dark-card {
@@ -148,7 +171,9 @@ html {
   border: 1px solid #2d3139;
   transition: all 0.3s;
   max-width: 100%;
+  width: 100%;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .dashboard-dark-card:hover {
@@ -258,6 +283,7 @@ html {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   border: 1px solid #2d3139;
   transition: all 0.3s;
+  overflow: visible;
 }
 
 .dashboard-dark-progress-card:hover {
@@ -291,6 +317,15 @@ html {
   font-size: 1rem;
   color: #b0b3b8;
   margin-left: 0.5rem;
+}
+
+.dashboard-dark-gauge {
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.dashboard-dark-gauge svg {
+  overflow: visible;
 }
 
 .dashboard-dark-progress-goal-label {
@@ -342,6 +377,26 @@ html {
   background: rgba(255, 107, 53, 0.2);
   border-color: #ff6b35;
   transform: translateY(-2px);
+}
+
+.dashboard-dark-progress-message {
+  margin-top: 1rem;
+  text-align: center;
+  width: 100%;
+}
+
+.progress-message-success {
+  color: #4caf50;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: block;
+}
+
+.progress-message-remaining {
+  color: #b0b3b8;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: block;
 }
 
 /* Tema Branco - Botão Defina uma Meta */
@@ -878,10 +933,14 @@ html {
 }
 
 .dashboard-content {
-  max-width: 1600px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   background: transparent;
   position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  overflow-x: hidden;
 }
 
 .dashboard-header {
@@ -890,6 +949,9 @@ html {
   align-items: center;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
+  padding-right: 0.5rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .dashboard-title {
@@ -898,6 +960,8 @@ html {
   font-weight: 700;
   margin: 0;
   letter-spacing: 1px;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .dashboard-nav {
@@ -942,15 +1006,16 @@ body:has(.dashboard-light) {
 
 .dashboard-light-main {
   background: #f5f7fa !important;
-  margin-left: 280px;
-  width: calc(100vw - 280px);
-  max-width: calc(100vw - 280px);
+  margin-left: 280px !important;
+  width: calc(100vw - 280px) !important;
+  max-width: calc(100vw - 280px) !important;
   box-sizing: border-box;
   min-height: 100vh;
   padding: 1.5rem;
   position: relative;
   overflow-x: hidden;
   overflow-y: auto;
+  z-index: 1;
 }
 
 .dashboard-light-content {
@@ -965,10 +1030,15 @@ body:has(.dashboard-light) {
 
 .dashboard-light-header {
   border-bottom: 2px solid #e0e0e0;
+  padding-right: 0.5rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .dashboard-light-title {
   color: #ff6b35;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .dashboard-light-nav {
@@ -1071,11 +1141,23 @@ body:has(.dashboard-light) {
   border: 3px solid #ffffff;
 }
 
+.dashboard-light .dashboard-header {
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.dashboard-light .theme-toggle-label {
+  color: #666666;
+}
+
 /* Tema Branco - Cards */
 .dashboard-light .dashboard-dark-card {
   background: #ffffff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border: 1px solid #e8e8e8;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .dashboard-light .dashboard-dark-card:hover {
@@ -1132,6 +1214,16 @@ body:has(.dashboard-light) {
   background: #ffffff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border: 1px solid #e8e8e8;
+  overflow: visible;
+}
+
+.dashboard-light .dashboard-dark-gauge {
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.dashboard-light .dashboard-dark-gauge svg {
+  overflow: visible;
 }
 
 .dashboard-light .dashboard-dark-progress-card:hover {
@@ -1154,6 +1246,34 @@ body:has(.dashboard-light) {
 
 .dashboard-light .dashboard-dark-progress-target {
   color: #666666;
+}
+
+.dashboard-light .dashboard-dark-progress-message {
+  margin-top: 1rem;
+  text-align: center;
+  width: 100%;
+}
+
+.dashboard-light .progress-message-success {
+  color: #4caf50;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: block;
+}
+
+.dashboard-light .progress-message-remaining {
+  color: #666666;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: block;
+}
+
+/* Tema Branco - Grid */
+.dashboard-light .dashboard-dark-grid {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* Tema Branco - Barras Horizontais */

@@ -20,8 +20,6 @@ interface DashboardSidebarProps {
   fileInputRef?: React.RefObject<HTMLInputElement>;
   isUploadingPicture?: boolean;
   onPictureButtonClick?: () => void;
-  theme?: "dark" | "light";
-  onThemeToggle?: () => void;
 }
 
 export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
@@ -31,8 +29,6 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   fileInputRef,
   isUploadingPicture = false,
   onPictureButtonClick,
-  theme = "dark",
-  onThemeToggle,
 }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
@@ -246,20 +242,6 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           >
             Histórico
           </Link>
-          {onThemeToggle && (
-            <button
-              className={`theme-toggle-switch ${theme === "light" ? "theme-toggle-on" : "theme-toggle-off"}`}
-              onClick={onThemeToggle}
-              title={theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro"}
-              type="button"
-              role="switch"
-              aria-checked={theme === "light"}
-              aria-label={theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro"}
-              style={{ margin: "0.5rem 1.5rem", alignSelf: "stretch" }}
-            >
-              <span className="theme-toggle-slider"></span>
-            </button>
-          )}
         </nav>
 
         <button className="logout-button" onClick={logout} aria-label="Sair">

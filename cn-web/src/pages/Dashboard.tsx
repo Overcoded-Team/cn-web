@@ -642,11 +642,25 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className={`dashboard-layout ${theme === "light" ? "dashboard-light" : "dashboard-dark"}`}>
-      <DashboardSidebar theme={theme} onThemeToggle={toggleTheme} />
+      <DashboardSidebar />
       <main className={`dashboard-main ${theme === "light" ? "dashboard-light-main" : "dashboard-dark-main"}`}>
         <div className={`dashboard-content ${theme === "light" ? "dashboard-light-content" : "dashboard-dark-content"}`}>
           <div className={`dashboard-header ${theme === "light" ? "dashboard-light-header" : "dashboard-dark-header"}`}>
             <h1 className={`dashboard-title ${theme === "light" ? "dashboard-light-title" : "dashboard-dark-title"}`}>Dashboard</h1>
+            <div className="theme-toggle-container">
+              <span className="theme-toggle-label">Tema</span>
+              <button
+                className={`theme-toggle-switch ${theme === "light" ? "theme-toggle-on" : "theme-toggle-off"}`}
+                onClick={toggleTheme}
+                title={theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro"}
+                type="button"
+                role="switch"
+                aria-checked={theme === "light"}
+                aria-label={theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro"}
+              >
+                <span className="theme-toggle-slider"></span>
+              </button>
+            </div>
           </div>
 
           <div
@@ -849,7 +863,7 @@ const Dashboard: React.FC = () => {
                 maxHeight: "280px",
                 height: "280px",
                 flex: "1 1 auto",
-                minWidth: "400px",
+                minWidth: "500px",
                 display: "flex",
                 flexDirection: "row",
                 alignItems: "flex-start",
@@ -894,16 +908,20 @@ const Dashboard: React.FC = () => {
                 className="dashboard-dark-gauge"
                 style={{
                   flex: "0 0 auto",
-                  width: "200px",
-                  height: "120px",
+                  width: "280px",
+                  minWidth: "280px",
                   marginTop: "auto",
                   marginBottom: "auto",
                   alignSelf: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  overflow: "visible",
                 }}
               >
                 <svg
                   viewBox="0 0 200 100"
-                  style={{ width: "100%", height: "100%" }}
+                  style={{ width: "100%", height: "160px", overflow: "visible" }}
                 >
                   <defs>
                     <path
@@ -923,6 +941,19 @@ const Dashboard: React.FC = () => {
                     } ${Math.PI * 80}`}
                   />
                 </svg>
+                {monthlyGoal > 0 && (
+                  <div className="dashboard-dark-progress-message">
+                    {metrics.monthEarnings >= (monthlyGoal / 100) ? (
+                      <span className="progress-message-success">
+                        🎉 Parabéns! Meta atingida!
+                      </span>
+                    ) : (
+                      <span className="progress-message-remaining">
+                        Faltam {formatCurrency((monthlyGoal / 100 - metrics.monthEarnings) * 100)} para atingir a meta
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
