@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Link, useLocation } from "react-router-dom";
 import "./Dashboard.css";
 import "./DashboardDark.css";
 import estrelaInteira from "../assets/estrelainteira.png";
@@ -8,7 +7,7 @@ import estrelaVazia from "../assets/estrelavazia.png";
 import logoBranco from "../assets/iconebranco.png";
 import { chefService, ChefReview } from "../services/chef.service";
 import { useAuth } from "../contexts/AuthContext";
-import perfilVazio from "../assets/perfilvazio.png";
+import { DashboardSidebar } from "../components/DashboardSidebar";
 import {
   serviceRequestService,
   ServiceRequest,
@@ -22,8 +21,7 @@ import {
 } from "../services/chef-wallet.service";
 
 const Dashboard: React.FC = () => {
-  const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
@@ -40,7 +38,6 @@ const Dashboard: React.FC = () => {
   const [walletPayouts, setWalletPayouts] = useState<ChefPayout[]>([]);
   const [isLoadingWallet, setIsLoadingWallet] = useState<boolean>(false);
   const [walletError, setWalletError] = useState<string>("");
-  const [profileImageError, setProfileImageError] = useState(false);
   const previousCompletedCountRef = useRef<number>(0);
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     const savedTheme = localStorage.getItem("dashboard-theme");
@@ -620,11 +617,6 @@ const Dashboard: React.FC = () => {
     return stars;
   };
 
-  const profilePicture =
-    user?.profilePictureUrl && !profileImageError
-      ? user.profilePictureUrl
-      : perfilVazio;
-
   const toggleTheme = () => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
@@ -652,91 +644,29 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className={`dashboard-layout ${theme === "light" ? "dashboard-light" : "dashboard-dark"}`}>
+      <DashboardSidebar theme={theme} onThemeToggle={toggleTheme} />
       <main className={`dashboard-main ${theme === "light" ? "dashboard-light-main" : "dashboard-dark-main"}`}>
         <div className={`dashboard-content ${theme === "light" ? "dashboard-light-content" : "dashboard-dark-content"}`}>
           <div className={`dashboard-header ${theme === "light" ? "dashboard-light-header" : "dashboard-dark-header"}`}>
             <h1 className={`dashboard-title ${theme === "light" ? "dashboard-light-title" : "dashboard-dark-title"}`}>Dashboard</h1>
-            <nav className={`dashboard-nav ${theme === "light" ? "dashboard-light-nav" : "dashboard-dark-nav"}`}>
-              <Link
-                to="/dashboard"
-                className={`dashboard-nav-link ${theme === "light" ? "dashboard-light-nav-link" : "dashboard-dark-nav-link"} ${
-                  location.pathname === "/dashboard" ||
-                  location.pathname === "/"
-                    ? "active"
-                    : ""
-                }`}
-              >
-                Dashboard
-              </Link>
-              <Link
-                to="/agendamentos"
-                className={`dashboard-nav-link ${theme === "light" ? "dashboard-light-nav-link" : "dashboard-dark-nav-link"} ${
-                  location.pathname === "/agendamentos" ||
-                  location.pathname === "/preview/agendamentos"
-                    ? "active"
-                    : ""
-                }`}
-              >
-                Agendamentos
-              </Link>
-              <Link
-                to="/historico"
-                className={`dashboard-nav-link ${theme === "light" ? "dashboard-light-nav-link" : "dashboard-dark-nav-link"} ${
-                  location.pathname === "/historico" ? "active" : ""
-                }`}
-              >
-                Histórico
-              </Link>
-              <button
-                className={`theme-toggle-switch ${theme === "light" ? "theme-toggle-on" : "theme-toggle-off"}`}
-                onClick={toggleTheme}
-                title={theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro"}
-                type="button"
-                role="switch"
-                aria-checked={theme === "light"}
-                aria-label={theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro"}
-              >
-                <span className="theme-toggle-slider"></span>
-              </button>
-              <Link to="/perfil">
-                <img
-                  src={profilePicture}
-                  alt="Perfil"
-                  className={`dashboard-nav-profile ${theme === "light" ? "dashboard-light-nav-profile" : "dashboard-dark-nav-profile"}`}
-                  onError={() => setProfileImageError(true)}
-                />
-              </Link>
-              <button
-                className={`dashboard-nav-link ${theme === "light" ? "dashboard-light-nav-link" : "dashboard-dark-nav-link"}`}
-                onClick={logout}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  fontSize: "inherit",
-                  fontWeight: "inherit",
-                }}
-              >
-                Sair
-              </button>
-            </nav>
           </div>
 
           <div
             style={{
               display: "flex",
-              gap: "1.5rem",
+              gap: "1rem",
               marginBottom: "1.5rem",
               flexWrap: "wrap",
+              width: "100%",
+              boxSizing: "border-box",
             }}
           >
             <div
               className="card ganhos-card"
               style={{
-                maxWidth: "350px",
+                maxWidth: "320px",
                 width: "100%",
-                flex: "0 0 auto",
+                flex: "1 1 300px",
                 maxHeight: "280px",
                 height: "280px",
                 position: "relative",

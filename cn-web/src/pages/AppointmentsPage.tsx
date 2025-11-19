@@ -1,13 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
 import "../App.css";
 import "./Dashboard.css";
 import "./DashboardDark.css";
 import "./AppointmentsPage.css";
 import { ChatWindow } from "../components/ChatWindow";
 import { useAuth } from "../contexts/AuthContext";
-import perfilVazio from "../assets/perfilvazio.png";
 import chatIcon from "../assets/chat.svg";
+import { DashboardSidebar } from "../components/DashboardSidebar";
 import {
   serviceRequestService,
   ServiceRequest,
@@ -39,7 +38,6 @@ type Appointment = {
 const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 const AppointmentsPage: React.FC = () => {
-  const location = useLocation();
   const today = useMemo(() => new Date(), []);
   const [currentMonth, setCurrentMonth] = useState<number>(today.getMonth());
   const [currentYear, setCurrentYear] = useState<number>(today.getFullYear());
@@ -65,7 +63,7 @@ const AppointmentsPage: React.FC = () => {
     serviceRequestId: number;
     status: ServiceRequestStatus;
   } | null>(null);
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     const savedTheme = localStorage.getItem("dashboard-theme");
     return (savedTheme as "dark" | "light") || "dark";
@@ -424,9 +422,6 @@ const AppointmentsPage: React.FC = () => {
     }
   };
 
-  const [profileImageError, setProfileImageError] = useState(false);
-  const profilePicture = (user?.profilePictureUrl && !profileImageError) ? user.profilePictureUrl : perfilVazio;
-
   const toggleTheme = () => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
@@ -437,74 +432,11 @@ const AppointmentsPage: React.FC = () => {
 
   return (
     <div className={`dashboard-layout ${theme === "light" ? "dashboard-light" : "dashboard-dark"}`}>
+      <DashboardSidebar theme={theme} onThemeToggle={toggleTheme} />
       <main className={`dashboard-main ${theme === "light" ? "dashboard-light-main" : "dashboard-dark-main"}`}>
         <div className={`dashboard-content ${theme === "light" ? "dashboard-light-content" : "dashboard-dark-content"}`}>
           <div className={`dashboard-header ${theme === "light" ? "dashboard-light-header" : "dashboard-dark-header"}`}>
             <h1 className={`dashboard-title ${theme === "light" ? "dashboard-light-title" : "dashboard-dark-title"}`}>Agendamentos</h1>
-            <nav className={`dashboard-nav ${theme === "light" ? "dashboard-light-nav" : "dashboard-dark-nav"}`}>
-              <Link
-                to="/dashboard"
-                className={`dashboard-nav-link ${theme === "light" ? "dashboard-light-nav-link" : "dashboard-dark-nav-link"} ${
-                  location.pathname === "/dashboard" || location.pathname === "/"
-                    ? "active"
-                    : ""
-                }`}
-              >
-                Dashboard
-              </Link>
-              <Link
-                to="/agendamentos"
-                className={`dashboard-nav-link ${theme === "light" ? "dashboard-light-nav-link" : "dashboard-dark-nav-link"} ${
-                  location.pathname === "/agendamentos" ||
-                  location.pathname === "/preview/agendamentos"
-                    ? "active"
-                    : ""
-                }`}
-              >
-                Agendamentos
-              </Link>
-              <Link
-                to="/historico"
-                className={`dashboard-nav-link ${theme === "light" ? "dashboard-light-nav-link" : "dashboard-dark-nav-link"} ${
-                  location.pathname === "/historico" ? "active" : ""
-                }`}
-              >
-                Histórico
-              </Link>
-              <button
-                className={`theme-toggle-switch ${theme === "light" ? "theme-toggle-on" : "theme-toggle-off"}`}
-                onClick={toggleTheme}
-                title={theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro"}
-                type="button"
-                role="switch"
-                aria-checked={theme === "light"}
-                aria-label={theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro"}
-              >
-                <span className="theme-toggle-slider"></span>
-              </button>
-              <Link to="/perfil">
-                <img
-                  src={profilePicture}
-                  alt="Perfil"
-                  className={`dashboard-nav-profile ${theme === "light" ? "dashboard-light-nav-profile" : "dashboard-dark-nav-profile"}`}
-                  onError={() => setProfileImageError(true)}
-                />
-              </Link>
-              <button
-                className={`dashboard-nav-link ${theme === "light" ? "dashboard-light-nav-link" : "dashboard-dark-nav-link"}`}
-                onClick={logout}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  fontSize: "inherit",
-                  fontWeight: "inherit",
-                }}
-              >
-                Sair
-              </button>
-            </nav>
           </div>
           <div className="appointments-grid">
             <section className="appointments-list-section">

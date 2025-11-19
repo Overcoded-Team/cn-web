@@ -3,34 +3,58 @@
 /* Tema Escuro Moderno - Estilo FIESTA ANALYTICS */
 
 /* Garantir que o body tenha fundo escuro quando dashboard estiver ativo */
-body:has(.dashboard-dark-layout) {
+body:has(.dashboard-dark-layout),
+body:has(.dashboard-light),
+body:has(.dashboard-dark) {
   background: #1a1d24 !important;
+  overflow-x: hidden !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+}
+
+html {
+  overflow-x: hidden !important;
+  width: 100% !important;
+  max-width: 100vw !important;
 }
 
 .dashboard-dark-layout {
   display: flex;
-  width: 100%;
+  width: 100vw;
+  max-width: 100vw;
   min-height: 100vh;
   font-family: "Comfortaa", sans-serif;
   background: #1a1d24 !important;
   color: #ffffff;
   position: relative;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .dashboard-dark-main {
   flex: 1;
-  margin-left: 0;
+  margin-left: 280px !important;
   background: #1a1d24 !important;
   min-height: 100vh;
-  padding: 2rem;
+  padding: 1.5rem;
   position: relative;
+  width: calc(100vw - 280px) !important;
+  max-width: calc(100vw - 280px) !important;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+  z-index: 1;
 }
 
 .dashboard-dark-content {
-  max-width: 1600px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   background: transparent;
   position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  overflow-x: hidden;
 }
 
 .dashboard-dark-header {
@@ -119,10 +143,12 @@ body:has(.dashboard-dark-layout) {
 .dashboard-dark-card {
   background: #242831;
   border-radius: 16px;
-  padding: 1rem 1.5rem 1.5rem 1.5rem;
+  padding: 1rem 1.2rem 1.2rem 1.2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   border: 1px solid #2d3139;
   transition: all 0.3s;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .dashboard-dark-card:hover {
@@ -475,7 +501,7 @@ body:has(.dashboard-dark-layout) {
   gap: 2rem;
   background: #1a1d24;
   width: 100%;
-  padding: 2rem;
+  padding: 1.5rem;
 }
 
 .dashboard-loading-logo {
@@ -596,7 +622,7 @@ body:has(.dashboard-dark-layout) {
 .wallet-loading,
 .wallet-error {
   text-align: center;
-  padding: 2rem;
+  padding: 1.5rem;
   color: #b0b3b8;
 }
 
@@ -648,7 +674,7 @@ body:has(.dashboard-dark-layout) {
 .wallet-empty {
   color: #b0b3b8;
   text-align: center;
-  padding: 2rem;
+  padding: 1.5rem;
   font-style: italic;
 }
 
@@ -827,7 +853,7 @@ body:has(.dashboard-dark-layout) {
   flex: 1;
   margin-left: 0;
   min-height: 100vh;
-  padding: 2rem;
+  padding: 1.5rem;
   position: relative;
 }
 
@@ -888,14 +914,33 @@ body:has(.dashboard-light) {
 .dashboard-light {
   background: #f5f7fa !important;
   color: #333333;
+  overflow-x: hidden;
+  width: 100vw;
+  max-width: 100vw;
+  box-sizing: border-box;
 }
 
 .dashboard-light-main {
   background: #f5f7fa !important;
+  margin-left: 280px;
+  width: calc(100vw - 280px);
+  max-width: calc(100vw - 280px);
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: 1.5rem;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .dashboard-light-content {
   background: transparent;
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
 }
 
 .dashboard-light-header {
@@ -931,6 +976,79 @@ body:has(.dashboard-light) {
 .dashboard-light-nav-profile:hover {
   border-color: #ff6b35;
   transform: scale(1.05);
+}
+
+/* Tema Escuro - Sidebar */
+.dashboard-dark .dashboard-sidebar {
+  background: #1a1d24 !important;
+  border-right: 1px solid #2d3139 !important;
+  z-index: 1000 !important;
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 280px !important;
+  height: 100vh !important;
+}
+
+/* Tema Branco - Sidebar */
+.dashboard-light .dashboard-sidebar {
+  background: #ffffff;
+  border-right: 1px solid #e0e0e0;
+  z-index: 1000;
+  position: fixed;
+}
+
+.dashboard-light .chef-label,
+.dashboard-light .chef-name {
+  color: #333333;
+}
+
+.dashboard-light .nav-item {
+  color: #666666;
+}
+
+.dashboard-light .nav-item:link,
+.dashboard-light .nav-item:visited,
+.dashboard-light .nav-item:active {
+  color: #666666;
+}
+
+.dashboard-light .nav-item:hover:not(.active) {
+  color: #333333;
+  background: rgba(255, 107, 53, 0.1);
+}
+
+.dashboard-light .nav-item.active {
+  background: #ff6b35;
+  color: #ffffff;
+}
+
+.dashboard-light .logout-button {
+  background-color: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  color: #333333;
+}
+
+.dashboard-light .logout-button:hover {
+  background-color: #e8e8e8;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-light .logout-button span {
+  color: #333333;
+}
+
+.dashboard-light .social-icon img {
+  filter: brightness(0) saturate(100%);
+}
+
+.dashboard-light .profile-photo {
+  background: #ffffff;
+  border: 4px solid #ff6b35;
+}
+
+.dashboard-light .change-picture-sidebar-button {
+  border: 3px solid #ffffff;
 }
 
 /* Tema Branco - Cards */
