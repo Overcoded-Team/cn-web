@@ -83,6 +83,7 @@ const ProfilePage: React.FC = () => {
   const [newSocialUrl, setNewSocialUrl] = useState<string>("");
   const [isUploadingMenu, setIsUploadingMenu] = useState<boolean>(false);
   const menuFileInputRef = useRef<HTMLInputElement>(null);
+  const [showMenuPreview, setShowMenuPreview] = useState<boolean>(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -470,6 +471,23 @@ const ProfilePage: React.FC = () => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const handleMenuThumbnailClick = () => {
+    setShowMenuPreview(true);
+  };
+
+  const handleDownloadMenu = () => {
+    if (profile?.menuUrl) {
+      // Criar link temporário para download
+      const link = document.createElement('a');
+      link.href = profile.menuUrl;
+      link.download = profile.menuOriginalName || 'cardapio.pdf';
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   const bio = profile?.bio || "";
   const specialty = profile?.portfolioDescription || "";
   const yearsOfExperience = profile?.yearsOfExperience || 0;
@@ -832,52 +850,57 @@ const ProfilePage: React.FC = () => {
                           style={{ display: "none" }}
                           disabled={isUploadingMenu}
                         />
-                        <button
-                          className="menu-button"
-                          onClick={handleMenuButtonClick}
-                          disabled={isUploadingMenu}
-                        >
-                          {isUploadingMenu ? "Enviando..." : "Adicionar cardápio"}
-                        </button>
-                        {profile?.menuUrl && (
-                          <div className="menu-info">
-                            <a
-                              href={profile.menuUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="menu-link"
-                            >
-                              <span className="menu-file-name">
-                                {profile.menuOriginalName || "Cardápio"}
-                              </span>
-                              {profile.menuSizeBytes && (
-                                <span className="menu-file-size">
-                                  ({formatFileSize(profile.menuSizeBytes)})
-                                </span>
-                              )}
-                            </a>
+                        <div className="menu-buttons-container">
+                          <button
+                            className="menu-button"
+                            onClick={handleMenuButtonClick}
+                            disabled={isUploadingMenu}
+                          >
+                            {isUploadingMenu ? "Enviando..." : "Adicionar cardápio"}
+                          </button>
+                          {profile?.menuUrl && (
                             <button
-                              type="button"
-                              className="menu-delete-button"
+                              className="menu-remove-button"
                               onClick={handleDeleteMenu}
+                              disabled={isUploadingMenu}
                               aria-label="Remover cardápio"
                             >
-                              <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  d="M18 6L6 18M6 6L18 18"
-                                  stroke="#f44336"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
+                              Remover cardápio
                             </button>
+                          )}
+                        </div>
+                        {profile?.menuUrl && (
+                          <div className="menu-info">
+                            <div className="menu-thumbnail-container">
+                              {(profile.menuUrl.endsWith('.pdf') || profile.menuMimeType === 'application/pdf') ? (
+                                <div className="menu-pdf-thumbnail" onClick={handleMenuThumbnailClick}>
+                                  <iframe
+                                    src={`${profile.menuUrl}#page=1&zoom=50`}
+                                    className="menu-pdf-thumbnail-iframe"
+                                    title="Prévia do Cardápio"
+                                    scrolling="no"
+                                  />
+                                  <div className="menu-thumbnail-overlay">
+                                    <span className="menu-thumbnail-text">Clique para visualizar</span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="menu-link-button"
+                                  onClick={() => window.open(profile.menuUrl, '_blank')}
+                                >
+                                  <span className="menu-file-name">
+                                    {profile.menuOriginalName || "Cardápio"}
+                                  </span>
+                                  {profile.menuSizeBytes && (
+                                    <span className="menu-file-size">
+                                      ({formatFileSize(profile.menuSizeBytes)})
+                                    </span>
+                                  )}
+                                </button>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -996,6 +1019,62 @@ const ProfilePage: React.FC = () => {
           )}
         </div>
       </main>
+
+      {/* Modal de Prévia do Cardápio */}
+      {showMenuPreview && profile?.menuUrl && (
+        <div className="menu-preview-modal-overlay" onClick={() => setShowMenuPreview(false)}>
+          <div className="menu-preview-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="menu-preview-modal-header">
+              <h2 className="menu-preview-modal-title">
+                {profile.menuOriginalName || "Cardápio"}
+              </h2>
+              <div className="menu-preview-modal-actions">
+                <button
+                  className="menu-preview-download-button"
+                  onClick={handleDownloadMenu}
+                  aria-label="Baixar cardápio"
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  Baixar
+                </button>
+              </div>
+            </div>
+            <div className="menu-preview-modal-content">
+              {(profile.menuUrl.endsWith('.pdf') || profile.menuMimeType === 'application/pdf') ? (
+                <iframe
+                  src={`${profile.menuUrl}#page=1`}
+                  className="menu-preview-iframe"
+                  title="Prévia do Cardápio"
+                />
+              ) : (
+                <div className="menu-preview-download">
+                  <p>Este arquivo não pode ser visualizado diretamente.</p>
+                  <button
+                    onClick={handleDownloadMenu}
+                    className="menu-preview-download-link"
+                  >
+                    Baixar arquivo
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

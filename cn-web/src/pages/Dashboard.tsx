@@ -16,10 +16,6 @@ import {
 import {
   chefWalletService,
   WalletBalance,
-  WalletEntry,
-  ChefPayout,
-  PixKeyType,
-  RequestPayoutDTO,
 } from "../services/chef-wallet.service";
 
 const Dashboard: React.FC = () => {
@@ -28,28 +24,15 @@ const Dashboard: React.FC = () => {
   const [profile, setProfile] = useState<any>(null);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [reviews, setReviews] = useState<ChefReview[]>([]);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedChartMonth, setSelectedChartMonth] = useState<number | null>(
+  const [selectedYear] = useState(new Date().getFullYear());
+  const [selectedChartMonth] = useState<number | null>(
     new Date().getMonth()
   );
 
   const [walletBalance, setWalletBalance] = useState<WalletBalance | null>(
     null
   );
-  const [walletEntries, setWalletEntries] = useState<WalletEntry[]>([]);
-  const [walletPayouts, setWalletPayouts] = useState<ChefPayout[]>([]);
-  const [isLoadingWallet, setIsLoadingWallet] = useState<boolean>(false);
-  const [walletError, setWalletError] = useState<string>("");
-  const [showWalletModal, setShowWalletModal] = useState<boolean>(false);
-  const [showPayoutModal, setShowPayoutModal] = useState<boolean>(false);
   const [showReviewsModal, setShowReviewsModal] = useState<boolean>(false);
-  const [payoutForm, setPayoutForm] = useState<RequestPayoutDTO>({
-    amount_cents: 0,
-    pix_key: "",
-    pix_key_type: "EVP",
-  });
-  const [payoutAmountInput, setPayoutAmountInput] = useState<string>("");
-  const [isRequestingPayout, setIsRequestingPayout] = useState<boolean>(false);
   const previousCompletedCountRef = useRef<number>(0);
 
   useEffect(() => {
@@ -84,19 +67,19 @@ const Dashboard: React.FC = () => {
 
         try {
           while (hasMore && page <= maxPages) {
-            const requestsData =
-              await serviceRequestService.listChefServiceRequests(page, 1000);
-            allRequests = [...allRequests, ...requestsData.items];
+          const requestsData =
+            await serviceRequestService.listChefServiceRequests(page, 1000);
+          allRequests = [...allRequests, ...requestsData.items];
 
-            if (
-              requestsData.items.length < 1000 ||
+          if (
+            requestsData.items.length < 1000 ||
               allRequests.length >= requestsData.total ||
               !requestsData.items || requestsData.items.length === 0
-            ) {
-              hasMore = false;
-            } else {
-              page++;
-            }
+          ) {
+            hasMore = false;
+          } else {
+            page++;
+          }
           }
         } catch (error) {
           console.error("Erro ao carregar solicitações:", error);
@@ -424,57 +407,6 @@ const Dashboard: React.FC = () => {
     };
   }, [serviceRequests, profile, selectedYear, selectedChartMonth, reviews]);
 
-  const handlePreviousYear = () => {
-    setSelectedYear(selectedYear - 1);
-  };
-
-  const handleNextYear = () => {
-    setSelectedYear(selectedYear + 1);
-  };
-
-  const loadWalletData = async () => {
-    try {
-      setIsLoadingWallet(true);
-      setWalletError("");
-      const [balance, entriesData, payoutsData] = await Promise.all([
-        chefWalletService.getBalance(),
-        chefWalletService.listEntries({ page: 1, limit: 10 }),
-        chefWalletService.listPayouts(1, 10),
-      ]);
-      setWalletBalance(balance);
-      setWalletEntries(entriesData.items);
-      setWalletPayouts(payoutsData.items);
-    } catch (err) {
-      setWalletError(
-        err instanceof Error ? err.message : "Erro ao carregar carteira"
-      );
-    } finally {
-      setIsLoadingWallet(false);
-    }
-  };
-
-  const handleOpenWallet = () => {
-    setShowWalletModal(true);
-    loadWalletData();
-  };
-
-  const formatCurrency = (cents: number): string => {
-    return `R$ ${(cents / 100).toLocaleString("pt-BR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  };
-
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
 
   if (isLoading) {
     return (
@@ -536,9 +468,9 @@ const Dashboard: React.FC = () => {
   };
 
   if (isLoading) {
-    return (
+  return (
       <div className="dashboard-dark-layout">
-        <DashboardSidebar />
+      <DashboardSidebar />
         <main className="dashboard-dark-main">
           <div className="dashboard-dark-content">
             <div className="dashboard-loading-container">
@@ -606,12 +538,6 @@ const Dashboard: React.FC = () => {
           <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
             {/* Card de Ganhos Laranja */}
             <div className="card ganhos-card" style={{ maxWidth: '350px', width: '100%', flex: '0 0 auto', maxHeight: '280px', height: '280px' }}>
-                  <button
-                    className="ver-carteira-button"
-                    onClick={handleOpenWallet}
-                  >
-                    Ver Carteira
-                  </button>
               <div className="saldo-disponivel-section" style={{ borderTop: 'none', paddingTop: '0' }}>
                 <p className="saldo-disponivel-label" style={{ fontSize: '1.2rem' }}>Saldo Disponível</p>
                 <p className="saldo-disponivel-value" style={{ fontSize: '2.5rem' }}>
@@ -632,9 +558,9 @@ const Dashboard: React.FC = () => {
                   R${" "}
                   {metrics.monthEarnings.toLocaleString("pt-BR", {
                     minimumFractionDigits: 2,
-                  })}
-                </p>
-              </div>
+                      })}
+                    </p>
+                  </div>
                 </div>
 
             {/* Card de Avaliações */}
