@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
 import "./Historico.css";
 import "./Dashboard.css";
 import "./DashboardDark.css";
@@ -8,8 +7,6 @@ import {
   ServiceRequest,
   ServiceRequestStatus,
 } from "../services/serviceRequest.service";
-import { useAuth } from "../contexts/AuthContext";
-import perfilVazio from "../assets/perfilvazio.png";
 import { ChatWindow } from "../components/ChatWindow";
 import chatIcon from "../assets/chat.svg";
 import { DashboardSidebar } from "../components/DashboardSidebar";
@@ -27,8 +24,6 @@ interface HistoricoEntry {
 }
 
 const Historico: React.FC = () => {
-  const location = useLocation();
-  const { user } = useAuth();
   const [historicoEntries, setHistoricoEntries] = useState<HistoricoEntry[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");

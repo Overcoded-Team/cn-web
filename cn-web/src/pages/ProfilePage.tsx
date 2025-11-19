@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Link, useLocation } from "react-router-dom";
 import "./Dashboard.css";
 import "./DashboardDark.css";
 import "./ProfilePage.css";
@@ -13,7 +12,6 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { authService } from "../services/auth.service";
 import editIcon from "../assets/edit.svg";
-import perfilVazio from "../assets/perfilvazio.png";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 
 interface ChefCuisineRelation {
@@ -52,7 +50,6 @@ interface ChefProfileResponse {
 }
 
 const ProfilePage: React.FC = () => {
-  const location = useLocation();
   const { user, checkAuth } = useAuth();
   const [profile, setProfile] = useState<ChefProfileResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);

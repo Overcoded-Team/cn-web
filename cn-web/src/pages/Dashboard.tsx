@@ -6,7 +6,6 @@ import meiaEstrela from "../assets/meiaestrela.png";
 import estrelaVazia from "../assets/estrelavazia.png";
 import logoBranco from "../assets/iconebranco.png";
 import { chefService, ChefReview } from "../services/chef.service";
-import { useAuth } from "../contexts/AuthContext";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import {
   serviceRequestService,
@@ -21,7 +20,6 @@ import {
 } from "../services/chef-wallet.service";
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
