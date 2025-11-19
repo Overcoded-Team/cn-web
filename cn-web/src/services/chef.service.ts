@@ -134,11 +134,17 @@ export const chefService = {
     return api.get<ChefSocialLink[]>("/chefs/my-socials");
   },
 
-  async addSocialLink(data: { type: ChefSocialType; url: string }): Promise<ChefSocialLink> {
+  async addSocialLink(data: {
+    type: ChefSocialType;
+    url: string;
+  }): Promise<ChefSocialLink> {
     return api.post<ChefSocialLink>("/chefs/socials", data);
   },
 
-  async updateSocialLink(type: ChefSocialType, data: { url: string }): Promise<ChefSocialLink> {
+  async updateSocialLink(
+    type: ChefSocialType,
+    data: { url: string }
+  ): Promise<ChefSocialLink> {
     return api.patch<ChefSocialLink>(`/chefs/socials/${type}`, data);
   },
 
@@ -212,9 +218,27 @@ export const chefService = {
         statusCode: response.status,
       }));
 
-      const errorMessage = Array.isArray(errorData.message)
+      let errorMessage = Array.isArray(errorData.message)
         ? errorData.message.join(", ")
         : errorData.message || `Erro: ${response.status}`;
+
+      const errorLower = errorMessage.toLowerCase();
+
+      if (
+        errorLower.includes("file too large") ||
+        errorLower.includes("file size exceeds")
+      ) {
+        errorMessage =
+          "Arquivo muito grande. O tamanho máximo permitido é 50MB para fotos.";
+      } else if (
+        errorLower.includes("invalid file type") ||
+        errorLower.includes("file type not allowed")
+      ) {
+        errorMessage =
+          "Tipo de arquivo inválido. Use apenas imagens (JPEG, PNG, WebP ou AVIF).";
+      } else if (errorLower.includes("upload failed")) {
+        errorMessage = "Falha no upload da foto. Tente novamente.";
+      }
 
       throw new Error(errorMessage);
     }
@@ -258,9 +282,27 @@ export const chefService = {
         statusCode: response.status,
       }));
 
-      const errorMessage = Array.isArray(errorData.message)
+      let errorMessage = Array.isArray(errorData.message)
         ? errorData.message.join(", ")
         : errorData.message || `Erro: ${response.status}`;
+
+      const errorLower = errorMessage.toLowerCase();
+
+      if (
+        errorLower.includes("file too large") ||
+        errorLower.includes("file size exceeds")
+      ) {
+        errorMessage =
+          "Arquivo muito grande. O tamanho máximo permitido é 50MB para fotos.";
+      } else if (
+        errorLower.includes("invalid file type") ||
+        errorLower.includes("file type not allowed")
+      ) {
+        errorMessage =
+          "Tipo de arquivo inválido. Use apenas imagens (JPEG, PNG, WebP ou AVIF).";
+      } else if (errorLower.includes("upload failed")) {
+        errorMessage = "Falha no upload da foto. Tente novamente.";
+      }
 
       throw new Error(errorMessage);
     }
@@ -275,23 +317,46 @@ export const chefService = {
   async getMyReviews(
     page: number = 1,
     limit: number = 10
-  ): Promise<{ items: ChefReview[]; page: number; limit: number; total: number }> {
-    return api.get<{ items: ChefReview[]; page: number; limit: number; total: number }>(
-      `/chefs/my-reviews?page=${page}&limit=${limit}`
-    );
+  ): Promise<{
+    items: ChefReview[];
+    page: number;
+    limit: number;
+    total: number;
+  }> {
+    return api.get<{
+      items: ChefReview[];
+      page: number;
+      limit: number;
+      total: number;
+    }>(`/chefs/my-reviews?page=${page}&limit=${limit}`);
   },
 
   async getChefReviews(
     chefId: number,
     page: number = 1,
     limit: number = 10
-  ): Promise<{ items: ChefReview[]; page: number; limit: number; total: number }> {
-    return api.get<{ items: ChefReview[]; page: number; limit: number; total: number }>(
-      `/chefs/${chefId}/reviews?page=${page}&limit=${limit}`
-    );
+  ): Promise<{
+    items: ChefReview[];
+    page: number;
+    limit: number;
+    total: number;
+  }> {
+    return api.get<{
+      items: ChefReview[];
+      page: number;
+      limit: number;
+      total: number;
+    }>(`/chefs/${chefId}/reviews?page=${page}&limit=${limit}`);
   },
 
-  async uploadMenu(file: File): Promise<{ url: string; originalName: string; mimeType: string; sizeBytes: number }> {
+  async uploadMenu(
+    file: File
+  ): Promise<{
+    url: string;
+    originalName: string;
+    mimeType: string;
+    sizeBytes: number;
+  }> {
     const formData = new FormData();
     formData.append("file", file);
 
@@ -313,9 +378,26 @@ export const chefService = {
         statusCode: response.status,
       }));
 
-      const errorMessage = Array.isArray(errorData.message)
+      let errorMessage = Array.isArray(errorData.message)
         ? errorData.message.join(", ")
         : errorData.message || `Erro: ${response.status}`;
+
+      const errorLower = errorMessage.toLowerCase();
+
+      if (
+        errorLower.includes("file too large") ||
+        errorLower.includes("file size exceeds")
+      ) {
+        errorMessage =
+          "Arquivo muito grande. O tamanho máximo permitido é 20MB para cardápios.";
+      } else if (
+        errorLower.includes("invalid file type") ||
+        errorLower.includes("file type not allowed")
+      ) {
+        errorMessage = "Tipo de arquivo inválido. Use apenas PDF ou DOCX.";
+      } else if (errorLower.includes("upload failed")) {
+        errorMessage = "Falha no upload do cardápio. Tente novamente.";
+      }
 
       throw new Error(errorMessage);
     }

@@ -48,30 +48,26 @@ const Dashboard: React.FC = () => {
       try {
         setIsLoading(true);
 
-        // Timeout de segurança para garantir que o loading não fique infinito
         const timeoutId = setTimeout(() => {
           setIsLoading(false);
-        }, 5000); // 5 segundos máximo
+        }, 5000);
 
-        // Carregar dados principais primeiro (mais rápido)
         const [profileData, reviewsData, balanceData] = await Promise.all([
           chefService.getMyProfile().catch(() => null),
           chefService.getMyReviews(1, 1000).catch(() => ({ items: [] })),
           chefWalletService.getBalance().catch(() => null),
         ]);
 
-        // Atualizar estados principais primeiro para mostrar conteúdo
         setProfile(profileData);
         setReviews(reviewsData.items || []);
         if (balanceData) {
           setWalletBalance(balanceData);
         }
 
-        // Carregar solicitações em background (pode demorar mais)
         let allRequests: ServiceRequest[] = [];
         let page = 1;
         let hasMore = true;
-        let maxPages = 10; // Limite de segurança para evitar loop infinito
+        let maxPages = 10;
 
         try {
           while (hasMore && page <= maxPages) {
@@ -176,6 +172,22 @@ const Dashboard: React.FC = () => {
 
     const paidWithQuote = paidRequests.filter((sr) => sr.quote);
 
+    const completedWithQuote = completedRequests.filter((sr) => sr.quote);
+    const pendingWithQuote = pendingRequests.filter((sr) => sr.quote);
+
+    const completedEarnings = completedWithQuote.reduce(
+      (sum, sr) => sum + (sr.quote?.amount_cents || 0),
+      0
+    );
+
+    const pendingEarnings = pendingWithQuote.reduce(
+      (sum, sr) => sum + (sr.quote?.amount_cents || 0),
+      0
+    );
+
+    const completedCount = completedWithQuote.length;
+    const pendingCount = pendingWithQuote.length;
+
     const totalEarnings = paidWithQuote.reduce((sum, sr) => {
       if (!sr.quote) return sum;
       return sum + (sr.quote.amount_cents || 0);
@@ -257,6 +269,25 @@ const Dashboard: React.FC = () => {
         }, 0);
     });
 
+    const dailyEarnings = Array.from({ length: 7 }, (_, dayIndex) => {
+      return serviceRequests
+        .filter((sr) => {
+          if (
+            (sr.status !== ServiceRequestStatus.PAYMENT_CONFIRMED &&
+              sr.status !== ServiceRequestStatus.SCHEDULED &&
+              sr.status !== ServiceRequestStatus.COMPLETED) ||
+            !sr.quote
+          )
+            return false;
+          const paymentDate = new Date(sr.updated_at);
+          return paymentDate.getDay() === dayIndex;
+        })
+        .reduce((sum, sr) => {
+          if (!sr.quote) return sum;
+          return sum + (sr.quote.amount_cents || 0);
+        }, 0);
+    });
+
     const maxMonthlyEarning = Math.max(...monthlyEarnings, 1);
 
     const formatPeriod = () => {
@@ -297,7 +328,6 @@ const Dashboard: React.FC = () => {
       avgRating5 = (Number(profile.avgRating) / 10) * 5;
     }
 
-    // Novas métricas
     const pendingApprovals = serviceRequests.filter(
       (sr) => sr.status === ServiceRequestStatus.QUOTE_SENT
     );
@@ -350,7 +380,7 @@ const Dashboard: React.FC = () => {
       const avgMs =
         quotesWithTimes.reduce((sum, time) => sum + time, 0) /
         quotesWithTimes.length;
-      return Math.round(avgMs / (1000 * 60 * 60)); // horas
+      return Math.round(avgMs / (1000 * 60 * 60));
     })();
 
     const lastMonthEarnings =
@@ -423,6 +453,11 @@ const Dashboard: React.FC = () => {
       avgResponseTime,
       earningsGrowth,
       lastMonthEarnings,
+      completedEarnings: completedEarnings / 100,
+      pendingEarnings: pendingEarnings / 100,
+      completedCount,
+      pendingCount,
+      dailyEarnings: dailyEarnings.map((e) => e / 100),
     };
   }, [serviceRequests, profile, selectedYear, selectedChartMonth, reviews]);
 
@@ -623,7 +658,6 @@ const Dashboard: React.FC = () => {
             </nav>
           </div>
 
-          {/* Cards Topo - Ganhos e Avaliações lado a lado */}
           <div
             style={{
               display: "flex",
@@ -632,7 +666,6 @@ const Dashboard: React.FC = () => {
               flexWrap: "wrap",
             }}
           >
-            {/* Card de Ganhos Laranja */}
             <div
               className="card ganhos-card"
               style={{
@@ -716,7 +749,6 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Card de Avaliações */}
             <div
               className="dashboard-dark-card"
               style={{
@@ -753,7 +785,6 @@ const Dashboard: React.FC = () => {
               </button>
               <h3 className="dashboard-dark-card-title">Avaliações</h3>
 
-              {/* Informações à esquerda */}
               <div
                 style={{
                   display: "flex",
@@ -798,7 +829,6 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Logo fixa */}
               <div
                 style={{
                   position: "absolute",
@@ -820,7 +850,6 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Card Progresso de Vendas */}
             <div
               className="dashboard-dark-progress-card"
               style={{
@@ -888,7 +917,6 @@ const Dashboard: React.FC = () => {
           </div>
 
           <div className="dashboard-dark-grid">
-            {/* Primeiro Card - Ganhos com Tabela */}
             <div className="dashboard-dark-card">
               <div className="dashboard-dark-summary-row">
                 <div className="dashboard-dark-summary-item">
@@ -925,37 +953,26 @@ const Dashboard: React.FC = () => {
                     <td>Concluídos</td>
                     <td>
                       R${" "}
-                      {(metrics.totalEarnings * 0.4).toLocaleString("pt-BR", {
+                      {metrics.completedEarnings.toLocaleString("pt-BR", {
                         minimumFractionDigits: 2,
                       })}
                     </td>
-                    <td>{metrics.totalCompleted}</td>
+                    <td>{metrics.completedCount}</td>
                   </tr>
                   <tr>
                     <td>Pendentes</td>
                     <td>
                       R${" "}
-                      {(metrics.totalEarnings * 0.3).toLocaleString("pt-BR", {
+                      {metrics.pendingEarnings.toLocaleString("pt-BR", {
                         minimumFractionDigits: 2,
                       })}
                     </td>
-                    <td>{metrics.totalPending}</td>
-                  </tr>
-                  <tr>
-                    <td>Cancelados</td>
-                    <td>
-                      R${" "}
-                      {(metrics.totalEarnings * 0.1).toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </td>
-                    <td>{metrics.totalCancelled}</td>
+                    <td>{metrics.pendingCount}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-            {/* Coluna Direita */}
             <div>
               <div className="dashboard-dark-card">
                 <h3 className="dashboard-dark-card-title">Ganhos por Dia</h3>
@@ -965,11 +982,8 @@ const Dashboard: React.FC = () => {
                 <div className="dashboard-dark-horizontal-bars">
                   {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map(
                     (day, index) => {
-                      const earning = metrics.monthlyEarnings[index] || 0;
-                      const maxEarning = Math.max(
-                        ...metrics.monthlyEarnings,
-                        1
-                      );
+                      const earning = metrics.dailyEarnings[index] || 0;
+                      const maxEarning = Math.max(...metrics.dailyEarnings, 1);
                       const percentage = (earning / maxEarning) * 100;
                       return (
                         <div
@@ -986,7 +1000,11 @@ const Dashboard: React.FC = () => {
                             ></div>
                           </div>
                           <span className="dashboard-dark-horizontal-bar-value">
-                            R$ {(earning / 1000).toFixed(1)}K
+                            R${" "}
+                            {earning.toLocaleString("pt-BR", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
                           </span>
                         </div>
                       );
@@ -997,7 +1015,6 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Card Ganhos Mensais - Parte Inferior, Largura Total */}
           <div
             className="dashboard-dark-card"
             style={{ marginTop: "1.5rem", gridColumn: "1 / -1" }}
@@ -1024,7 +1041,6 @@ const Dashboard: React.FC = () => {
                     <stop offset="100%" stopColor="#ff6b35" stopOpacity="0" />
                   </linearGradient>
                 </defs>
-                {/* Grid lines */}
                 {[0, 25, 50, 75, 100].map((y) => (
                   <line
                     key={y}
@@ -1036,7 +1052,6 @@ const Dashboard: React.FC = () => {
                     strokeWidth="1"
                   />
                 ))}
-                {/* Data line */}
                 <polyline
                   points={metrics.monthlyEarnings
                     .map((earning, index) => {
@@ -1055,7 +1070,6 @@ const Dashboard: React.FC = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
-                {/* Area fill */}
                 <polygon
                   points={`40,160 ${metrics.monthlyEarnings
                     .map((earning, index) => {
@@ -1070,7 +1084,6 @@ const Dashboard: React.FC = () => {
                     .join(" ")} 760,160`}
                   fill="url(#lineGradient)"
                 />
-                {/* Data points */}
                 {metrics.monthlyEarnings.map((earning, index) => {
                   const x = 40 + (index / 11) * 720;
                   const maxEarning = Math.max(...metrics.monthlyEarnings, 1);
@@ -1087,7 +1100,6 @@ const Dashboard: React.FC = () => {
                     />
                   );
                 })}
-                {/* Month labels */}
                 {[
                   "Jan",
                   "Fev",
