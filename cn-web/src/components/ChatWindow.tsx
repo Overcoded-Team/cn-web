@@ -1,13 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useChatSocket, ChatMessage } from '../hooks/useChatSocket';
-import { ServiceRequestStatus } from '../services/serviceRequest.service';
-import { isChatReadOnly } from '../utils/chatUtils';
-import './ChatWindow.css';
+import React, { useState, useRef, useEffect } from "react";
+import { useChatSocket, ChatMessage } from "../hooks/useChatSocket";
+import { ServiceRequestStatus } from "../services/serviceRequest.service";
+import { isChatReadOnly } from "../utils/chatUtils";
+import "./ChatWindow.css";
 
 interface ChatWindowProps {
   serviceRequestId: number;
   currentUserId?: number;
-  currentUserRole?: 'CLIENT' | 'CHEF';
+  currentUserRole?: "CLIENT" | "CHEF";
   status: ServiceRequestStatus;
   onClose?: () => void;
 }
@@ -19,7 +19,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   status,
   onClose,
 }) => {
-  const [messageInput, setMessageInput] = useState('');
+  const [messageInput, setMessageInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -33,7 +33,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   });
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
     setError(null);
     sendMessage(messageInput);
-    setMessageInput('');
+    setMessageInput("");
   };
 
   const formatMessageTime = (dateString: string) => {
@@ -57,22 +57,22 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Agora';
+    if (diffMins < 1) return "Agora";
     if (diffMins < 60) return `${diffMins}min atrás`;
     if (diffHours < 24) return `${diffHours}h atrás`;
     if (diffDays < 7) return `${diffDays}d atrás`;
 
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const isMyMessage = (message: ChatMessage) => {
-    if (message.sender_type === 'SYSTEM') return false;
+    if (message.sender_type === "SYSTEM") return false;
     if (message.sender_type === currentUserRole) {
       return message.sender_user_id === currentUserId;
     }
@@ -89,10 +89,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               <span className="chat-readonly-badge">Somente Leitura</span>
             )}
             <span
-              className={`status-indicator ${isConnected ? 'connected' : 'disconnected'}`}
+              className={`status-indicator ${
+                isConnected ? "connected" : "disconnected"
+              }`}
             />
             <span className="status-text">
-              {isConnected ? 'Conectado' : 'Desconectado'}
+              {isConnected ? "Conectado" : "Desconectado"}
             </span>
           </div>
         </div>
@@ -107,24 +109,30 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         {isLoading ? (
           <div className="chat-loading">Carregando mensagens...</div>
         ) : messages.length === 0 ? (
-          <div className="chat-empty">Nenhuma mensagem ainda. Seja o primeiro a enviar!</div>
+          <div className="chat-empty">
+            Nenhuma mensagem ainda. Seja o primeiro a enviar!
+          </div>
         ) : (
           messages.map((message) => {
             const isMyMsg = isMyMessage(message);
-            const isSystem = message.sender_type === 'SYSTEM';
+            const isSystem = message.sender_type === "SYSTEM";
 
             return (
               <div
                 key={message.id}
-                className={`chat-message ${isMyMsg ? 'my-message' : ''} ${isSystem ? 'system-message' : ''}`}
+                className={`chat-message ${isMyMsg ? "my-message" : ""} ${
+                  isSystem ? "system-message" : ""
+                }`}
               >
                 {!isSystem && (
                   <div className="message-sender">
-                    {message.sender_type === 'CLIENT' ? 'Cliente' : 'Chef'}
+                    {message.sender_type === "CLIENT" ? "Cliente" : "Chef"}
                   </div>
                 )}
                 <div className="message-content">{message.content}</div>
-                <div className="message-time">{formatMessageTime(message.created_at)}</div>
+                <div className="message-time">
+                  {formatMessageTime(message.created_at)}
+                </div>
               </div>
             );
           })
@@ -150,7 +158,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         <div className="chat-readonly-notice">
           <span className="chat-readonly-icon">🔒</span>
           <span className="chat-readonly-text">
-            Este chat está em modo somente leitura. Você pode visualizar as mensagens, mas não pode enviar novas.
+            Este chat está em modo somente leitura. Você pode visualizar as
+            mensagens, mas não pode enviar novas.
           </span>
         </div>
       ) : (
@@ -160,7 +169,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             className="chat-input"
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
-            placeholder={isConnected ? 'Digite sua mensagem...' : 'Conectando...'}
+            placeholder={
+              isConnected ? "Digite sua mensagem..." : "Conectando..."
+            }
             disabled={!isConnected}
             maxLength={1000}
           />
@@ -176,5 +187,3 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     </div>
   );
 };
-
-

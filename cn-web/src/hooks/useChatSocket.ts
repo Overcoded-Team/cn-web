@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
-import { api } from '../utils/api';
+import { useEffect, useRef, useState, useCallback } from "react";
+import { io, Socket } from "socket.io-client";
+import { api } from "../utils/api";
 
 export interface ChatMessage {
   id: number;
   service_request_id: number;
-  sender_type: 'CLIENT' | 'CHEF' | 'SYSTEM';
+  sender_type: "CLIENT" | "CHEF" | "SYSTEM";
   sender_user_id?: number;
   content: string;
   metadata?: Record<string, any>;
@@ -28,7 +28,7 @@ export const useChatSocket = ({
   const [isLoading, setIsLoading] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const onErrorRef = useRef(onError);
-  
+
   useEffect(() => {
     onErrorRef.current = onError;
   }, [onError]);
@@ -43,18 +43,18 @@ export const useChatSocket = ({
       socketRef.current = null;
     }
 
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem("access_token");
     if (!token) {
-      onErrorRef.current?.('Token de autenticação não encontrado');
+      onErrorRef.current?.("Token de autenticação não encontrado");
       return;
     }
 
-    const baseUrl = api.baseURL.replace(/\/$/, '');
+    const baseUrl = api.baseURL.replace(/\/$/, "");
     const socketUrl = `${baseUrl}/service-requests-chat`;
-    
-    console.log('Connecting to WebSocket:', socketUrl);
-    console.log('Token exists:', !!token);
-    
+
+    console.log("Connecting to WebSocket:", socketUrl);
+    console.log("Token exists:", !!token);
+
     const socket = io(socketUrl, {
       auth: {
         token: token,
@@ -65,40 +65,40 @@ export const useChatSocket = ({
       query: {
         token: token,
       },
-      transports: ['websocket', 'polling'],
+      transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
       timeout: 20000,
     });
 
-    socket.on('connect', () => {
+    socket.on("connect", () => {
       setIsConnected(true);
       setIsLoading(true);
-      
-      socket.emit('join', { serviceRequestId });
+
+      socket.emit("join", { serviceRequestId });
     });
 
-    socket.on('disconnect', (reason) => {
-      console.log('Socket disconnected:', reason);
+    socket.on("disconnect", (reason) => {
+      console.log("Socket disconnected:", reason);
       setIsConnected(false);
       setIsLoading(false);
     });
 
-    socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
+    socket.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
       setIsConnected(false);
       setIsLoading(false);
-      const errorMessage = error.message || 'Erro ao conectar ao chat';
+      const errorMessage = error.message || "Erro ao conectar ao chat";
       onErrorRef.current?.(errorMessage);
     });
 
-    socket.on('chat_history', (history: ChatMessage[]) => {
+    socket.on("chat_history", (history: ChatMessage[]) => {
       setMessages(history || []);
       setIsLoading(false);
     });
 
-    socket.on('message', (message: ChatMessage) => {
+    socket.on("message", (message: ChatMessage) => {
       setMessages((prev) => {
         if (prev.some((m) => m.id === message.id)) {
           return prev;
@@ -107,8 +107,8 @@ export const useChatSocket = ({
       });
     });
 
-    socket.on('error', (error: { message: string }) => {
-      onErrorRef.current?.(error.message || 'Erro no chat');
+    socket.on("error", (error: { message: string }) => {
+      onErrorRef.current?.(error.message || "Erro no chat");
     });
 
     socketRef.current = socket;
@@ -126,22 +126,22 @@ export const useChatSocket = ({
   const sendMessage = useCallback(
     (content: string) => {
       if (!socketRef.current?.connected || !serviceRequestId) {
-        onErrorRef.current?.('Não conectado ao chat');
+        onErrorRef.current?.("Não conectado ao chat");
         return;
       }
 
       const trimmedContent = content.trim();
       if (!trimmedContent) {
-        onErrorRef.current?.('Mensagem não pode estar vazia');
+        onErrorRef.current?.("Mensagem não pode estar vazia");
         return;
       }
 
       if (trimmedContent.length > 1000) {
-        onErrorRef.current?.('Mensagem excede o limite de 1000 caracteres');
+        onErrorRef.current?.("Mensagem excede o limite de 1000 caracteres");
         return;
       }
 
-      socketRef.current.emit('message', {
+      socketRef.current.emit("message", {
         serviceRequestId,
         content: trimmedContent,
       });
@@ -170,4 +170,3 @@ export const useChatSocket = ({
     disconnect,
   };
 };
-
