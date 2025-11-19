@@ -29,6 +29,10 @@
   top: 0;
   border-right: 1px solid #2d3139;
   z-index: 1000 !important;
+  transform: scale(0.8);
+  transform-origin: top left;
+  width: calc(280px / 0.8);
+  height: calc(100vh / 0.8);
 }
 
 .sidebar-content {
