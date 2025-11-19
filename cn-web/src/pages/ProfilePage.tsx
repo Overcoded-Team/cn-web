@@ -509,7 +509,13 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className={`dashboard-layout ${theme === "light" ? "dashboard-light" : "dashboard-dark"}`}>
-      <DashboardSidebar />
+      <DashboardSidebar 
+        isEditing={isEditing}
+        onPictureChange={handleProfilePictureChange}
+        fileInputRef={profilePictureFileInputRef}
+        isUploadingPicture={isUploadingProfilePicture}
+        onPictureButtonClick={handleChangeProfilePictureClick}
+      />
       <main className={`dashboard-main ${theme === "light" ? "dashboard-light-main" : "dashboard-dark-main"}`}>
         <div className={`dashboard-content ${theme === "light" ? "dashboard-light-content" : "dashboard-dark-content"}`}>
           <div className={`dashboard-header ${theme === "light" ? "dashboard-light-header" : "dashboard-dark-header"}`}>
@@ -575,29 +581,6 @@ const ProfilePage: React.FC = () => {
             <div className="profile-loading">Carregando...</div>
           ) : (
             <>
-              {isEditing && (
-                <div className="dashboard-dark-card profile-picture-section">
-                  <h2 className="dashboard-dark-card-title">Foto de Perfil</h2>
-                  <div className="profile-picture-edit-container">
-                    <input
-                      ref={profilePictureFileInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/avif"
-                      onChange={handleProfilePictureChange}
-                      style={{ display: "none" }}
-                      disabled={isUploadingProfilePicture}
-                    />
-                    <button
-                      type="button"
-                      className="change-profile-picture-button"
-                      onClick={handleChangeProfilePictureClick}
-                      disabled={isUploadingProfilePicture}
-                    >
-                      {isUploadingProfilePicture ? "Enviando..." : "Alterar Foto"}
-                    </button>
-                  </div>
-                </div>
-              )}
               <div className="profile-content">
               <div className="profile-main-grid">
                 <div className="profile-left-column">
