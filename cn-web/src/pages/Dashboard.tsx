@@ -934,7 +934,7 @@ const Dashboard: React.FC = () => {
                 style={{ display: "flex", flexDirection: "column", flex: "1" }}
               >
                 <h3 className="dashboard-dark-progress-title" style={{ marginTop: "0" }}>
-                  Progresso de Vendas
+                  Meta de Ganhos Mensal
                 </h3>
                 <p className="dashboard-dark-progress-subtitle">Mês atual</p>
                 {monthlyGoal > 0 && (
