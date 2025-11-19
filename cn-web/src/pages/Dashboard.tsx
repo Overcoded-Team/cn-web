@@ -554,7 +554,7 @@ const Dashboard: React.FC = () => {
   if (isLoading) {
     return (
       <div className={`dashboard-layout ${theme === "light" ? "dashboard-light" : "dashboard-dark"}`}>
-        <main className={`dashboard-main ${theme === "light" ? "dashboard-light-main" : "dashboard-dark-main"}`}>
+        <main className={`dashboard-main ${theme === "light" ? "dashboard-light-main" : "dashboard-dark-main"}`} style={{ marginLeft: 0, width: '100vw' }}>
           <div className={`dashboard-content ${theme === "light" ? "dashboard-light-content" : "dashboard-dark-content"}`}>
             <div className="dashboard-loading-container">
               <div className="dashboard-loading-logo">

@@ -497,22 +497,41 @@ html {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 4rem);
+  height: 100vh;
+  min-height: 100vh;
   gap: 2rem;
   background: #1a1d24;
   width: 100%;
-  padding: 1.5rem;
+  padding: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  z-index: 1;
 }
 
 .dashboard-loading-logo {
   animation: pulse 2s ease-in-out infinite;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .loading-logo-image {
   width: 120px;
   height: 120px;
   filter: brightness(0) invert(1);
-  opacity: 0.9;
+  opacity: 1 !important;
+  display: block !important;
+  margin: 0 auto;
+  object-fit: contain;
+  visibility: visible !important;
 }
 
 .dashboard-loading-text {
@@ -520,6 +539,7 @@ html {
   font-size: 1.2rem;
   font-weight: 500;
   margin: 0;
+  text-align: center;
   animation: fadeInOut 2s ease-in-out infinite;
 }
 
