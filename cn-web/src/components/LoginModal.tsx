@@ -24,8 +24,11 @@ const LoginModal: React.FC<LoginModalProps> = ({
     if (isOpen) {
       document.body.style.overflow = "hidden";
       setError("");
-      setEmail("");
-      setPassword("");
+      // Carregar dados salvos do localStorage
+      const savedEmail = localStorage.getItem("login_form_email");
+      const savedPassword = localStorage.getItem("login_form_password");
+      if (savedEmail) setEmail(savedEmail);
+      if (savedPassword) setPassword(savedPassword);
     } else {
       document.body.style.overflow = "unset";
     }
@@ -35,6 +38,31 @@ const LoginModal: React.FC<LoginModalProps> = ({
     };
   }, [isOpen]);
 
+  // Salvar no localStorage quando perder o foco
+  const handleEmailBlur = () => {
+    if (email) {
+      localStorage.setItem("login_form_email", email);
+    }
+  };
+
+  const handlePasswordBlur = () => {
+    if (password) {
+      localStorage.setItem("login_form_password", password);
+    }
+  };
+
+  // Limpar localStorage quando a página for atualizada
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      localStorage.removeItem("login_form_email");
+      localStorage.removeItem("login_form_password");
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -42,6 +70,9 @@ const LoginModal: React.FC<LoginModalProps> = ({
 
     try {
       await login(email, password);
+      // Limpar localStorage após login bem-sucedido
+      localStorage.removeItem("login_form_email");
+      localStorage.removeItem("login_form_password");
       onClose();
     } catch (err) {
       setError(
@@ -78,6 +109,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
                 placeholder="Email:"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onBlur={handleEmailBlur}
                 className="form-input"
                 required
                 disabled={isLoading}
@@ -90,6 +122,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
                 placeholder="Senha:"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onBlur={handlePasswordBlur}
                 className="form-input"
                 required
                 disabled={isLoading}

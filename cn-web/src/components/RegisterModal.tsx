@@ -49,21 +49,54 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
     if (isOpen) {
       document.body.style.overflow = "hidden";
       setError("");
-      setCurrentStep(1);
-      setFormData({
-        nome: "",
-        cpfCnpj: "",
-        email: "",
-        senha: "",
-        confirmarSenha: "",
-        sobreVoce: "",
-      });
-      setStep2Data({
-        profilePicture: null,
-        anosExperiencia: "",
-        especialidades: [],
-        portfolioDescription: "",
-      });
+      // Carregar dados salvos do localStorage
+      const savedFormData = localStorage.getItem("register_form_data");
+      const savedStep2Data = localStorage.getItem("register_step2_data");
+      const savedStep = localStorage.getItem("register_current_step");
+      
+      if (savedFormData) {
+        try {
+          const parsed = JSON.parse(savedFormData);
+          setFormData(parsed);
+        } catch (e) {
+          console.error("Erro ao carregar dados do formulário:", e);
+        }
+      } else {
+        setFormData({
+          nome: "",
+          cpfCnpj: "",
+          email: "",
+          senha: "",
+          confirmarSenha: "",
+          sobreVoce: "",
+        });
+      }
+
+      if (savedStep2Data) {
+        try {
+          const parsed = JSON.parse(savedStep2Data);
+          setStep2Data({
+            ...parsed,
+            profilePicture: null, // Não salvar arquivo, apenas dados
+          });
+        } catch (e) {
+          console.error("Erro ao carregar dados do step 2:", e);
+        }
+      } else {
+        setStep2Data({
+          profilePicture: null,
+          anosExperiencia: "",
+          especialidades: [],
+          portfolioDescription: "",
+        });
+      }
+
+      if (savedStep) {
+        setCurrentStep(parseInt(savedStep, 10));
+      } else {
+        setCurrentStep(1);
+      }
+
       setProfilePicturePreview(null);
     } else {
       document.body.style.overflow = "unset";
@@ -73,6 +106,45 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
+
+  // Salvar formData no localStorage quando mudar
+  useEffect(() => {
+    if (isOpen && formData.nome) {
+      localStorage.setItem("register_form_data", JSON.stringify(formData));
+    }
+  }, [formData, isOpen]);
+
+  // Salvar step2Data no localStorage quando mudar (exceto profilePicture)
+  useEffect(() => {
+    if (isOpen && (step2Data.anosExperiencia || step2Data.especialidades.length > 0 || step2Data.portfolioDescription)) {
+      const dataToSave = {
+        anosExperiencia: step2Data.anosExperiencia,
+        especialidades: step2Data.especialidades,
+        portfolioDescription: step2Data.portfolioDescription,
+      };
+      localStorage.setItem("register_step2_data", JSON.stringify(dataToSave));
+    }
+  }, [step2Data.anosExperiencia, step2Data.especialidades, step2Data.portfolioDescription, isOpen]);
+
+  // Salvar step atual
+  useEffect(() => {
+    if (isOpen) {
+      localStorage.setItem("register_current_step", currentStep.toString());
+    }
+  }, [currentStep, isOpen]);
+
+  // Limpar localStorage quando a página for atualizada
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      localStorage.removeItem("register_form_data");
+      localStorage.removeItem("register_step2_data");
+      localStorage.removeItem("register_current_step");
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
 
   useEffect(() => {
     const loadCuisines = async () => {
@@ -216,6 +288,11 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
       const updatedUserData = await authService.getProfile();
       authService.setUser(updatedUserData);
       await checkAuth();
+
+      // Limpar localStorage após cadastro bem-sucedido
+      localStorage.removeItem("register_form_data");
+      localStorage.removeItem("register_step2_data");
+      localStorage.removeItem("register_current_step");
 
       onClose();
       navigate("/dashboard");

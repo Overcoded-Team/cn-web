@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import "../App.css";
 import "./Dashboard.css";
 import "./DashboardDark.css";
@@ -70,6 +70,17 @@ const AppointmentsPage: React.FC = () => {
     const savedTheme = localStorage.getItem("dashboard-theme");
     return (savedTheme as "dark" | "light") || "dark";
   });
+  const [isPendingExpanded, setIsPendingExpanded] = useState<boolean>(true);
+  const [isAwaitingClientExpanded, setIsAwaitingClientExpanded] = useState<boolean>(true);
+  const [isConfirmedExpanded, setIsConfirmedExpanded] = useState<boolean>(true);
+  const [hasPendingNotification, setHasPendingNotification] = useState<boolean>(false);
+  const [hasAwaitingClientNotification, setHasAwaitingClientNotification] = useState<boolean>(false);
+  const [hasConfirmedNotification, setHasConfirmedNotification] = useState<boolean>(false);
+  
+  const prevPendingCountRef = useRef<number>(-1);
+  const prevAwaitingClientCountRef = useRef<number>(-1);
+  const prevConfirmedCountRef = useRef<number>(-1);
+  const isInitialLoadRef = useRef<boolean>(true);
 
   const calculateValueWithFees = (value: string): string => {
     if (!value || value.trim() === "") return "0,00";
@@ -165,6 +176,59 @@ const AppointmentsPage: React.FC = () => {
 
     loadAppointments();
   }, []);
+
+  // Detectar atualizações e mostrar notificações quando os cards estiverem fechados
+  useEffect(() => {
+    // Ignorar a primeira carga
+    if (isInitialLoadRef.current) {
+      prevPendingCountRef.current = pendingRequests.length;
+      prevAwaitingClientCountRef.current = pendingClientApproval.length;
+      prevConfirmedCountRef.current = appointments.length;
+      isInitialLoadRef.current = false;
+      return;
+    }
+
+    const currentPendingCount = pendingRequests.length;
+    const currentAwaitingClientCount = pendingClientApproval.length;
+    const currentConfirmedCount = appointments.length;
+
+    // Verificar se há novos itens pendentes
+    if (currentPendingCount > prevPendingCountRef.current && !isPendingExpanded && prevPendingCountRef.current >= 0) {
+      setHasPendingNotification(true);
+    }
+    prevPendingCountRef.current = currentPendingCount;
+
+    // Verificar se há novos itens aguardando cliente
+    if (currentAwaitingClientCount > prevAwaitingClientCountRef.current && !isAwaitingClientExpanded && prevAwaitingClientCountRef.current >= 0) {
+      setHasAwaitingClientNotification(true);
+    }
+    prevAwaitingClientCountRef.current = currentAwaitingClientCount;
+
+    // Verificar se há novos itens confirmados
+    if (currentConfirmedCount > prevConfirmedCountRef.current && !isConfirmedExpanded && prevConfirmedCountRef.current >= 0) {
+      setHasConfirmedNotification(true);
+    }
+    prevConfirmedCountRef.current = currentConfirmedCount;
+  }, [pendingRequests.length, pendingClientApproval.length, appointments.length, isPendingExpanded, isAwaitingClientExpanded, isConfirmedExpanded]);
+
+  // Limpar notificações quando os cards forem abertos
+  useEffect(() => {
+    if (isPendingExpanded) {
+      setHasPendingNotification(false);
+    }
+  }, [isPendingExpanded]);
+
+  useEffect(() => {
+    if (isAwaitingClientExpanded) {
+      setHasAwaitingClientNotification(false);
+    }
+  }, [isAwaitingClientExpanded]);
+
+  useEffect(() => {
+    if (isConfirmedExpanded) {
+      setHasConfirmedNotification(false);
+    }
+  }, [isConfirmedExpanded]);
 
   const monthName = useMemo(() => {
     return new Date(currentYear, currentMonth, 1).toLocaleString("pt-BR", {
@@ -456,9 +520,49 @@ const AppointmentsPage: React.FC = () => {
           </div>
           <div className="appointments-grid">
             <section className="appointments-list-section">
-              {pendingRequests.length > 0 && (
-                <div className="dashboard-dark-card pending-section">
-                  <h2 className="dashboard-dark-card-title">Pendentes</h2>
+              <div className="dashboard-dark-card pending-section">
+                <div className="section-header-with-chevron">
+                  <div className="section-title-with-notification">
+                    <h2 className="dashboard-dark-card-title">Pendentes</h2>
+                    {hasPendingNotification && !isPendingExpanded && (
+                      <span className="section-notification-badge" aria-label="Novos itens">
+                        <span className="notification-dot"></span>
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    className="section-chevron-button"
+                    onClick={() => setIsPendingExpanded(!isPendingExpanded)}
+                    aria-label={isPendingExpanded ? "Ocultar" : "Mostrar"}
+                    type="button"
+                  >
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className={`section-chevron-icon ${isPendingExpanded ? "expanded" : ""}`}
+                    >
+                      <path
+                        d="M6 9L12 15L18 9"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                {isPendingExpanded && (
+                <>
+                {isLoading ? (
+                  <div className="empty-state">Carregando...</div>
+                ) : pendingRequests.length === 0 ? (
+                  <div className="empty-state">
+                    Nenhum pedido pendente.
+                  </div>
+                ) : (
                   <div className="pending-requests-list">
                     {pendingRequests.map((req) => {
                       const requestedDate = new Date(req.requested_date);
@@ -530,12 +634,54 @@ const AppointmentsPage: React.FC = () => {
                       );
                     })}
                   </div>
-                </div>
-              )}
+                )}
+                </>
+                )}
+              </div>
 
-              {pendingClientApproval.length > 0 && (
-                <div className="dashboard-dark-card pending-section">
-                  <h2 className="dashboard-dark-card-title">Aguardando Cliente</h2>
+              <div className="dashboard-dark-card pending-section">
+                <div className="section-header-with-chevron">
+                  <div className="section-title-with-notification">
+                    <h2 className="dashboard-dark-card-title">Aguardando Cliente</h2>
+                    {hasAwaitingClientNotification && !isAwaitingClientExpanded && (
+                      <span className="section-notification-badge" aria-label="Novos itens">
+                        <span className="notification-dot"></span>
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    className="section-chevron-button"
+                    onClick={() => setIsAwaitingClientExpanded(!isAwaitingClientExpanded)}
+                    aria-label={isAwaitingClientExpanded ? "Ocultar" : "Mostrar"}
+                    type="button"
+                  >
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className={`section-chevron-icon ${isAwaitingClientExpanded ? "expanded" : ""}`}
+                    >
+                      <path
+                        d="M6 9L12 15L18 9"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                {isAwaitingClientExpanded && (
+                <>
+                {isLoading ? (
+                  <div className="empty-state">Carregando...</div>
+                ) : pendingClientApproval.length === 0 ? (
+                  <div className="empty-state">
+                    Nenhum pedido aguardando aprovação do cliente.
+                  </div>
+                ) : (
                   <div className="pending-requests-list">
                     {pendingClientApproval.map((req) => {
                       const requestedDate = new Date(req.requested_date);
@@ -604,12 +750,48 @@ const AppointmentsPage: React.FC = () => {
                       );
                     })}
                   </div>
-                </div>
-              )}
+                )}
+                </>
+                )}
+              </div>
 
               <div className="dashboard-dark-card">
-                <h2 className="dashboard-dark-card-title">Confirmados</h2>
+                <div className="section-header-with-chevron">
+                  <div className="section-title-with-notification">
+                    <h2 className="dashboard-dark-card-title">Confirmados</h2>
+                    {hasConfirmedNotification && !isConfirmedExpanded && (
+                      <span className="section-notification-badge" aria-label="Novos itens">
+                        <span className="notification-dot"></span>
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    className="section-chevron-button"
+                    onClick={() => setIsConfirmedExpanded(!isConfirmedExpanded)}
+                    aria-label={isConfirmedExpanded ? "Ocultar" : "Mostrar"}
+                    type="button"
+                  >
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className={`section-chevron-icon ${isConfirmedExpanded ? "expanded" : ""}`}
+                    >
+                      <path
+                        d="M6 9L12 15L18 9"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
 
+                {isConfirmedExpanded && (
+                <>
                 {isLoading ? (
                   <div className="empty-state">Carregando...</div>
                 ) : error ? (
@@ -670,9 +852,27 @@ const AppointmentsPage: React.FC = () => {
                           R$ {a.priceBRL.toFixed(2).replace(".", ",")}
                         </div>
                       </div>
+                      <button
+                        className="pending-chat-fab"
+                        aria-label="Abrir chat"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setChatContext({
+                            serviceRequestId: a.serviceRequestId,
+                            status: a.status,
+                            participantName: a.clientName,
+                            participantAvatarUrl: a.clientProfilePicture,
+                          });
+                          setShowChatModal(true);
+                        }}
+                      >
+                        <img src={chatIcon} alt="" className="chat-icon" />
+                      </button>
                     </li>
                   ))}
                   </ul>
+                )}
+                </>
                 )}
               </div>
             </section>
