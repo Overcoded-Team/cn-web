@@ -9,6 +9,8 @@ interface ChatWindowProps {
   currentUserId?: number;
   currentUserRole?: "CLIENT" | "CHEF";
   status: ServiceRequestStatus;
+  participantName?: string;
+  participantAvatarUrl?: string;
   onClose?: () => void;
 }
 
@@ -17,6 +19,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   currentUserId,
   currentUserRole,
   status,
+  participantName,
+  participantAvatarUrl,
   onClose,
 }) => {
   const [messageInput, setMessageInput] = useState("");
@@ -79,11 +83,28 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     return false;
   };
 
+  const chatTitle = participantName
+    ? `${participantName} - Chat do Pedido #${serviceRequestId}`
+    : `Chat do Pedido #${serviceRequestId}`;
+
+  const participantInitial = participantName?.charAt(0).toUpperCase();
+
   return (
     <div className="chat-window">
       <div className="chat-header">
         <div className="chat-header-content">
-          <h3 className="chat-title">Chat do Pedido #{serviceRequestId}</h3>
+          <div className="chat-header-main">
+            {participantName && (
+              <div className="chat-avatar">
+                {participantAvatarUrl ? (
+                  <img src={participantAvatarUrl} alt={participantName} />
+                ) : (
+                  <span>{participantInitial}</span>
+                )}
+              </div>
+            )}
+            <h3 className="chat-title">{chatTitle}</h3>
+          </div>
           <div className="chat-status">
             {isReadOnly && (
               <span className="chat-readonly-badge">Somente Leitura</span>

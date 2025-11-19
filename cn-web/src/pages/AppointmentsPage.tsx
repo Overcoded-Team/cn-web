@@ -62,6 +62,8 @@ const AppointmentsPage: React.FC = () => {
   const [chatContext, setChatContext] = useState<{
     serviceRequestId: number;
     status: ServiceRequestStatus;
+    participantName?: string;
+    participantAvatarUrl?: string;
   } | null>(null);
   const { user } = useAuth();
   const [theme, setTheme] = useState<"dark" | "light">(() => {
@@ -502,6 +504,8 @@ const AppointmentsPage: React.FC = () => {
                               setChatContext({
                                 serviceRequestId: req.id,
                                 status: req.status,
+                                participantName: clientName,
+                                participantAvatarUrl: clientProfilePicture,
                               });
                               setShowChatModal(true);
                             }}
@@ -574,6 +578,8 @@ const AppointmentsPage: React.FC = () => {
                               setChatContext({
                                 serviceRequestId: req.id,
                                 status: req.status,
+                                participantName: clientName,
+                                participantAvatarUrl: clientProfilePicture,
                               });
                               setShowChatModal(true);
                             }}
@@ -819,6 +825,8 @@ const AppointmentsPage: React.FC = () => {
                                   setChatContext({
                                     serviceRequestId: selectedAppointment.serviceRequestId,
                                     status: selectedAppointment.status,
+                                    participantName: selectedAppointment.clientName,
+                                    participantAvatarUrl: selectedAppointment.clientProfilePicture,
                                   });
                                   setShowChatModal(true);
                                 }
@@ -981,6 +989,8 @@ const AppointmentsPage: React.FC = () => {
               currentUserId={user?.id}
               currentUserRole="CHEF"
               status={chatContext.status}
+              participantName={chatContext.participantName}
+              participantAvatarUrl={chatContext.participantAvatarUrl}
               onClose={() => setShowChatModal(false)}
             />
           </div>
