@@ -7,6 +7,7 @@ import {
   ServiceRequest,
   ServiceRequestStatus,
 } from "../services/serviceRequest.service";
+import { useAuth } from "../contexts/AuthContext";
 import { ChatWindow } from "../components/ChatWindow";
 import chatIcon from "../assets/chat.svg";
 import { DashboardSidebar } from "../components/DashboardSidebar";
@@ -24,6 +25,7 @@ interface HistoricoEntry {
 }
 
 const Historico: React.FC = () => {
+  const { user } = useAuth();
   const [historicoEntries, setHistoricoEntries] = useState<HistoricoEntry[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
