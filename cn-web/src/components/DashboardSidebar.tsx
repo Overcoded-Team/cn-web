@@ -114,11 +114,95 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     }
   };
 
-  const getSocialUrl = (link: ChefSocialLink): string => {
-    if (link.type === "WHATSAPP") {
-      return formatWhatsAppUrl(link.url);
+  const formatInstagramUrl = (url: string): string => {
+    try {
+      if (url.startsWith("http://") || url.startsWith("https://")) {
+        return url;
+      }
+      if (url.startsWith("@")) {
+        return `https://www.instagram.com/${url.substring(1)}`;
+      }
+      if (url.startsWith("instagram.com") || url.startsWith("www.instagram.com")) {
+        return `https://${url}`;
+      }
+      return `https://www.instagram.com/${url}`;
+    } catch (error) {
+      return url;
     }
-    return link.url;
+  };
+
+  const formatFacebookUrl = (url: string): string => {
+    try {
+      if (url.startsWith("http://") || url.startsWith("https://")) {
+        return url;
+      }
+      if (url.startsWith("facebook.com") || url.startsWith("www.facebook.com")) {
+        return `https://${url}`;
+      }
+      return `https://www.facebook.com/${url}`;
+    } catch (error) {
+      return url;
+    }
+  };
+
+  const formatYouTubeUrl = (url: string): string => {
+    try {
+      if (url.startsWith("http://") || url.startsWith("https://")) {
+        return url;
+      }
+      if (url.startsWith("@")) {
+        return `https://www.youtube.com/${url}`;
+      }
+      if (url.startsWith("youtube.com") || url.startsWith("www.youtube.com") || url.startsWith("youtu.be")) {
+        return `https://${url}`;
+      }
+      if (url.startsWith("channel/") || url.startsWith("c/") || url.startsWith("user/")) {
+        return `https://www.youtube.com/${url}`;
+      }
+      return `https://www.youtube.com/@${url}`;
+    } catch (error) {
+      return url;
+    }
+  };
+
+  const formatTikTokUrl = (url: string): string => {
+    try {
+      if (url.startsWith("http://") || url.startsWith("https://")) {
+        return url;
+      }
+      if (url.startsWith("@")) {
+        return `https://www.tiktok.com/${url}`;
+      }
+      if (url.startsWith("tiktok.com") || url.startsWith("www.tiktok.com")) {
+        return `https://${url}`;
+      }
+      return `https://www.tiktok.com/@${url}`;
+    } catch (error) {
+      return url;
+    }
+  };
+
+  const getSocialUrl = (link: ChefSocialLink): string => {
+    if (!link.url || !link.url.trim()) {
+      return link.url;
+    }
+
+    const trimmedUrl = link.url.trim();
+
+    switch (link.type) {
+      case "WHATSAPP":
+        return formatWhatsAppUrl(trimmedUrl);
+      case "INSTAGRAM":
+        return formatInstagramUrl(trimmedUrl);
+      case "FACEBOOK":
+        return formatFacebookUrl(trimmedUrl);
+      case "YOUTUBE":
+        return formatYouTubeUrl(trimmedUrl);
+      case "TIKTOK":
+        return formatTikTokUrl(trimmedUrl);
+      default:
+        return trimmedUrl;
+    }
   };
 
   const renderSocialLinks = useMemo(() => {
@@ -126,25 +210,28 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
       return null;
     }
 
-    return socialLinks.map((link) => {
-      const icon = getSocialIcon(link.type);
-      if (!icon) return null;
+    return socialLinks
+      .filter((link) => {
+        const icon = getSocialIcon(link.type);
+        return icon && link.url;
+      })
+      .map((link) => {
+        const icon = getSocialIcon(link.type);
+        const url = getSocialUrl(link);
 
-      const url = getSocialUrl(link);
-
-      return (
-        <a
-          key={link.type}
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="social-icon"
-          aria-label={link.type}
-        >
-          <img src={icon} alt={link.type} style={{ display: 'block' }} />
-        </a>
-      );
-    });
+        return (
+          <a
+            key={link.type}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="social-icon"
+            aria-label={link.type}
+          >
+            <img src={icon} alt={link.type} style={{ display: 'block' }} />
+          </a>
+        );
+      });
   }, [socialLinks]);
 
   return (

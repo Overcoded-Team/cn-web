@@ -1007,53 +1007,6 @@ const AppointmentsPage: React.FC = () => {
                         <p>Nenhuma observação disponível.</p>
                       </div>
                     )}
-
-                    <div className="appointment-actions">
-                      {(() => {
-                        const chatEnabled = isChatEnabled(selectedAppointment.status);
-                        const chatReadOnly = isChatReadOnly(selectedAppointment.status);
-                        const statusMessage = getChatStatusMessage(selectedAppointment.status);
-
-                        if (!chatEnabled) {
-                          return (
-                            <div className="chat-unavailable">
-                              <div className="chat-unavailable-text">
-                                <strong>Chat Indisponível</strong>
-                                {statusMessage && <p>{statusMessage}</p>}
-                              </div>
-                            </div>
-                          );
-                        }
-
-                        return (
-                          <>
-                            {statusMessage && (
-                              <div className="chat-info-message">
-                                <span className="chat-info-icon">ℹ️</span>
-                                <span>{statusMessage}</span>
-                              </div>
-                            )}
-                            <button
-                              className={`chat-button ${chatReadOnly ? "chat-readonly" : ""}`}
-                              onClick={() => {
-                                if (selectedAppointment) {
-                                  setChatContext({
-                                    serviceRequestId: selectedAppointment.serviceRequestId,
-                                    status: selectedAppointment.status,
-                                    participantName: selectedAppointment.clientName,
-                                    participantAvatarUrl: selectedAppointment.clientProfilePicture,
-                                  });
-                                  setShowChatModal(true);
-                                }
-                              }}
-                            >
-                              <img src={chatIcon} alt="Chat" className="chat-icon" />
-                              {chatReadOnly ? "Ver Chat (Somente Leitura)" : "Abrir Chat"}
-                            </button>
-                          </>
-                        );
-                      })()}
-                    </div>
                   </>
                 ) : (
                   <>
