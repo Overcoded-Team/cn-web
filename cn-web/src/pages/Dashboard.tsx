@@ -24,8 +24,8 @@ const Dashboard: React.FC = () => {
   const [profile, setProfile] = useState<any>(null);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [reviews, setReviews] = useState<ChefReview[]>([]);
-  const [selectedYear] = useState(new Date().getFullYear());
-  const [selectedChartMonth] = useState<number | null>(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedChartMonth, setSelectedChartMonth] = useState<number | null>(new Date().getMonth());
 
   const [walletBalance, setWalletBalance] = useState<WalletBalance | null>(
     null
@@ -41,16 +41,36 @@ const Dashboard: React.FC = () => {
     const savedTheme = localStorage.getItem("dashboard-theme");
     return (savedTheme as "dark" | "light") || "dark";
   });
-  const [monthlyGoal, setMonthlyGoal] = useState<number>(() => {
-    const savedGoal = localStorage.getItem("monthly-sales-goal");
-    return savedGoal ? parseFloat(savedGoal) : 0;
-  });
+  const [monthlyGoal, setMonthlyGoal] = useState<number>(0);
   const [showGoalModal, setShowGoalModal] = useState<boolean>(false);
   const [editingGoal, setEditingGoal] = useState<string>("");
+  const [isLoadingGoal, setIsLoadingGoal] = useState<boolean>(false);
 
   useEffect(() => {
     localStorage.setItem("dashboard-theme", theme);
   }, [theme]);
+
+  // Carregar meta quando o mês/ano selecionado mudar
+  useEffect(() => {
+    const loadGoalForMonth = async () => {
+      if (selectedChartMonth === null) return;
+      
+      try {
+        const monthKey = `${selectedYear}-${String(selectedChartMonth + 1).padStart(2, '0')}`;
+        const goalData = await chefService.getMySalesGoal(monthKey).catch(() => null);
+        
+        if (goalData && goalData.goal_set) {
+          setMonthlyGoal(goalData.amount_cents);
+        } else {
+          setMonthlyGoal(0);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar meta:", error);
+      }
+    };
+
+    loadGoalForMonth();
+  }, [selectedYear, selectedChartMonth]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -61,16 +81,24 @@ const Dashboard: React.FC = () => {
           setIsLoading(false);
         }, 5000);
 
-        const [profileData, reviewsData, balanceData] = await Promise.all([
+        // Formatar o mês atual no formato YYYY-MM
+        const now = new Date();
+        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+        const [profileData, reviewsData, balanceData, goalData] = await Promise.all([
           chefService.getMyProfile().catch(() => null),
           chefService.getMyReviews(1, 1000).catch(() => ({ items: [] })),
           chefWalletService.getBalance().catch(() => null),
+          chefService.getMySalesGoal(currentMonth).catch(() => null),
         ]);
 
         setProfile(profileData);
         setReviews(reviewsData.items || []);
         if (balanceData) {
           setWalletBalance(balanceData);
+        }
+        if (goalData && goalData.goal_set) {
+          setMonthlyGoal(goalData.amount_cents);
         }
 
         let allRequests: ServiceRequest[] = [];
@@ -624,15 +652,39 @@ const Dashboard: React.FC = () => {
     setShowGoalModal(true);
   };
 
-  const handleSaveGoal = () => {
+  const handleSaveGoal = async () => {
     const goalValue = parseFloat(editingGoal);
-    if (isNaN(goalValue) || goalValue < 0) {
+    if (isNaN(goalValue) || goalValue < 1) {
+      alert("A meta mínima é de R$ 1,00");
       return;
     }
     const goalInCents = Math.round(goalValue * 100);
-    setMonthlyGoal(goalInCents);
-    localStorage.setItem("monthly-sales-goal", goalInCents.toString());
-    setShowGoalModal(false);
+    
+    // Validar mínimo de 100 centavos (R$ 1,00) conforme backend
+    if (goalInCents < 100) {
+      alert("A meta mínima é de R$ 1,00");
+      return;
+    }
+    
+    try {
+      setIsLoadingGoal(true);
+      // Usar o mês/ano selecionado no formato YYYY-MM
+      const monthToSave = selectedChartMonth !== null ? selectedChartMonth : new Date().getMonth();
+      const monthKey = `${selectedYear}-${String(monthToSave + 1).padStart(2, '0')}`;
+      
+      await chefService.setMySalesGoal({
+        amount_cents: goalInCents,
+        goalMonth: monthKey,
+      });
+      
+      setMonthlyGoal(goalInCents);
+      setShowGoalModal(false);
+    } catch (error) {
+      console.error("Erro ao salvar meta:", error);
+      alert("Erro ao salvar meta. Tente novamente.");
+    } finally {
+      setIsLoadingGoal(false);
+    }
   };
 
   const handleCloseGoalModal = () => {
@@ -875,10 +927,19 @@ const Dashboard: React.FC = () => {
               <div
                 style={{ display: "flex", flexDirection: "column", flex: "1" }}
               >
-                <h3 className="dashboard-dark-progress-title" style={{ marginTop: "0" }}>
+                <h3 className="dashboard-dark-progress-title" style={{ marginTop: "0", marginBottom: "0.5rem" }}>
                   Meta de Ganhos Mensal
                 </h3>
-                <p className="dashboard-dark-progress-subtitle">Mês atual</p>
+                <p className="dashboard-dark-progress-subtitle">
+                  {selectedChartMonth !== null
+                    ? (() => {
+                        const monthName = new Date(selectedYear, selectedChartMonth).toLocaleDateString("pt-BR", {
+                          month: "long",
+                        });
+                        return monthName.charAt(0).toUpperCase() + monthName.slice(1) + ` ${selectedYear}`;
+                      })()
+                    : "Mês atual"}
+                </p>
                 {monthlyGoal > 0 && (
                   <p className="dashboard-dark-progress-goal-label">
                     Meta: {formatCurrency(monthlyGoal)}
@@ -945,7 +1006,7 @@ const Dashboard: React.FC = () => {
                   <div className="dashboard-dark-progress-message">
                     {metrics.monthEarnings >= (monthlyGoal / 100) ? (
                       <span className="progress-message-success">
-                        🎉 Parabéns! Meta atingida!
+                         Parabéns! Meta atingida!
                       </span>
                     ) : (
                       <span className="progress-message-remaining">
@@ -1061,7 +1122,56 @@ const Dashboard: React.FC = () => {
             className="dashboard-dark-card"
             style={{ marginTop: "1.5rem", gridColumn: "1 / -1" }}
           >
-            <h3 className="dashboard-dark-card-title">Ganhos Mensais</h3>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "0.5rem", position: "relative" }}>
+              <h3 className="dashboard-dark-card-title" style={{ margin: 0, position: "absolute", left: 0 }}>Ganhos Mensais</h3>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <button
+                  onClick={() => setSelectedYear(selectedYear - 1)}
+                  style={{
+                    background: "transparent",
+                    border: "1px solid rgba(255, 255, 255, 0.3)",
+                    color: "#b0b3b8",
+                    padding: "0.25rem 0.5rem",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "0.9rem",
+                    fontFamily: '"Comfortaa", sans-serif',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  &lt;
+                </button>
+                <span style={{ color: "#b0b3b8", fontSize: "0.9rem", minWidth: "60px", textAlign: "center" }}>
+                  {selectedYear}
+                </span>
+                <button
+                  onClick={() => setSelectedYear(selectedYear + 1)}
+                  style={{
+                    background: "transparent",
+                    border: "1px solid rgba(255, 255, 255, 0.3)",
+                    color: "#b0b3b8",
+                    padding: "0.25rem 0.5rem",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "0.9rem",
+                    fontFamily: '"Comfortaa", sans-serif',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  &gt;
+                </button>
+              </div>
+            </div>
             <p className="dashboard-dark-card-description">
               Descrição dos ganhos do período selecionado
             </p>
@@ -1130,15 +1240,26 @@ const Dashboard: React.FC = () => {
                   const x = 40 + (index / 11) * 720;
                   const maxEarning = Math.max(...metrics.monthlyEarnings, 1);
                   const y = 160 - (earning / maxEarning) * 120;
+                  const isSelected = selectedChartMonth === index;
                   return (
                     <circle
                       key={index}
                       cx={x}
                       cy={y}
-                      r="4"
-                      fill="#ff6b35"
-                      stroke="#1a1d24"
-                      strokeWidth="2"
+                      r={isSelected ? "7" : "4"}
+                      fill={isSelected ? "#ff6b35" : "#ff6b35"}
+                      stroke={isSelected ? "#ffffff" : "#1a1d24"}
+                      strokeWidth={isSelected ? "3" : "2"}
+                      style={{ cursor: "pointer", transition: "all 0.2s" }}
+                      onClick={() => {
+                        setSelectedChartMonth(index);
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.setAttribute("r", "6");
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.setAttribute("r", isSelected ? "7" : "4");
+                      }}
                     />
                   );
                 })}
@@ -1450,7 +1571,7 @@ const Dashboard: React.FC = () => {
                 value={editingGoal}
                 onChange={(e) => setEditingGoal(e.target.value)}
                 placeholder="Ex: 15000.00"
-                min="0"
+                min="1"
                 step="0.01"
               />
               <div className="goal-modal-actions">
@@ -1463,9 +1584,9 @@ const Dashboard: React.FC = () => {
                 <button
                   className="goal-modal-save"
                   onClick={handleSaveGoal}
-                  disabled={!editingGoal || isNaN(parseFloat(editingGoal)) || parseFloat(editingGoal) < 0}
+                  disabled={isLoadingGoal || !editingGoal || isNaN(parseFloat(editingGoal)) || parseFloat(editingGoal) < 1}
                 >
-                  Salvar
+                  {isLoadingGoal ? "Salvando..." : "Salvar"}
                 </button>
               </div>
             </div>

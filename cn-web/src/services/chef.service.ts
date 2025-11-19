@@ -408,4 +408,40 @@ export const chefService = {
   async deleteMenu(): Promise<void> {
     await api.delete<void>("/chefs/my-menu");
   },
+
+  async getMySalesGoal(month?: string): Promise<{
+    goal_month: string;
+    amount_cents: number;
+    sold_amount_cents: number;
+    progress_percentage: number;
+    goal_set: boolean;
+  }> {
+    const queryParams = month ? `?month=${month}` : "";
+    return api.get<{
+      goal_month: string;
+      amount_cents: number;
+      sold_amount_cents: number;
+      progress_percentage: number;
+      goal_set: boolean;
+    }>(`/chefs/my-sales-goal${queryParams}`);
+  },
+
+  async setMySalesGoal(data: {
+    amount_cents: number;
+    goalMonth?: string;
+  }): Promise<{
+    goal_month: string;
+    amount_cents: number;
+    sold_amount_cents: number;
+    progress_percentage: number;
+    goal_set: boolean;
+  }> {
+    return api.post<{
+      goal_month: string;
+      amount_cents: number;
+      sold_amount_cents: number;
+      progress_percentage: number;
+      goal_set: boolean;
+    }>("/chefs/my-sales-goal", data);
+  },
 };
