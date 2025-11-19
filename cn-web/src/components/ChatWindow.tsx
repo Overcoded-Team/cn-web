@@ -136,14 +136,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         notes: quoteNotes.trim() || undefined,
       });
 
-      const quoteMessage = ` **ORÇAMENTO**\n\n` +
-        `Valor: R$ ${amount.toFixed(2).replace(".", ",")}\n` +
-        (quoteNotes.trim() ? `Observações: ${quoteNotes.trim()}` : "");
-
-      if (isConnected) {
-        sendMessage(quoteMessage);
-      }
-
       setShowQuoteModal(false);
       setQuoteAmount("");
       setQuoteNotes("");
