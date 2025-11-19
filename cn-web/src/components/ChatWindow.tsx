@@ -156,7 +156,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
       {isReadOnly ? (
         <div className="chat-readonly-notice">
-          <span className="chat-readonly-icon">🔒</span>
           <span className="chat-readonly-text">
             Este chat está em modo somente leitura. Você pode visualizar as
             mensagens, mas não pode enviar novas.

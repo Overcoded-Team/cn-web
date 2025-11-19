@@ -10,6 +10,8 @@ import {
 } from "../services/serviceRequest.service";
 import { useAuth } from "../contexts/AuthContext";
 import perfilVazio from "../assets/perfilvazio.png";
+import { ChatWindow } from "../components/ChatWindow";
+import chatIcon from "../assets/chat.svg";
 
 interface HistoricoEntry {
   valor: number;
@@ -20,6 +22,7 @@ interface HistoricoEntry {
   clienteNome: string;
   contato?: string;
   clientProfilePicture?: string;
+  serviceRequestId: number;
 }
 
 const Historico: React.FC = () => {
@@ -28,6 +31,8 @@ const Historico: React.FC = () => {
   const [historicoEntries, setHistoricoEntries] = useState<HistoricoEntry[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [showChatModal, setShowChatModal] = useState<boolean>(false);
+  const [selectedServiceRequestId, setSelectedServiceRequestId] = useState<number | null>(null);
 
   useEffect(() => {
     const loadHistorico = async () => {
@@ -62,6 +67,7 @@ const Historico: React.FC = () => {
             clienteNome: clientName,
             contato: req.client_profile?.user?.email || undefined,
             clientProfilePicture: clientProfilePicture,
+            serviceRequestId: req.id,
           };
         });
 
@@ -207,6 +213,16 @@ const Historico: React.FC = () => {
                         {entry.contato && ` - Contato: ${entry.contato}`}
                       </p>
                     </div>
+                    <button
+                      className="pending-chat-fab"
+                      aria-label="Abrir chat"
+                      onClick={() => {
+                        setSelectedServiceRequestId(entry.serviceRequestId);
+                        setShowChatModal(true);
+                      }}
+                    >
+                      <img src={chatIcon} alt="" className="chat-icon" />
+                    </button>
                     </div>
                   </div>
                 ))}
@@ -215,6 +231,20 @@ const Historico: React.FC = () => {
           )}
         </div>
       </main>
+
+      {showChatModal && selectedServiceRequestId && (
+        <div className="modal-overlay" onClick={() => setShowChatModal(false)}>
+          <div className="chat-modal" onClick={(e) => e.stopPropagation()}>
+            <ChatWindow
+              serviceRequestId={selectedServiceRequestId}
+              currentUserId={user?.id}
+              currentUserRole="CHEF"
+              status={ServiceRequestStatus.COMPLETED}
+              onClose={() => setShowChatModal(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

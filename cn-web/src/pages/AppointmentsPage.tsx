@@ -841,7 +841,6 @@ const AppointmentsPage: React.FC = () => {
                         if (!chatEnabled) {
                           return (
                             <div className="chat-unavailable">
-                              <div className="chat-unavailable-icon">🔒</div>
                               <div className="chat-unavailable-text">
                                 <strong>Chat Indisponível</strong>
                                 {statusMessage && <p>{statusMessage}</p>}

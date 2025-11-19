@@ -20,6 +20,7 @@
   padding: 1.5rem;
   border-bottom: 1px solid #2d3139;
   transition: all 0.3s;
+  position: relative;
 }
 
 .historico-entry:hover {
@@ -121,6 +122,32 @@
   margin: 0;
   line-height: 1.4;
   text-align: left;
+}
+
+.pending-chat-fab {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: #ff6b35;
+  box-shadow: 0 4px 10px rgba(255, 107, 53, 0.35);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pending-chat-fab:hover {
+  background: #e55a2b;
+}
+
+.pending-chat-fab .chat-icon {
+  width: 18px;
+  height: 18px;
+  filter: brightness(0) invert(1);
 }
 
 @media (max-width: 768px) {
