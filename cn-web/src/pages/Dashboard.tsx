@@ -16,6 +16,8 @@ import {
 import {
   chefWalletService,
   WalletBalance,
+  WalletEntry,
+  ChefPayout,
 } from "../services/chef-wallet.service";
 
 const Dashboard: React.FC = () => {
@@ -33,6 +35,11 @@ const Dashboard: React.FC = () => {
     null
   );
   const [showReviewsModal, setShowReviewsModal] = useState<boolean>(false);
+  const [showWalletModal, setShowWalletModal] = useState<boolean>(false);
+  const [walletEntries, setWalletEntries] = useState<WalletEntry[]>([]);
+  const [walletPayouts, setWalletPayouts] = useState<ChefPayout[]>([]);
+  const [isLoadingWallet, setIsLoadingWallet] = useState<boolean>(false);
+  const [walletError, setWalletError] = useState<string>("");
   const previousCompletedCountRef = useRef<number>(0);
 
   useEffect(() => {
@@ -407,6 +414,71 @@ const Dashboard: React.FC = () => {
     };
   }, [serviceRequests, profile, selectedYear, selectedChartMonth, reviews]);
 
+  const loadWalletData = async () => {
+    try {
+      setIsLoadingWallet(true);
+      setWalletError("");
+      const [balance, entriesData, payoutsData] = await Promise.all([
+        chefWalletService.getBalance(),
+        chefWalletService.listEntries({ page: 1, limit: 10 }),
+        chefWalletService.listPayouts(1, 10),
+      ]);
+      setWalletBalance(balance);
+      setWalletEntries(entriesData.items);
+      setWalletPayouts(payoutsData.items);
+    } catch (err) {
+      setWalletError(
+        err instanceof Error ? err.message : "Erro ao carregar carteira"
+      );
+    } finally {
+      setIsLoadingWallet(false);
+    }
+  };
+
+  const handleOpenWallet = () => {
+    setShowWalletModal(true);
+    loadWalletData();
+  };
+
+  const formatCurrency = (cents: number): string => {
+    return `R$ ${(cents / 100).toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
+
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const getPayoutStatusLabel = (status: string): string => {
+    const statusMap: Record<string, string> = {
+      REQUESTED: "Solicitado",
+      PROCESSING: "Processando",
+      PAID: "Pago",
+      FAILED: "Falhou",
+      CANCELLED: "Cancelado",
+    };
+    return statusMap[status] || status;
+  };
+
+  const getPayoutStatusColor = (status: string): string => {
+    const colorMap: Record<string, string> = {
+      REQUESTED: "#ff6b35",
+      PROCESSING: "#ffa726",
+      PAID: "#4caf50",
+      FAILED: "#f44336",
+      CANCELLED: "#9e9e9e",
+    };
+    return colorMap[status] || "#9e9e9e";
+  };
 
   if (isLoading) {
     return (
@@ -537,7 +609,34 @@ const Dashboard: React.FC = () => {
           {/* Cards Topo - Ganhos e Avaliações lado a lado */}
           <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
             {/* Card de Ganhos Laranja */}
-            <div className="card ganhos-card" style={{ maxWidth: '350px', width: '100%', flex: '0 0 auto', maxHeight: '280px', height: '280px' }}>
+            <div className="card ganhos-card" style={{ maxWidth: '350px', width: '100%', flex: '0 0 auto', maxHeight: '280px', height: '280px', position: 'relative' }}>
+              <button
+                className="ver-carteira-button"
+                onClick={handleOpenWallet}
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  color: 'white',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '20px',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  transition: 'all 0.3s',
+                  fontFamily: '"Comfortaa", sans-serif'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                }}
+              >
+                Ver Carteira
+              </button>
               <div className="saldo-disponivel-section" style={{ borderTop: 'none', paddingTop: '0' }}>
                 <p className="saldo-disponivel-label" style={{ fontSize: '1.2rem' }}>Saldo Disponível</p>
                 <p className="saldo-disponivel-value" style={{ fontSize: '2.5rem' }}>
@@ -948,6 +1047,126 @@ const Dashboard: React.FC = () => {
                 </div>
               ) : (
                 <p className="wallet-empty">Nenhuma avaliação encontrada.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal da Carteira */}
+      {showWalletModal && (
+        <div className="wallet-modal-overlay" onClick={() => setShowWalletModal(false)}>
+          <div className="wallet-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="wallet-modal-header">
+              <h2 className="wallet-modal-title">Carteira</h2>
+              <button
+                className="wallet-modal-close"
+                onClick={() => setShowWalletModal(false)}
+                aria-label="Fechar"
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M18 6L6 18M6 6L18 18"
+                    stroke="#ffffff"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="wallet-modal-content">
+              {isLoadingWallet ? (
+                <div className="wallet-loading">
+                  <p>Carregando informações da carteira...</p>
+                </div>
+              ) : walletError ? (
+                <div className="wallet-error">
+                  <p>{walletError}</p>
+                </div>
+              ) : (
+                <>
+                  <div className="wallet-balance-section">
+                    <div className="wallet-balance-item">
+                      <span className="wallet-balance-label">Saldo Disponível</span>
+                      <span className="wallet-balance-value">
+                        {formatCurrency(walletBalance?.available_cents || 0)}
+                      </span>
+                    </div>
+                    <div className="wallet-balance-item">
+                      <span className="wallet-balance-label">Saldo Bloqueado</span>
+                      <span className="wallet-balance-value">
+                        {formatCurrency(walletBalance?.blocked_cents || 0)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="wallet-section">
+                    <h3 className="wallet-section-title">Últimas Transações</h3>
+                    {walletEntries.length === 0 ? (
+                      <p className="wallet-empty">Nenhuma transação encontrada.</p>
+                    ) : (
+                      <div className="wallet-entries-list">
+                        {walletEntries.map((entry) => (
+                          <div key={entry.id} className="wallet-entry-item">
+                            <div className="wallet-entry-info">
+                              <span className={`wallet-entry-type ${entry.type.toLowerCase()}`}>
+                                {entry.type === "CREDIT" ? "Crédito" : "Débito"}
+                              </span>
+                              <span className="wallet-entry-description">
+                                {entry.description || "Transação"}
+                              </span>
+                              <span className="wallet-entry-date">
+                                {formatDate(entry.created_at)}
+                              </span>
+                            </div>
+                            <span className={`wallet-entry-amount ${entry.type.toLowerCase()}`}>
+                              {entry.type === "CREDIT" ? "+" : "-"}
+                              {formatCurrency(Math.abs(entry.amount_cents))}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="wallet-section">
+                    <h3 className="wallet-section-title">Saques</h3>
+                    {walletPayouts.length === 0 ? (
+                      <p className="wallet-empty">Nenhum saque encontrado.</p>
+                    ) : (
+                      <div className="wallet-payouts-list">
+                        {walletPayouts.map((payout) => (
+                          <div key={payout.id} className="wallet-payout-item">
+                            <div className="wallet-payout-info">
+                              <span className="wallet-payout-amount">
+                                {formatCurrency(payout.amount_cents)}
+                              </span>
+                              <span className="wallet-payout-date">
+                                {formatDate(payout.requested_at)}
+                              </span>
+                              <span className="wallet-payout-key">
+                                {payout.pix_key_type}: {payout.pix_key}
+                              </span>
+                            </div>
+                            <span
+                              className="wallet-payout-status"
+                              style={{ color: getPayoutStatusColor(payout.status) }}
+                            >
+                              {getPayoutStatusLabel(payout.status)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           </div>
