@@ -25,6 +25,7 @@ export interface ChefReview {
   client?: {
     id: number;
     name?: string;
+    profilePictureUrl?: string;
   };
 }
 

@@ -175,7 +175,7 @@ html {
 .dashboard-dark-card {
   background: #242831;
   border-radius: 16px;
-  padding: 1rem 1.2rem 1.2rem 1.2rem;
+  padding: 1.5rem 1.75rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   border: 1px solid #2d3139;
   transition: all 0.3s;
@@ -186,17 +186,19 @@ html {
 }
 
 .dashboard-dark-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.4);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   border-color: #ff6b35;
 }
 
 .dashboard-dark-card-title {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   color: #ffffff;
-  font-weight: 600;
-  margin: 0 0 0.5rem 0;
-  padding-top: 0;
+  font-weight: 700;
+  margin: 0 0 1.5rem 0;
+  padding: 0;
+  letter-spacing: 0.3px;
+  font-family: "Comfortaa", sans-serif;
 }
 
 .dashboard-dark-card-description {
@@ -206,10 +208,12 @@ html {
 }
 
 .dashboard-dark-metric-large {
-  font-size: 2.5rem;
-  font-weight: 700;
+  font-size: 3rem;
+  font-weight: 800;
   color: #ff6b35;
   margin: 0.5rem 0;
+  line-height: 1;
+  text-shadow: 0 2px 8px rgba(255, 107, 53, 0.2);
 }
 
 .dashboard-dark-metric-label {
@@ -521,6 +525,14 @@ html {
   object-fit: contain;
 }
 
+/* Estrelas maiores no card de avaliações do topo */
+.dashboard-dark-card .review-stars-top .star-image {
+  width: 1.5rem;
+  height: 1.5rem;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(255, 193, 7, 0.3));
+}
+
 .dashboard-dark-metrics-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -722,6 +734,35 @@ html {
   background: #1a1d24;
   border-radius: 12px;
   border: 1px solid #2d3139;
+  position: relative;
+}
+
+.wallet-request-payout-button {
+  grid-column: 1 / -1;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, #ff6b35 0%, #ff8c00 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: "Comfortaa", sans-serif;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+  margin-top: 0.5rem;
+}
+
+.wallet-request-payout-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 107, 53, 0.4);
+  background: linear-gradient(135deg, #ff8c00 0%, #ff6b35 100%);
+}
+
+.wallet-request-payout-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .wallet-balance-item {
@@ -1484,11 +1525,40 @@ body:has(.dashboard-light) {
   margin: 0;
 }
 
+.review-client-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.review-client-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #2d3139;
+}
+
+.review-client-avatar-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff6b35 0%, #ff8c00 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: 2px solid #2d3139;
+}
+
 .review-client {
   font-size: 1rem;
   font-weight: 600;
   color: #ffffff;
-  margin: 0 0 0.5rem 0;
+  margin: 0;
 }
 
 .review-comment {
@@ -1518,6 +1588,14 @@ body:has(.dashboard-light) {
 
 .dashboard-light .review-client {
   color: #333333;
+}
+
+.dashboard-light .review-client-avatar {
+  border-color: #e0e0e0;
+}
+
+.dashboard-light .review-client-avatar-placeholder {
+  border-color: #e0e0e0;
 }
 
 .dashboard-light .review-comment {

@@ -36,6 +36,12 @@ const Dashboard: React.FC = () => {
   const [walletPayouts, setWalletPayouts] = useState<ChefPayout[]>([]);
   const [isLoadingWallet, setIsLoadingWallet] = useState<boolean>(false);
   const [walletError, setWalletError] = useState<string>("");
+  const [showPayoutModal, setShowPayoutModal] = useState<boolean>(false);
+  const [payoutAmount, setPayoutAmount] = useState<string>("");
+  const [pixKey, setPixKey] = useState<string>("");
+  const [pixKeyType, setPixKeyType] = useState<"EMAIL" | "CPF" | "CNPJ" | "PHONE" | "EVP">("EMAIL");
+  const [isSubmittingPayout, setIsSubmittingPayout] = useState<boolean>(false);
+  const [payoutError, setPayoutError] = useState<string>("");
   const previousCompletedCountRef = useRef<number>(0);
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     const savedTheme = localStorage.getItem("dashboard-theme");
@@ -692,6 +698,63 @@ const Dashboard: React.FC = () => {
     setEditingGoal("");
   };
 
+  const handleRequestPayout = async () => {
+    const amountValue = parseFloat(payoutAmount);
+    if (isNaN(amountValue) || amountValue <= 0) {
+      setPayoutError("Por favor, insira um valor válido maior que zero.");
+      return;
+    }
+
+    if (!pixKey || pixKey.trim() === "") {
+      setPayoutError("Por favor, insira uma chave PIX.");
+      return;
+    }
+
+    if (!walletBalance || walletBalance.available_cents < amountValue * 100) {
+      setPayoutError("Saldo insuficiente para realizar o saque.");
+      return;
+    }
+
+    try {
+      setIsSubmittingPayout(true);
+      setPayoutError("");
+      
+      const amountCents = Math.round(amountValue * 100);
+      const payout = await chefWalletService.requestPayout({
+        amount_cents: amountCents,
+        pix_key: pixKey.trim(),
+        pix_key_type: pixKeyType,
+      });
+
+      // Atualizar saldo e lista de saques
+      await loadWalletData();
+      
+      // Fechar modal e limpar campos
+      setShowPayoutModal(false);
+      setPayoutAmount("");
+      setPixKey("");
+      setPixKeyType("EMAIL");
+      setPayoutError("");
+      
+      alert(`Saque de ${formatCurrency(amountCents)} solicitado com sucesso!`);
+    } catch (error) {
+      console.error("Erro ao solicitar saque:", error);
+      setPayoutError(
+        error instanceof Error ? error.message : "Erro ao solicitar saque. Tente novamente."
+      );
+    } finally {
+      setIsSubmittingPayout(false);
+    }
+  };
+
+  const handleClosePayoutModal = () => {
+    setShowPayoutModal(false);
+    setPayoutAmount("");
+    setPixKey("");
+    setPixKeyType("EMAIL");
+    setPayoutError("");
+  };
+
   return (
     <div className={`dashboard-layout ${theme === "light" ? "dashboard-light" : "dashboard-dark"}`}>
       <DashboardSidebar />
@@ -728,13 +791,16 @@ const Dashboard: React.FC = () => {
             <div
               className="card ganhos-card"
               style={{
-                maxWidth: "320px",
+                maxWidth: "380px",
                 width: "100%",
-                flex: "1 1 300px",
-                maxHeight: "280px",
-                height: "280px",
+                flex: "1 1 350px",
+                maxHeight: "320px",
+                height: "320px",
                 position: "relative",
-                padding: "1rem 1.5rem 1.5rem 1.5rem",
+                padding: "1.5rem 1.75rem 1.75rem 1.75rem",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
               }}
             >
               <button
@@ -742,40 +808,66 @@ const Dashboard: React.FC = () => {
                 onClick={handleOpenWallet}
                 style={{
                   position: "absolute",
-                  top: "1rem",
-                  right: "1rem",
-                  background: "rgba(255, 255, 255, 0.2)",
-                  border: "1px solid rgba(255, 255, 255, 0.3)",
+                  top: "1.25rem",
+                  right: "1.25rem",
+                  background: "rgba(255, 255, 255, 0.25)",
+                  border: "1px solid rgba(255, 255, 255, 0.4)",
                   color: "white",
-                  padding: "0.5rem 1rem",
-                  borderRadius: "20px",
+                  padding: "0.6rem 1.2rem",
+                  borderRadius: "24px",
                   cursor: "pointer",
-                  fontSize: "0.9rem",
-                  fontWeight: "600",
+                  fontSize: "0.85rem",
+                  fontWeight: "700",
                   transition: "all 0.3s",
                   fontFamily: '"Comfortaa", sans-serif',
+                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.35)";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.2)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.25)";
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.15)";
                 }}
               >
                 Ver Carteira
               </button>
+              <h3
+                className="saldo-disponivel-label"
+                style={{ 
+                  fontSize: "1.2rem", 
+                  color: "#ffffff",
+                  marginBottom: "1.5rem", 
+                  letterSpacing: "0.3px",
+                  fontWeight: "700",
+                  marginTop: "0",
+                  marginLeft: "0",
+                  marginRight: "0",
+                  padding: "0",
+                  fontFamily: '"Comfortaa", sans-serif'
+                }}
+              >
+                Saldo Disponível
+              </h3>
               <div
                 className="saldo-disponivel-section"
-                style={{ borderTop: "none", paddingTop: "0", marginTop: "0" }}
+                style={{ borderTop: "none", paddingTop: "0", marginTop: "0", flex: "1" }}
               >
                 <p
-                  className="saldo-disponivel-label"
-                >
-                  Saldo Disponível
-                </p>
-                <p
                   className="saldo-disponivel-value"
-                  style={{ fontSize: "2.5rem" }}
+                  style={{ 
+                    fontSize: "3rem", 
+                    fontWeight: "800", 
+                    lineHeight: "1", 
+                    marginBottom: "1.5rem", 
+                    marginTop: "0", 
+                    fontFamily: '"Comfortaa", sans-serif',
+                    color: "white",
+                    letterSpacing: "0"
+                  }}
                 >
                   R${" "}
                   {(walletBalance?.available_cents &&
@@ -790,19 +882,20 @@ const Dashboard: React.FC = () => {
               </div>
               <div
                 style={{
-                  borderTop: "1px solid rgba(255, 255, 255, 0.2)",
-                  marginTop: "1rem",
-                  marginBottom: "1rem",
-                  paddingTop: "1rem",
+                  borderTop: "1px solid rgba(255, 255, 255, 0.25)",
+                  marginTop: "auto",
+                  paddingTop: "1.25rem",
+                  paddingBottom: "0",
                 }}
               >
-                <h3 className="card-title-white" style={{ fontSize: "1.2rem" }}>
-                  Ganhos
+                <h3 className="card-title-white" style={{ fontSize: "1rem", opacity: 0.95, marginBottom: "0.5rem", fontWeight: "500", fontFamily: '"Comfortaa", sans-serif', color: "rgba(255, 255, 255, 0.9)" }}>
+                  Ganhos do Mês
                 </h3>
-                <p className="card-value-white" style={{ fontSize: "1.5rem" }}>
+                <p className="card-value-white" style={{ fontSize: "1.75rem", fontWeight: "700", lineHeight: "1.2", fontFamily: '"Comfortaa", sans-serif' }}>
                   R${" "}
                   {metrics.monthEarnings.toLocaleString("pt-BR", {
                     minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
                   })}
                 </p>
               </div>
@@ -811,13 +904,16 @@ const Dashboard: React.FC = () => {
             <div
               className="dashboard-dark-card"
               style={{
-                maxWidth: "300px",
+                maxWidth: "360px",
                 width: "100%",
                 flex: "0 0 auto",
                 position: "relative",
                 overflow: "hidden",
-                maxHeight: "280px",
-                height: "280px",
+                maxHeight: "320px",
+                height: "320px",
+                display: "flex",
+                flexDirection: "column",
+                padding: "1.5rem 1.75rem",
               }}
             >
               <button
@@ -825,55 +921,91 @@ const Dashboard: React.FC = () => {
                 onClick={() => setShowReviewsModal(true)}
                 style={{
                   position: "absolute",
-                  top: "1rem",
-                  right: "1rem",
-                  padding: "0.5rem 1rem",
+                  top: "1.25rem",
+                  right: "1.25rem",
+                  padding: "0.6rem 1.2rem",
                   background: "#ff6b35",
                   color: "#ffffff",
-                  border: "2px solid rgba(255, 107, 53, 0.3)",
-                  borderRadius: "20px",
+                  border: "none",
+                  borderRadius: "24px",
                   fontSize: "0.85rem",
-                  fontWeight: "600",
+                  fontWeight: "700",
                   cursor: "pointer",
                   transition: "all 0.3s",
                   fontFamily: '"Comfortaa", sans-serif',
                   zIndex: 10,
+                  boxShadow: "0 2px 8px rgba(255, 107, 53, 0.3)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#ff8c00";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(255, 107, 53, 0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#ff6b35";
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(255, 107, 53, 0.3)";
                 }}
               >
                 Ver Avaliações
               </button>
-              <h3 className="dashboard-dark-card-title">Avaliações</h3>
+              <h3 className="dashboard-dark-card-title" style={{ 
+                fontSize: "1.2rem", 
+                color: "#ffffff",
+                marginBottom: "1.5rem", 
+                letterSpacing: "0.3px",
+                fontWeight: "700",
+                marginTop: "0",
+                marginLeft: "0",
+                marginRight: "0",
+                padding: "0",
+                fontFamily: '"Comfortaa", sans-serif'
+              }}>
+                Avaliações
+              </h3>
 
               <div
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: "0.5rem",
-                  position: "absolute",
-                  left: "1rem",
-                  bottom: "6rem",
+                  gap: "1rem",
+                  flex: "1",
+                  justifyContent: "center",
+                  alignItems: "flex-start",
+                  paddingTop: "0.5rem",
                 }}
               >
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "0.75rem",
+                    gap: "1rem",
+                    width: "100%",
                   }}
                 >
                   <div
                     className="dashboard-dark-metric-large"
-                    style={{ margin: 0 }}
+                    style={{ 
+                      margin: 0, 
+                      fontSize: "3rem", 
+                      fontWeight: "800", 
+                      lineHeight: "1", 
+                      color: "#ff6b35", 
+                      fontFamily: '"Comfortaa", sans-serif',
+                      letterSpacing: "0"
+                    }}
                   >
                     {metrics.avgRating.toLocaleString("pt-BR", {
                       minimumFractionDigits: 1,
                     })}
                   </div>
                   <div
+                    className="review-stars-top"
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: "0.2rem",
+                      gap: "0.3rem",
+                      flex: "1",
                     }}
                   >
                     {renderStars(metrics.avgRating)}
@@ -881,7 +1013,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div
                   className="dashboard-dark-metric-label"
-                  style={{ margin: 0, opacity: 1 }}
+                  style={{ margin: 0, opacity: 1, fontSize: "1rem", fontWeight: "500", color: "rgba(255, 255, 255, 0.9)", fontFamily: '"Comfortaa", sans-serif' }}
                 >
                   {reviews.length}{" "}
                   {reviews.length === 1 ? "avaliação" : "avaliações"}
@@ -1394,9 +1526,22 @@ const Dashboard: React.FC = () => {
                           </p>
                         </div>
                         {review.client && (
-                          <p className="review-client">
-                            {review.client.name || "Cliente"}
-                          </p>
+                          <div className="review-client-container">
+                            {review.client.profilePictureUrl ? (
+                              <img
+                                src={review.client.profilePictureUrl}
+                                alt={review.client.name || "Cliente"}
+                                className="review-client-avatar"
+                              />
+                            ) : (
+                              <div className="review-client-avatar-placeholder">
+                                {(review.client.name || "Cliente").charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <p className="review-client">
+                              {review.client.name || "Cliente"}
+                            </p>
+                          </div>
                         )}
                         {review.comment && (
                           <p className="review-comment">{review.comment}</p>
@@ -1472,6 +1617,19 @@ const Dashboard: React.FC = () => {
                         {formatCurrency(walletBalance?.blocked_cents || 0)}
                       </span>
                     </div>
+                    <button
+                      className="wallet-request-payout-button"
+                      onClick={() => {
+                        setPayoutAmount("");
+                        setPixKey("");
+                        setPixKeyType("EMAIL");
+                        setPayoutError("");
+                        setShowPayoutModal(true);
+                      }}
+                      disabled={!walletBalance || walletBalance.available_cents <= 0}
+                    >
+                      Solicitar Saque
+                    </button>
                   </div>
 
                   <div className="wallet-section">
@@ -1587,6 +1745,113 @@ const Dashboard: React.FC = () => {
                   disabled={isLoadingGoal || !editingGoal || isNaN(parseFloat(editingGoal)) || parseFloat(editingGoal) < 1}
                 >
                   {isLoadingGoal ? "Salvando..." : "Salvar"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Solicitar Saque */}
+      {showPayoutModal && (
+        <div className="wallet-modal-overlay" onClick={handleClosePayoutModal}>
+          <div className="goal-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="goal-modal-header">
+              <h2 className="goal-modal-title">Solicitar Saque</h2>
+              <button
+                className="goal-modal-close"
+                onClick={handleClosePayoutModal}
+                aria-label="Fechar"
+              >
+                ×
+              </button>
+            </div>
+            <div className="goal-modal-content">
+              {payoutError && (
+                <div className="wallet-error" style={{ marginBottom: "1rem", padding: "0.75rem", borderRadius: "8px" }}>
+                  <p style={{ margin: 0, color: "#f44336" }}>{payoutError}</p>
+                </div>
+              )}
+              
+              <label className="goal-modal-label">
+                Valor do saque (em reais):
+              </label>
+              <input
+                type="number"
+                className="goal-modal-input"
+                value={payoutAmount}
+                onChange={(e) => setPayoutAmount(e.target.value)}
+                placeholder="Ex: 300.00"
+                min="0.01"
+                step="0.01"
+                disabled={isSubmittingPayout}
+              />
+              
+              <label className="goal-modal-label" style={{ marginTop: "1rem" }}>
+                Tipo de chave PIX:
+              </label>
+              <select
+                className="goal-modal-input"
+                value={pixKeyType}
+                onChange={(e) => setPixKeyType(e.target.value as typeof pixKeyType)}
+                disabled={isSubmittingPayout}
+              >
+                <option value="EMAIL">E-mail</option>
+                <option value="CPF">CPF</option>
+                <option value="CNPJ">CNPJ</option>
+                <option value="PHONE">Telefone</option>
+                <option value="EVP">Chave Aleatória</option>
+              </select>
+              
+              <label className="goal-modal-label" style={{ marginTop: "1rem" }}>
+                Chave PIX:
+              </label>
+              <input
+                type="text"
+                className="goal-modal-input"
+                value={pixKey}
+                onChange={(e) => setPixKey(e.target.value)}
+                placeholder={
+                  pixKeyType === "EMAIL" ? "exemplo@email.com" :
+                  pixKeyType === "CPF" ? "000.000.000-00" :
+                  pixKeyType === "CNPJ" ? "00.000.000/0000-00" :
+                  pixKeyType === "PHONE" ? "(00) 00000-0000" :
+                  "Chave aleatória"
+                }
+                disabled={isSubmittingPayout}
+              />
+              
+              {walletBalance && (
+                <p style={{ 
+                  fontSize: "0.85rem", 
+                  color: "#b0b3b8", 
+                  marginTop: "0.5rem",
+                  marginBottom: "0"
+                }}>
+                  Saldo disponível: {formatCurrency(walletBalance.available_cents)}
+                </p>
+              )}
+              
+              <div className="goal-modal-actions">
+                <button
+                  className="goal-modal-cancel"
+                  onClick={handleClosePayoutModal}
+                  disabled={isSubmittingPayout}
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="goal-modal-save"
+                  onClick={handleRequestPayout}
+                  disabled={
+                    isSubmittingPayout || 
+                    !payoutAmount || 
+                    !pixKey || 
+                    isNaN(parseFloat(payoutAmount)) || 
+                    parseFloat(payoutAmount) <= 0
+                  }
+                >
+                  {isSubmittingPayout ? "Processando..." : "Solicitar Saque"}
                 </button>
               </div>
             </div>
