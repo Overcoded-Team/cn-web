@@ -160,7 +160,8 @@ html {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
+  padding-top: 2px;
 }
 
 .dashboard-dark-card {
@@ -173,7 +174,7 @@ html {
   max-width: 100%;
   width: 100%;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .dashboard-dark-card:hover {
@@ -1157,7 +1158,7 @@ body:has(.dashboard-light) {
   max-width: 100%;
   width: 100%;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .dashboard-light .dashboard-dark-card:hover {
@@ -1273,7 +1274,8 @@ body:has(.dashboard-light) {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
+  padding-top: 2px;
 }
 
 /* Tema Branco - Barras Horizontais */
