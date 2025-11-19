@@ -1328,6 +1328,193 @@
   color: #666666;
 }
 
+/* Modal de Pré-visualização da Foto de Perfil */
+.profile-picture-preview-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 2rem;
+}
+
+.profile-picture-preview-modal {
+  background: #242831;
+  border-radius: 16px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.profile-picture-preview-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #2d3139;
+}
+
+.profile-picture-preview-modal-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+  font-family: "Comfortaa", sans-serif;
+}
+
+.profile-picture-preview-close-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ffffff;
+  padding: 0.5rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.profile-picture-preview-close-button:hover {
+  background: #2d3139;
+}
+
+.profile-picture-preview-modal-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.profile-picture-preview-image-container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-picture-preview-image {
+  max-width: 100%;
+  max-height: 60vh;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #ff6b35;
+  box-shadow: 0 4px 50px rgba(255, 107, 53, 0.3);
+}
+
+.profile-picture-preview-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-top: 1px solid #2d3139;
+}
+
+.profile-picture-preview-cancel-button {
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid #2d3139;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: "Comfortaa", sans-serif;
+}
+
+.profile-picture-preview-cancel-button:hover:not(:disabled) {
+  background: #2d3139;
+  border-color: #3d4149;
+}
+
+.profile-picture-preview-cancel-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.profile-picture-preview-confirm-button {
+  padding: 0.75rem 1.5rem;
+  background: #ff6b35;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: "Comfortaa", sans-serif;
+}
+
+.profile-picture-preview-confirm-button:hover:not(:disabled) {
+  background: #e65100;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.profile-picture-preview-confirm-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Tema Branco - Modal de Pré-visualização da Foto de Perfil */
+.dashboard-light .profile-picture-preview-modal-overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.dashboard-light .profile-picture-preview-modal {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-light .profile-picture-preview-modal-header {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dashboard-light .profile-picture-preview-modal-title {
+  color: #333333;
+}
+
+.dashboard-light .profile-picture-preview-close-button {
+  color: #666666;
+}
+
+.dashboard-light .profile-picture-preview-close-button:hover {
+  background: #f0f0f0;
+}
+
+.dashboard-light .profile-picture-preview-image {
+  border: 4px solid #ff6b35;
+  box-shadow: 0 4px 50px rgba(255, 107, 53, 0.2);
+}
+
+.dashboard-light .profile-picture-preview-modal-footer {
+  border-top: 1px solid #e0e0e0;
+}
+
+.dashboard-light .profile-picture-preview-cancel-button {
+  color: #333333;
+  border-color: #e0e0e0;
+}
+
+.dashboard-light .profile-picture-preview-cancel-button:hover:not(:disabled) {
+  background: #f5f5f5;
+  border-color: #d0d0d0;
+}
+
 /* Tema Branco - Botão de Editar */
 .dashboard-light .edit-button {
   background: rgba(255, 107, 53, 0.1);

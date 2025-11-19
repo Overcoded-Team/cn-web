@@ -82,6 +82,9 @@ const ProfilePage: React.FC = () => {
   const [showMenuPreview, setShowMenuPreview] = useState<boolean>(false);
   const [isUploadingProfilePicture, setIsUploadingProfilePicture] = useState<boolean>(false);
   const profilePictureFileInputRef = useRef<HTMLInputElement>(null);
+  const [showProfilePicturePreview, setShowProfilePicturePreview] = useState<boolean>(false);
+  const [previewProfilePicture, setPreviewProfilePicture] = useState<string | null>(null);
+  const [selectedProfilePictureFile, setSelectedProfilePictureFile] = useState<File | null>(null);
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     const savedTheme = localStorage.getItem("dashboard-theme");
     return (savedTheme as "dark" | "light") || "dark";
@@ -314,7 +317,7 @@ const ProfilePage: React.FC = () => {
     galleryFileInputRef.current?.click();
   };
 
-  const handleProfilePictureChange = async (
+  const handleProfilePictureChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
@@ -331,13 +334,31 @@ const ProfilePage: React.FC = () => {
       return;
     }
 
+    // Criar URL de pré-visualização
+    const previewUrl = URL.createObjectURL(file);
+    setPreviewProfilePicture(previewUrl);
+    setSelectedProfilePictureFile(file);
+    setShowProfilePicturePreview(true);
+  };
+
+  const handleConfirmProfilePictureUpload = async () => {
+    if (!selectedProfilePictureFile) return;
+
     try {
       setIsUploadingProfilePicture(true);
       setError("");
-      await chefService.uploadProfilePicture(file);
+      await chefService.uploadProfilePicture(selectedProfilePictureFile);
       
       // Atualizar o contexto de autenticação
       await checkAuth();
+      
+      // Fechar modal e limpar
+      setShowProfilePicturePreview(false);
+      if (previewProfilePicture) {
+        URL.revokeObjectURL(previewProfilePicture);
+      }
+      setPreviewProfilePicture(null);
+      setSelectedProfilePictureFile(null);
       
       // Limpar o input
       if (profilePictureFileInputRef.current) {
@@ -349,6 +370,20 @@ const ProfilePage: React.FC = () => {
       );
     } finally {
       setIsUploadingProfilePicture(false);
+    }
+  };
+
+  const handleCancelProfilePicturePreview = () => {
+    setShowProfilePicturePreview(false);
+    if (previewProfilePicture) {
+      URL.revokeObjectURL(previewProfilePicture);
+    }
+    setPreviewProfilePicture(null);
+    setSelectedProfilePictureFile(null);
+    
+    // Limpar o input
+    if (profilePictureFileInputRef.current) {
+      profilePictureFileInputRef.current.value = "";
     }
   };
 
@@ -506,6 +541,15 @@ const ProfilePage: React.FC = () => {
   useEffect(() => {
     localStorage.setItem("dashboard-theme", theme);
   }, [theme]);
+
+  // Limpar URL de pré-visualização quando o componente for desmontado
+  useEffect(() => {
+    return () => {
+      if (previewProfilePicture) {
+        URL.revokeObjectURL(previewProfilePicture);
+      }
+    };
+  }, [previewProfilePicture]);
 
   return (
     <div className={`dashboard-layout ${theme === "light" ? "dashboard-light" : "dashboard-dark"}`}>
@@ -1095,6 +1139,64 @@ const ProfilePage: React.FC = () => {
                   </button>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showProfilePicturePreview && previewProfilePicture && (
+        <div className="profile-picture-preview-modal-overlay" onClick={handleCancelProfilePicturePreview}>
+          <div className="profile-picture-preview-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="profile-picture-preview-modal-header">
+              <h2 className="profile-picture-preview-modal-title">
+                Pré-visualização da Foto de Perfil
+              </h2>
+              <button
+                className="profile-picture-preview-close-button"
+                onClick={handleCancelProfilePicturePreview}
+                aria-label="Fechar pré-visualização"
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M18 6L6 18M6 6l12 12"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="profile-picture-preview-modal-content">
+              <div className="profile-picture-preview-image-container">
+                <img
+                  src={previewProfilePicture}
+                  alt="Pré-visualização"
+                  className="profile-picture-preview-image"
+                />
+              </div>
+            </div>
+            <div className="profile-picture-preview-modal-footer">
+              <button
+                className="profile-picture-preview-cancel-button"
+                onClick={handleCancelProfilePicturePreview}
+                disabled={isUploadingProfilePicture}
+              >
+                Cancelar
+              </button>
+              <button
+                className="profile-picture-preview-confirm-button"
+                onClick={handleConfirmProfilePictureUpload}
+                disabled={isUploadingProfilePicture}
+              >
+                {isUploadingProfilePicture ? "Enviando..." : "Confirmar"}
+              </button>
             </div>
           </div>
         </div>
