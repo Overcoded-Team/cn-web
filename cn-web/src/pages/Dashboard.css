@@ -373,9 +373,9 @@
 
 .saldo-disponivel-label {
   color: rgba(255, 255, 255, 0.9);
-  font-size: 0.85rem;
-  font-weight: 500;
-  margin: 0 0 0.3rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
 }
 
 .saldo-disponivel-value {

@@ -119,7 +119,7 @@ body:has(.dashboard-dark-layout) {
 .dashboard-dark-card {
   background: #242831;
   border-radius: 16px;
-  padding: 1.5rem;
+  padding: 1rem 1.5rem 1.5rem 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   border: 1px solid #2d3139;
   transition: all 0.3s;
@@ -136,6 +136,7 @@ body:has(.dashboard-dark-layout) {
   color: #ffffff;
   font-weight: 600;
   margin: 0 0 0.5rem 0;
+  padding-top: 0;
 }
 
 .dashboard-dark-card-description {
@@ -227,7 +228,7 @@ body:has(.dashboard-dark-layout) {
 .dashboard-dark-progress-card {
   background: #242831;
   border-radius: 16px;
-  padding: 1.5rem;
+  padding: 1rem 1.5rem 1.5rem 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   border: 1px solid #2d3139;
   transition: all 0.3s;
@@ -240,10 +241,11 @@ body:has(.dashboard-dark-layout) {
 }
 
 .dashboard-dark-progress-title {
-  font-size: 1rem;
+  font-size: 1.1rem;
   color: #ffffff;
   font-weight: 600;
   margin: 0 0 0.5rem 0;
+  padding-top: 0;
 }
 
 .dashboard-dark-progress-subtitle {
@@ -263,6 +265,69 @@ body:has(.dashboard-dark-layout) {
   font-size: 1rem;
   color: #b0b3b8;
   margin-left: 0.5rem;
+}
+
+.dashboard-dark-progress-goal-label {
+  font-size: 0.9rem;
+  color: #ff6b35;
+  font-weight: 600;
+  margin: 0.5rem 0;
+}
+
+.edit-goal-button {
+  background: rgba(255, 107, 53, 0.1);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  border-radius: 8px;
+  padding: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  color: #ff6b35;
+}
+
+.edit-goal-button:hover {
+  background: rgba(255, 107, 53, 0.2);
+  border-color: #ff6b35;
+  transform: scale(1.05);
+}
+
+.edit-goal-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.define-goal-button {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 107, 53, 0.1);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ff6b35;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: "Comfortaa", sans-serif;
+  margin-top: 1rem;
+}
+
+.define-goal-button:hover {
+  background: rgba(255, 107, 53, 0.2);
+  border-color: #ff6b35;
+  transform: translateY(-2px);
+}
+
+/* Tema Branco - Botão Defina uma Meta */
+.dashboard-light .define-goal-button {
+  background: rgba(255, 107, 53, 0.1);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  color: #ff6b35;
+}
+
+.dashboard-light .define-goal-button:hover {
+  background: rgba(255, 107, 53, 0.2);
+  border-color: #ff6b35;
 }
 
 .dashboard-dark-gauge {
@@ -1164,5 +1229,203 @@ body:has(.dashboard-light) {
 
 .dashboard-light .review-comment {
   color: #666666;
+}
+
+/* Modal de Meta */
+.goal-modal {
+  background: #242831;
+  border-radius: 16px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  border: 1px solid #2d3139;
+  animation: slideInModal 0.3s ease-out;
+}
+
+.goal-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #2d3139;
+}
+
+.goal-modal-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+}
+
+.goal-modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #b0b3b8;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s;
+}
+
+.goal-modal-close:hover {
+  background: #2d3139;
+  color: #ffffff;
+}
+
+.goal-modal-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.goal-modal-label {
+  font-size: 1rem;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.goal-modal-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #2d3139;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-family: "Comfortaa", sans-serif;
+  color: #ffffff;
+  background: #1a1d24;
+  transition: all 0.3s;
+}
+
+.goal-modal-input:focus {
+  outline: none;
+  border-color: #ff6b35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.goal-modal-input::placeholder {
+  color: #666;
+}
+
+.goal-modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.goal-modal-cancel,
+.goal-modal-save {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: "Comfortaa", sans-serif;
+}
+
+.goal-modal-cancel {
+  background: #2d3139;
+  color: #ffffff;
+  border: 1px solid #3d4149;
+}
+
+.goal-modal-cancel:hover {
+  background: #3d4149;
+}
+
+.goal-modal-save {
+  background: #ff6b35;
+  color: white;
+}
+
+.goal-modal-save:hover:not(:disabled) {
+  background: #e65100;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.goal-modal-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Tema Branco - Modal de Meta */
+.dashboard-light .goal-modal {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-light .goal-modal-header {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dashboard-light .goal-modal-title {
+  color: #333333;
+}
+
+.dashboard-light .goal-modal-close {
+  color: #666666;
+}
+
+.dashboard-light .goal-modal-close:hover {
+  background: #f0f0f0;
+  color: #333333;
+}
+
+.dashboard-light .goal-modal-label {
+  color: #333333;
+}
+
+.dashboard-light .goal-modal-input {
+  border: 2px solid #e0e0e0;
+  color: #333333;
+  background: #ffffff;
+}
+
+.dashboard-light .goal-modal-input:focus {
+  border-color: #ff6b35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.dashboard-light .goal-modal-input::placeholder {
+  color: #999999;
+}
+
+.dashboard-light .goal-modal-cancel {
+  background: #f5f7fa;
+  color: #333333;
+  border: 1px solid #e0e0e0;
+}
+
+.dashboard-light .goal-modal-cancel:hover {
+  background: #e8e8e8;
+}
+
+/* Tema Branco - Botão de Editar Meta */
+.dashboard-light .edit-goal-button {
+  background: rgba(255, 107, 53, 0.1);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  color: #ff6b35;
+}
+
+.dashboard-light .edit-goal-button:hover {
+  background: rgba(255, 107, 53, 0.2);
+  border-color: #ff6b35;
+}
+
+/* Tema Branco - Label de Meta */
+.dashboard-light .dashboard-dark-progress-goal-label {
+  color: #ff6b35;
 }
 

@@ -46,6 +46,12 @@ const Dashboard: React.FC = () => {
     const savedTheme = localStorage.getItem("dashboard-theme");
     return (savedTheme as "dark" | "light") || "dark";
   });
+  const [monthlyGoal, setMonthlyGoal] = useState<number>(() => {
+    const savedGoal = localStorage.getItem("monthly-sales-goal");
+    return savedGoal ? parseFloat(savedGoal) : 0;
+  });
+  const [showGoalModal, setShowGoalModal] = useState<boolean>(false);
+  const [editingGoal, setEditingGoal] = useState<string>("");
 
   useEffect(() => {
     localStorage.setItem("dashboard-theme", theme);
@@ -434,6 +440,13 @@ const Dashboard: React.FC = () => {
         ? 100
         : 0;
 
+    // Calcular progresso baseado na meta mensal se definida
+    // monthEarnings está em centavos, monthlyGoal também está em centavos
+    // Se não houver meta, usar o total de vendas do mês como referência (100%)
+    const salesProgress = monthlyGoal > 0
+      ? Math.min(Math.round((monthEarnings / monthlyGoal) * 100), 100)
+      : (monthEarnings > 0 ? 100 : 0); // Se não há meta, mostra 100% quando há vendas
+
     return {
       avgRating: avgRating5,
       totalEarnings: totalEarnings / 100,
@@ -451,6 +464,7 @@ const Dashboard: React.FC = () => {
       progressAtendidos,
       progressPendentes,
       progressCancelados,
+      salesProgress,
       monthlyEarnings: monthlyEarnings.map((e) => e / 100),
       maxMonthlyEarning: maxMonthlyEarning / 100,
       yearTotal: yearRequests.length,
@@ -467,7 +481,7 @@ const Dashboard: React.FC = () => {
       pendingCount,
       dailyEarnings: dailyEarnings.map((e) => e / 100),
     };
-  }, [serviceRequests, profile, selectedYear, selectedChartMonth, reviews]);
+  }, [serviceRequests, profile, selectedYear, selectedChartMonth, reviews, monthlyGoal]);
 
   const loadWalletData = async () => {
     try {
@@ -497,6 +511,13 @@ const Dashboard: React.FC = () => {
 
   const formatCurrency = (cents: number): string => {
     return `R$ ${(cents / 100).toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
+
+  const formatCurrencyFromReais = (reais: number): string => {
+    return `R$ ${reais.toLocaleString("pt-BR", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
@@ -608,6 +629,27 @@ const Dashboard: React.FC = () => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
+  const handleOpenGoalModal = () => {
+    setEditingGoal(monthlyGoal > 0 ? (monthlyGoal / 100).toFixed(2) : "");
+    setShowGoalModal(true);
+  };
+
+  const handleSaveGoal = () => {
+    const goalValue = parseFloat(editingGoal);
+    if (isNaN(goalValue) || goalValue < 0) {
+      return;
+    }
+    const goalInCents = Math.round(goalValue * 100);
+    setMonthlyGoal(goalInCents);
+    localStorage.setItem("monthly-sales-goal", goalInCents.toString());
+    setShowGoalModal(false);
+  };
+
+  const handleCloseGoalModal = () => {
+    setShowGoalModal(false);
+    setEditingGoal("");
+  };
+
   return (
     <div className={`dashboard-layout ${theme === "light" ? "dashboard-light" : "dashboard-dark"}`}>
       <main className={`dashboard-main ${theme === "light" ? "dashboard-light-main" : "dashboard-dark-main"}`}>
@@ -698,6 +740,7 @@ const Dashboard: React.FC = () => {
                 maxHeight: "280px",
                 height: "280px",
                 position: "relative",
+                padding: "1rem 1.5rem 1.5rem 1.5rem",
               }}
             >
               <button
@@ -729,11 +772,10 @@ const Dashboard: React.FC = () => {
               </button>
               <div
                 className="saldo-disponivel-section"
-                style={{ borderTop: "none", paddingTop: "0" }}
+                style={{ borderTop: "none", paddingTop: "0", marginTop: "0" }}
               >
                 <p
                   className="saldo-disponivel-label"
-                  style={{ fontSize: "1.2rem" }}
                 >
                   Saldo Disponível
                 </p>
@@ -882,7 +924,7 @@ const Dashboard: React.FC = () => {
                 minWidth: "400px",
                 display: "flex",
                 flexDirection: "row",
-                alignItems: "center",
+                alignItems: "flex-start",
                 justifyContent: "space-between",
                 gap: "2rem",
                 overflow: "visible",
@@ -891,17 +933,33 @@ const Dashboard: React.FC = () => {
               <div
                 style={{ display: "flex", flexDirection: "column", flex: "1" }}
               >
-                <h3 className="dashboard-dark-progress-title">
+                <h3 className="dashboard-dark-progress-title" style={{ marginTop: "0" }}>
                   Progresso de Vendas
                 </h3>
                 <p className="dashboard-dark-progress-subtitle">Mês atual</p>
+                {monthlyGoal > 0 && (
+                  <p className="dashboard-dark-progress-goal-label">
+                    Meta: {formatCurrency(monthlyGoal)}
+                  </p>
+                )}
                 <div>
                   <span className="dashboard-dark-progress-value">
-                    R$ {(metrics.monthEarnings / 1000).toFixed(2)}K
+                    {formatCurrencyFromReais(metrics.monthEarnings)}
                   </span>
                   <span className="dashboard-dark-progress-target">
-                    / R$ {(metrics.totalEarnings / 1000).toFixed(2)}K
+                    {monthlyGoal > 0 
+                      ? ` / ${formatCurrency(monthlyGoal)}`
+                      : ` / ${formatCurrencyFromReais(metrics.totalEarnings)}`}
                   </span>
+                </div>
+                <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
+                  <button
+                    className="define-goal-button"
+                    onClick={handleOpenGoalModal}
+                    style={{ alignSelf: "flex-start" }}
+                  >
+                    Defina uma meta
+                  </button>
                 </div>
               </div>
               <div
@@ -910,7 +968,9 @@ const Dashboard: React.FC = () => {
                   flex: "0 0 auto",
                   width: "200px",
                   height: "120px",
-                  marginTop: "0",
+                  marginTop: "auto",
+                  marginBottom: "auto",
+                  alignSelf: "center",
                 }}
               >
                 <svg
@@ -931,7 +991,7 @@ const Dashboard: React.FC = () => {
                     strokeWidth="20"
                     strokeLinecap="round"
                     strokeDasharray={`${
-                      (metrics.progressAtendidos / 100) * (Math.PI * 80)
+                      (metrics.salesProgress / 100) * (Math.PI * 80)
                     } ${Math.PI * 80}`}
                   />
                 </svg>
@@ -1403,6 +1463,52 @@ const Dashboard: React.FC = () => {
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showGoalModal && (
+        <div className="wallet-modal-overlay" onClick={handleCloseGoalModal}>
+          <div className="goal-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="goal-modal-header">
+              <h2 className="goal-modal-title">Ajustar Meta Mensal</h2>
+              <button
+                className="goal-modal-close"
+                onClick={handleCloseGoalModal}
+                aria-label="Fechar"
+              >
+                ×
+              </button>
+            </div>
+            <div className="goal-modal-content">
+              <label className="goal-modal-label">
+                Meta de vendas mensal (em reais):
+              </label>
+              <input
+                type="number"
+                className="goal-modal-input"
+                value={editingGoal}
+                onChange={(e) => setEditingGoal(e.target.value)}
+                placeholder="Ex: 15000.00"
+                min="0"
+                step="0.01"
+              />
+              <div className="goal-modal-actions">
+                <button
+                  className="goal-modal-cancel"
+                  onClick={handleCloseGoalModal}
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="goal-modal-save"
+                  onClick={handleSaveGoal}
+                  disabled={!editingGoal || isNaN(parseFloat(editingGoal)) || parseFloat(editingGoal) < 0}
+                >
+                  Salvar
+                </button>
+              </div>
             </div>
           </div>
         </div>
