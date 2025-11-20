@@ -1439,7 +1439,6 @@ const Dashboard: React.FC = () => {
                   <th>Período</th>
                   <th>Ganhos</th>
                   <th>Eventos</th>
-                  <th>Taxa</th>
                 </tr>
               </thead>
               <tbody>
@@ -1452,7 +1451,6 @@ const Dashboard: React.FC = () => {
                     })}
                   </td>
                   <td>{metrics.totalRequests}</td>
-                  <td>{metrics.conversionRate}%</td>
                 </tr>
                 <tr>
                   <td>Este Ano</td>
@@ -1463,7 +1461,6 @@ const Dashboard: React.FC = () => {
                     })}
                   </td>
                   <td>{metrics.yearTotal}</td>
-                  <td>{metrics.conversionRate}%</td>
                 </tr>
               </tbody>
             </table>
