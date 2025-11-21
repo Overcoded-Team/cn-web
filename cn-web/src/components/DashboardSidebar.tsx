@@ -331,6 +331,14 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           >
             Histórico
           </Link>
+          {/* <Link
+            to="/posts"
+            className={`nav-item ${
+              location.pathname === "/posts" ? "active" : ""
+            }`}
+          >
+            Posts
+          </Link> */}
         </nav>
 
         <button className="logout-button" onClick={logout} aria-label="Sair">

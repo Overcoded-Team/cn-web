@@ -4,6 +4,7 @@ import "./App.css";
 import HomePage from "./pages/HomePage";
 import Dashboard from "./pages/Dashboard";
 import Historico from "./pages/Historico";
+import Posts from "./pages/Posts";
 import ChefsPage from "./pages/ChefsPage";
 import AppointmentsPage from "./pages/AppointmentsPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -35,6 +36,14 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <Historico />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/posts"
+          element={
+            <ProtectedRoute>
+              <Posts />
             </ProtectedRoute>
           }
         />
