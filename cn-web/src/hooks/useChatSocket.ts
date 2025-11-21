@@ -220,22 +220,31 @@ export const useChatSocket = ({
           return updated;
         }
 
-        // Se é uma nova mensagem com attachment, verificar se precisa salvar no cache
+        // Se é uma nova mensagem com attachment, garantir que tenha base64
         if (message.metadata?.attachment && serviceRequestId) {
           const attachment = message.metadata.attachment as any;
-          if (attachment._base64) {
-            saveAttachmentToCache(serviceRequestId, message.id, attachment._base64);
-          } else if (!attachment.url || attachment.url === "about:blank" || attachment.url.includes("about:")) {
-            // Tentar recuperar do cache se não tem URL válida
-            const cachedBase64 = getAttachmentFromCache(serviceRequestId, message.id);
+          
+          // Sempre tentar recuperar do cache primeiro
+          const cachedBase64 = getAttachmentFromCache(serviceRequestId, message.id);
+          if (cachedBase64) {
+            attachment._base64 = cachedBase64;
+          }
+          
+          // Se não tem URL válida, usar base64 do cache
+          if (!attachment.url || attachment.url === "about:blank" || attachment.url.includes("about:")) {
             if (cachedBase64) {
               const isImage = attachment.type === "image" || attachment.mimeType?.startsWith("image/");
               const mimeType = attachment.mimeType || (isImage ? "image/jpeg" : "application/octet-stream");
               attachment.url = `data:${mimeType};base64,${cachedBase64}`;
-              attachment._base64 = cachedBase64;
-              message.metadata.attachment = attachment;
             }
           }
+          
+          // Salvar base64 no cache se disponível
+          if (attachment._base64) {
+            saveAttachmentToCache(serviceRequestId, message.id, attachment._base64);
+          }
+          
+          message.metadata.attachment = attachment;
         }
 
         return [...prev, message];

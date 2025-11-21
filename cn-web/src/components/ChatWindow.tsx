@@ -431,11 +431,21 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
                   if (!attachment) return null;
 
+                  // Garantir que sempre tenha base64 se não tiver URL válida
+                  if (!attachment._base64 && serviceRequestId) {
+                    const cachedBase64 = sessionStorage.getItem(`chat_attachment_${serviceRequestId}_${message.id}`);
+                    if (cachedBase64) {
+                      attachment._base64 = cachedBase64;
+                    }
+                  }
+
                   // Determinar URL a usar (priorizar URL real, fallback para base64)
                   const getImageUrl = () => {
+                    // Primeiro tentar URL do S3
                     if (attachment.url && attachment.url !== "about:blank" && !attachment.url.includes("about:")) {
                       return attachment.url;
                     }
+                    // Se não tem URL válida, usar base64
                     if (attachment._base64) {
                       const mimeType = attachment.mimeType || (attachment.type === "image" ? "image/jpeg" : "application/octet-stream");
                       return `data:${mimeType};base64,${attachment._base64}`;
@@ -444,7 +454,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   };
 
                   const imageUrl = getImageUrl();
+                  // Para imagens, sempre considerar válido se tiver base64, mesmo sem URL
                   const isValidUrl = imageUrl && imageUrl !== "about:blank" && !imageUrl.includes("about:");
+                  const hasBase64 = !!attachment._base64;
+                  
+                  // Para imagens, sempre mostrar preview se tiver base64 ou URL válida
+                  // Se for imagem e tiver URL ou base64, mostrar preview
+                  const shouldShowImage = attachment.type === "image" && (isValidUrl || hasBase64);
+                  
+                  // Se não tem URL nem base64 mas é imagem, tentar usar a URL mesmo que inválida (pode ser que carregue)
+                  const imageUrlToUse = imageUrl || (attachment.type === "image" && attachment.url ? attachment.url : null);
 
                   // Função para fazer download do anexo
                   const handleDownload = (e: React.MouseEvent) => {
@@ -489,14 +508,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     <div className="message-attachment">
                       {attachment.type === "image" ? (
                         <div className="message-attachment-image-wrapper">
-                          {isValidUrl && imageUrl ? (
+                          {shouldShowImage && imageUrlToUse ? (
                             <img
-                              src={imageUrl}
+                              src={imageUrlToUse}
                               alt={attachment.name}
                               className="message-attachment-image"
                               onClick={() => {
-                                if (imageUrl && isValidUrl) {
-                                  setSelectedImageUrl(imageUrl);
+                                if (imageUrlToUse) {
+                                  setSelectedImageUrl(imageUrlToUse);
                                   setSelectedImageName(attachment.name);
                                   setSelectedImageBase64(attachment._base64 || null);
                                   setShowImageModal(true);
@@ -510,11 +529,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                                   if (e.currentTarget.src !== fallbackUrl) {
                                     e.currentTarget.src = fallbackUrl;
                                   } else {
-                                    // Se base64 também falhar, esconder imagem mas manter botão
+                                    // Se base64 também falhar, esconder imagem
                                     e.currentTarget.style.display = "none";
                                   }
                                 } else {
-                                  // Esconder imagem mas manter informações e botão
+                                  // Esconder imagem se não tem base64
                                   e.currentTarget.style.display = "none";
                                 }
                               }}
