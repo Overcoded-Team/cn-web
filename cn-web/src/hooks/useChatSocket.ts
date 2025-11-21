@@ -245,6 +245,27 @@ export const useChatSocket = ({
           }
           
           message.metadata.attachment = attachment;
+        } else if ((message.content === "📎 Arquivo anexado" || message.content === "Arquivo anexado") && serviceRequestId) {
+          // Se não tem metadata mas o conteúdo indica anexo, tentar criar metadata a partir do cache
+          const cachedBase64 = getAttachmentFromCache(serviceRequestId, message.id);
+          if (cachedBase64) {
+            const base64Start = cachedBase64.substring(0, 30);
+            const isImage = base64Start.includes('/9j/') || 
+                           base64Start.includes('iVBORw0KGgo') || 
+                           base64Start.includes('UklGR') || 
+                           base64Start.includes('AAAAIGZ0eXB');
+            
+            message.metadata = {
+              attachment: {
+                name: isImage ? "imagem-anexada.jpg" : "arquivo-anexado",
+                type: isImage ? "image" : "file",
+                sizeBytes: Math.round((cachedBase64.length * 3) / 4),
+                mimeType: isImage ? "image/jpeg" : "application/octet-stream",
+                _base64: cachedBase64,
+                url: `data:${isImage ? "image/jpeg" : "application/octet-stream"};base64,${cachedBase64}`,
+              },
+            };
+          }
         }
 
         return [...prev, message];

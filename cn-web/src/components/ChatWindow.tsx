@@ -406,9 +406,38 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
                   // Se não tem attachment no metadata mas o conteúdo indica anexo, tentar recuperar do cache
                   if (!attachment && (message.content === "📎 Arquivo anexado" || message.content === "Arquivo anexado")) {
-                    const cachedBase64 = serviceRequestId 
-                      ? sessionStorage.getItem(`chat_attachment_${serviceRequestId}_${message.id}`)
-                      : null;
+                    // Tentar buscar em todas as chaves de cache possíveis (pode ter sido salvo com ID diferente)
+                    let cachedBase64 = null;
+                    if (serviceRequestId) {
+                      // Primeiro tentar com o ID da mensagem atual
+                      cachedBase64 = sessionStorage.getItem(`chat_attachment_${serviceRequestId}_${message.id}`);
+                      
+                      // Se não encontrou, tentar buscar em todas as chaves do cache do mesmo serviceRequestId
+                      if (!cachedBase64) {
+                        const cacheKeys: { key: string; value: string; timestamp: number }[] = [];
+                        for (let i = 0; i < sessionStorage.length; i++) {
+                          const key = sessionStorage.key(i);
+                          if (key && key.startsWith(`chat_attachment_${serviceRequestId}_`)) {
+                            const value = sessionStorage.getItem(key);
+                            if (value && value.length > 100) { // Base64 válido tem tamanho mínimo
+                              // Extrair timestamp do ID da mensagem (últimos dígitos)
+                              const msgIdMatch = key.match(/_(\d+)$/);
+                              const msgId = msgIdMatch ? parseInt(msgIdMatch[1]) : 0;
+                              cacheKeys.push({ key, value, timestamp: msgId });
+                            }
+                          }
+                        }
+                        // Ordenar por timestamp (mais recente primeiro) e pegar o mais próximo
+                        cacheKeys.sort((a, b) => {
+                          const timeDiffA = Math.abs(a.timestamp - message.id);
+                          const timeDiffB = Math.abs(b.timestamp - message.id);
+                          return timeDiffA - timeDiffB;
+                        });
+                        if (cacheKeys.length > 0) {
+                          cachedBase64 = cacheKeys[0].value;
+                        }
+                      }
+                    }
                     
                     if (cachedBase64) {
                       // Criar attachment a partir do cache
@@ -441,7 +470,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
                   // Determinar URL a usar (priorizar URL real, fallback para base64)
                   const getImageUrl = () => {
-                    // Primeiro tentar URL do S3
+                    // Primeiro tentar URL do S3 (mesmo que pareça inválida, pode carregar)
                     if (attachment.url && attachment.url !== "about:blank" && !attachment.url.includes("about:")) {
                       return attachment.url;
                     }
@@ -450,19 +479,23 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                       const mimeType = attachment.mimeType || (attachment.type === "image" ? "image/jpeg" : "application/octet-stream");
                       return `data:${mimeType};base64,${attachment._base64}`;
                     }
+                    // Se é imagem e tem URL (mesmo que pareça inválida), tentar usar
+                    if (attachment.type === "image" && attachment.url) {
+                      return attachment.url;
+                    }
                     return null;
                   };
 
                   const imageUrl = getImageUrl();
-                  // Para imagens, sempre considerar válido se tiver base64, mesmo sem URL
+                  // Para imagens, sempre considerar válido se tiver URL ou base64
                   const isValidUrl = imageUrl && imageUrl !== "about:blank" && !imageUrl.includes("about:");
                   const hasBase64 = !!attachment._base64;
+                  const hasUrl = !!attachment.url && attachment.url !== "about:blank" && !attachment.url.includes("about:");
                   
-                  // Para imagens, sempre mostrar preview se tiver base64 ou URL válida
-                  // Se for imagem e tiver URL ou base64, mostrar preview
-                  const shouldShowImage = attachment.type === "image" && (isValidUrl || hasBase64);
+                  // Para imagens, sempre mostrar preview se tiver URL do S3 ou base64
+                  const shouldShowImage = attachment.type === "image" && (hasUrl || hasBase64 || !!attachment.url);
                   
-                  // Se não tem URL nem base64 mas é imagem, tentar usar a URL mesmo que inválida (pode ser que carregue)
+                  // URL a usar para exibir
                   const imageUrlToUse = imageUrl || (attachment.type === "image" && attachment.url ? attachment.url : null);
 
                   // Função para fazer download do anexo
