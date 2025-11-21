@@ -258,9 +258,14 @@ const AppointmentsPage: React.FC = () => {
     const newDate = new Date(currentYear, currentMonth, day);
     setSelectedDate(newDate);
     const dateISO = dateToISOString(newDate);
-    const appointmentForDate = appointments.find((a) => a.dateISO === dateISO);
-    if (appointmentForDate) {
-      setSelectedAppointmentId(appointmentForDate.id);
+    const appointmentsForDate = appointments.filter((a) => a.dateISO === dateISO);
+    if (appointmentsForDate.length > 0) {
+      const sortedByTime = appointmentsForDate.sort((a, b) => {
+        const timeA = new Date(a.requestedDate).getTime();
+        const timeB = new Date(b.requestedDate).getTime();
+        return timeA - timeB;
+      });
+      setSelectedAppointmentId(sortedByTime[0].id);
     } else {
       setSelectedAppointmentId(null);
     }
@@ -323,10 +328,10 @@ const AppointmentsPage: React.FC = () => {
 
   const confirmedSorted = useMemo(() => {
     return [...appointments].sort((a, b) => {
-      const timeA = new Date(a.dateISO).getTime();
-      const timeB = new Date(b.dateISO).getTime();
-      if (timeA < timeB) return -1;
-      if (timeA > timeB) return 1;
+      const dateA = new Date(a.requestedDate).getTime();
+      const dateB = new Date(b.requestedDate).getTime();
+      if (dateA < dateB) return -1;
+      if (dateA > dateB) return 1;
       return 0;
     });
   }, [appointments]);
