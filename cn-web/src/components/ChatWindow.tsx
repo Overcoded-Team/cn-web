@@ -50,6 +50,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+  const [selectedImageName, setSelectedImageName] = useState<string>("");
+  const [selectedImageBase64, setSelectedImageBase64] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -492,7 +496,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                               className="message-attachment-image"
                               onClick={() => {
                                 if (imageUrl && isValidUrl) {
-                                  window.open(imageUrl, "_blank");
+                                  setSelectedImageUrl(imageUrl);
+                                  setSelectedImageName(attachment.name);
+                                  setSelectedImageBase64(attachment._base64 || null);
+                                  setShowImageModal(true);
                                 }
                               }}
                               onError={(e) => {
@@ -789,6 +796,75 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               >
                 {isSendingQuote ? "Enviando..." : "Enviar Orçamento"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showImageModal && selectedImageUrl && (
+        <div className="image-modal-overlay" onClick={() => setShowImageModal(false)}>
+          <div className="image-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="image-modal-header">
+              <h3 className="image-modal-title">{selectedImageName}</h3>
+              <div className="image-modal-actions">
+                <button
+                  className="image-modal-download-btn"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (selectedImageUrl) {
+                      const a = document.createElement("a");
+                      a.href = selectedImageUrl;
+                      a.download = selectedImageName;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                    } else if (selectedImageBase64) {
+                      try {
+                        const byteCharacters = atob(selectedImageBase64);
+                        const byteNumbers = new Array(byteCharacters.length);
+                        for (let i = 0; i < byteCharacters.length; i++) {
+                          byteNumbers[i] = byteCharacters.charCodeAt(i);
+                        }
+                        const byteArray = new Uint8Array(byteNumbers);
+                        const blob = new Blob([byteArray], { type: "image/jpeg" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = selectedImageName;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                      } catch (error) {
+                        console.error("Erro ao fazer download:", error);
+                        setError("Erro ao fazer download do arquivo.");
+                      }
+                    }
+                  }}
+                  title="Baixar imagem"
+                  aria-label="Baixar imagem"
+                >
+                  <img src={downloadIcon} alt="Download" className="download-icon" />
+                </button>
+                <button
+                  className="image-modal-close"
+                  onClick={() => setShowImageModal(false)}
+                  aria-label="Fechar"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="image-modal-content">
+              <img
+                src={selectedImageUrl}
+                alt={selectedImageName}
+                className="image-modal-image"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
             </div>
           </div>
         </div>

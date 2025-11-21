@@ -1072,3 +1072,152 @@
 .dashboard-light .message-attachment-image-placeholder .message-attachment-icon {
   opacity: 0.5;
 }
+
+.image-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.image-modal {
+  background: #1a1d24;
+  border-radius: 12px;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.image-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #2d3139;
+  gap: 12px;
+}
+
+.image-modal-title {
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 16px;
+}
+
+.image-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.image-modal-download-btn {
+  background: rgba(255, 107, 53, 0.2);
+  border: 1px solid rgba(255, 107, 53, 0.4);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
+.image-modal-download-btn:hover {
+  background: rgba(255, 107, 53, 0.3);
+  border-color: rgba(255, 107, 53, 0.6);
+  transform: scale(1.05);
+}
+
+.image-modal-download-btn .download-icon {
+  width: 18px;
+  height: 18px;
+  filter: brightness(0) saturate(100%) invert(58%) sepia(95%) saturate(1352%) hue-rotate(0deg) brightness(95%) contrast(89%);
+}
+
+.image-modal-close {
+  background: transparent;
+  border: none;
+  color: #b0b3b8;
+  font-size: 32px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.image-modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.image-modal-content {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  max-height: calc(90vh - 80px);
+}
+
+.image-modal-image {
+  max-width: 100%;
+  max-height: calc(90vh - 120px);
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.dashboard-light .image-modal {
+  background: #ffffff;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.dashboard-light .image-modal-header {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dashboard-light .image-modal-title {
+  color: #333333;
+}
+
+.dashboard-light .image-modal-close {
+  color: #666666;
+}
+
+.dashboard-light .image-modal-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #333333;
+}
+
+.dashboard-light .image-modal-download-btn {
+  background: rgba(255, 107, 53, 0.15);
+  border-color: rgba(255, 107, 53, 0.3);
+}
+
+.dashboard-light .image-modal-download-btn:hover {
+  background: rgba(255, 107, 53, 0.25);
+  border-color: rgba(255, 107, 53, 0.5);
+}
