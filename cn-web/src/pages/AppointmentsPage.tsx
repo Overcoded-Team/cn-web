@@ -905,14 +905,25 @@ const AppointmentsPage: React.FC = () => {
                   ))}
                   {Array.from({ length: daysInMonth }).map((_, idx) => {
                     const day = idx + 1;
+                    const currentDate = new Date(currentYear, currentMonth, day);
                     const isSelected =
                       selectedDate.getFullYear() === currentYear &&
                       selectedDate.getMonth() === currentMonth &&
                       selectedDate.getDate() === day;
+                    const isToday =
+                      today.getFullYear() === currentYear &&
+                      today.getMonth() === currentMonth &&
+                      today.getDate() === day;
+                    const dateISO = dateToISOString(currentDate);
+                    const hasAppointment = appointments.some(
+                      (a) => a.dateISO === dateISO
+                    );
                     return (
                       <button
                         key={day}
-                        className={`cal-day ${isSelected ? "selected" : ""}`}
+                        className={`cal-day ${isSelected ? "selected" : ""} ${
+                          isToday ? "today" : ""
+                        } ${hasAppointment ? "has-appointment" : ""}`}
                         onClick={() => handleSelectDate(day)}
                       >
                         {day}

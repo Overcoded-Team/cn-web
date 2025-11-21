@@ -217,6 +217,16 @@
   color: #fff;
   font-weight: 700;
 }
+.cal-day.today:not(.selected):not(.has-appointment) {
+  background: #666;
+  color: #fff;
+  font-weight: 600;
+}
+.cal-day.has-appointment:not(.selected) {
+  background: #ff6b35;
+  color: #fff;
+  font-weight: 600;
+}
 .cal-day.empty {
   background: transparent;
   cursor: default;
@@ -1210,6 +1220,16 @@
 .dashboard-light .cal-day.selected {
   background: #ff6b35;
   color: #fff;
+}
+.dashboard-light .cal-day.today:not(.selected):not(.has-appointment) {
+  background: #999;
+  color: #fff;
+  font-weight: 600;
+}
+.dashboard-light .cal-day.has-appointment:not(.selected) {
+  background: #ff6b35;
+  color: #fff;
+  font-weight: 600;
 }
 
 .dashboard-light .notes-header {
