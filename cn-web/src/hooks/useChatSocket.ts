@@ -124,15 +124,15 @@ export const useChatSocket = ({
   }, []);
 
   const sendMessage = useCallback(
-    (content: string) => {
+    (content: string, attachment?: { filename: string; mimeType: string; base64: string; size: number }) => {
       if (!socketRef.current?.connected || !serviceRequestId) {
         onErrorRef.current?.("Não conectado ao chat");
         return;
       }
 
       const trimmedContent = content.trim();
-      if (!trimmedContent) {
-        onErrorRef.current?.("Mensagem não pode estar vazia");
+      if (!trimmedContent && !attachment) {
+        onErrorRef.current?.("Mensagem ou anexo é obrigatório");
         return;
       }
 
@@ -143,7 +143,13 @@ export const useChatSocket = ({
 
       socketRef.current.emit("message", {
         serviceRequestId,
-        content: trimmedContent,
+        content: trimmedContent || undefined,
+        attachment: attachment ? {
+          filename: attachment.filename,
+          mimeType: attachment.mimeType,
+          base64: attachment.base64,
+          size: attachment.size,
+        } : undefined,
       });
     },
     [serviceRequestId]
