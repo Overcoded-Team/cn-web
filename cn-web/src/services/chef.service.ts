@@ -366,11 +366,9 @@ export const chefService = {
       throw new Error("Você precisa estar autenticado para fazer upload do cardápio.");
     }
 
-    // Usa a mesma URL base do api.ts para consistência
     const API_BASE_URL =
       import.meta.env.VITE_API_BASE_URL || "https://api.chefnow.cloud";
 
-    // Cria um AbortController para timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutos de timeout
 
@@ -379,10 +377,9 @@ export const chefService = {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          // Não definir Content-Type manualmente - o navegador define automaticamente com o boundary correto para FormData
         },
         body: formData,
-        signal: controller.signal, // Adiciona suporte a abort/timeout
+        signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
@@ -392,7 +389,6 @@ export const chefService = {
         try {
           errorData = await response.json();
         } catch {
-          // Se não conseguir parsear JSON, tenta ler como texto
           const textError = await response.text();
           errorData = {
             message: textError || `Erro ${response.status}: ${response.statusText}`,
@@ -437,22 +433,18 @@ export const chefService = {
     } catch (err) {
       clearTimeout(timeoutId);
       
-      // Se for um erro de abort (timeout)
       if (err instanceof Error && err.name === "AbortError") {
         throw new Error("O upload demorou muito tempo. Verifique sua conexão e tente novamente com um arquivo menor.");
       }
       
-      // Se for um erro de rede ou conexão
       if (err instanceof TypeError && (err.message.includes("fetch") || err.message.includes("Failed to fetch"))) {
         throw new Error("Erro de conexão. Verifique sua internet e se o servidor está acessível.");
       }
       
-      // Se for um erro de DNS ou rede
       if (err instanceof Error && (err.message.includes("NetworkError") || err.message.includes("network"))) {
         throw new Error("Erro de rede. Verifique sua conexão com a internet.");
       }
       
-      // Re-lança outros erros
       throw err;
     }
   },

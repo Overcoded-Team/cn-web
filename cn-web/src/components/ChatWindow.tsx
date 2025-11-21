@@ -6,19 +6,17 @@ import attachIcon from "../assets/attach-files.svg";
 import downloadIcon from "../assets/dowload.svg";
 import "./ChatWindow.css";
 
-// Constantes alinhadas com o backend (service-request-chat.gateway.ts)
-const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5MB
+const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 const ALLOWED_ATTACHMENT_MIMES: readonly string[] = [
   "image/jpeg",
   "image/png",
   "image/webp",
   "image/avif",
   "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
-  "application/msword", // .doc
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/msword",
 ];
 
-// String para o atributo accept do input file
 const ACCEPT_FILE_TYPES = ALLOWED_ATTACHMENT_MIMES.join(",");
 
 interface ChatWindowProps {
@@ -135,7 +133,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       const reader = new FileReader();
       reader.onload = () => {
         const result = reader.result as string;
-        // Remove o prefixo data:image/...;base64,
         const base64 = result.split(",")[1] || result;
         resolve(base64);
       };
@@ -145,7 +142,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   };
 
   const normalizeMimeType = (mimeType: string): string => {
-    // Normalizar variações de JPEG
     if (mimeType === "image/jpg" || mimeType === "image/jpeg") {
       return "image/jpeg";
     }
@@ -156,16 +152,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Normalizar mimeType
     const normalizedType = normalizeMimeType(file.type);
 
-    // Validar tipo de arquivo (alinhado com o backend)
     if (!ALLOWED_ATTACHMENT_MIMES.includes(normalizedType)) {
       setError("Tipo de arquivo não permitido. Use imagens (JPEG, PNG, WebP, AVIF) ou documentos (PDF, DOC, DOCX).");
       return;
     }
 
-    // Validar tamanho (alinhado com o backend: 5MB)
     if (file.size > MAX_ATTACHMENT_BYTES) {
       setError("Arquivo muito grande. Tamanho máximo de 5MB.");
       return;
@@ -356,14 +349,18 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     {message.sender_type === "CLIENT" ? "Cliente" : "Chef"}
                   </div>
                 )}
-                {/* Verificar se há attachment no metadata ou no cache */}
                 {(() => {
-                  // Verificar se há attachment no metadata
-                  let hasAttachment = !!message.metadata?.attachment;
+                  let metadata = message.metadata;
+                  if (typeof metadata === "string") {
+                    try {
+                      metadata = JSON.parse(metadata);
+                    } catch (e) {
+                    }
+                  }
                   
-                  // Se não tem metadata mas o conteúdo indica anexo, verificar cache
+                  let hasAttachment = !!metadata?.attachment;
+                  
                   if (!hasAttachment && (message.content === "📎 Arquivo anexado" || message.content === "Arquivo anexado")) {
-                    // Tentar recuperar do cache usando o ID da mensagem
                     const cachedBase64 = serviceRequestId 
                       ? sessionStorage.getItem(`chat_attachment_${serviceRequestId}_${message.id}`)
                       : null;
@@ -372,20 +369,17 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   
                   return hasAttachment;
                 })() ? (
-                  // Se tem attachment, não mostrar o texto "Arquivo anexado"
                   message.content && 
                   message.content !== "📎 Arquivo anexado" && 
                   message.content !== "Arquivo anexado" && (
                     <div className="message-content">{message.content}</div>
                   )
                 ) : (
-                  // Se não tem attachment, mostrar conteúdo normal
                   message.content && (
                     <div className="message-content">{message.content}</div>
                   )
                 )}
                 {(() => {
-                  // Parse metadata se vier como string
                   let metadata = message.metadata;
                   if (typeof metadata === "string") {
                     try {
@@ -403,50 +397,39 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     mimeType?: string;
                     _base64?: string;
                   };
-
-                  // Se não tem attachment no metadata mas o conteúdo indica anexo, tentar recuperar do cache
-                  if (!attachment && (message.content === "📎 Arquivo anexado" || message.content === "Arquivo anexado")) {
-                    // Tentar buscar em todas as chaves de cache possíveis (pode ter sido salvo com ID diferente)
-                    let cachedBase64 = null;
-                    if (serviceRequestId) {
-                      // Primeiro tentar com o ID da mensagem atual
-                      cachedBase64 = sessionStorage.getItem(`chat_attachment_${serviceRequestId}_${message.id}`);
-                      
-                      // Se não encontrou, tentar buscar em todas as chaves do cache do mesmo serviceRequestId
-                      if (!cachedBase64) {
-                        const cacheKeys: { key: string; value: string; timestamp: number }[] = [];
-                        for (let i = 0; i < sessionStorage.length; i++) {
-                          const key = sessionStorage.key(i);
-                          if (key && key.startsWith(`chat_attachment_${serviceRequestId}_`)) {
-                            const value = sessionStorage.getItem(key);
-                            if (value && value.length > 100) { // Base64 válido tem tamanho mínimo
-                              // Extrair timestamp do ID da mensagem (últimos dígitos)
-                              const msgIdMatch = key.match(/_(\d+)$/);
-                              const msgId = msgIdMatch ? parseInt(msgIdMatch[1]) : 0;
-                              cacheKeys.push({ key, value, timestamp: msgId });
-                            }
+                  
+                  if (!attachment && serviceRequestId) {
+                    let cachedBase64 = sessionStorage.getItem(`chat_attachment_${serviceRequestId}_${message.id}`);
+                    
+                    if (!cachedBase64) {
+                      const cacheKeys: { key: string; value: string; timestamp: number }[] = [];
+                      for (let i = 0; i < sessionStorage.length; i++) {
+                        const key = sessionStorage.key(i);
+                        if (key && key.startsWith(`chat_attachment_${serviceRequestId}_`)) {
+                          const value = sessionStorage.getItem(key);
+                          if (value && value.length > 100) {
+                            const msgIdMatch = key.match(/_(\d+)$/);
+                            const msgId = msgIdMatch ? parseInt(msgIdMatch[1]) : 0;
+                            cacheKeys.push({ key, value, timestamp: msgId });
                           }
                         }
-                        // Ordenar por timestamp (mais recente primeiro) e pegar o mais próximo
-                        cacheKeys.sort((a, b) => {
-                          const timeDiffA = Math.abs(a.timestamp - message.id);
-                          const timeDiffB = Math.abs(b.timestamp - message.id);
-                          return timeDiffA - timeDiffB;
-                        });
-                        if (cacheKeys.length > 0) {
-                          cachedBase64 = cacheKeys[0].value;
-                        }
+                      }
+                      cacheKeys.sort((a, b) => {
+                        const timeDiffA = Math.abs(a.timestamp - message.id);
+                        const timeDiffB = Math.abs(b.timestamp - message.id);
+                        return timeDiffA - timeDiffB;
+                      });
+                      if (cacheKeys.length > 0) {
+                        cachedBase64 = cacheKeys[0].value;
                       }
                     }
                     
                     if (cachedBase64) {
-                      // Criar attachment a partir do cache
-                      // Tentar detectar tipo pelo base64
                       const base64Start = cachedBase64.substring(0, 30);
-                      const isImage = base64Start.includes('/9j/') || // JPEG
-                                     base64Start.includes('iVBORw0KGgo') || // PNG
-                                     base64Start.includes('UklGR') || // WebP
-                                     base64Start.includes('AAAAIGZ0eXB'); // AVIF
+                      const isImage = base64Start.includes('/9j/') ||
+                                     base64Start.includes('iVBORw0KGgo') ||
+                                     base64Start.includes('UklGR') ||
+                                     base64Start.includes('AAAAIGZ0eXB');
                       
                       attachment = {
                         name: isImage ? "imagem-anexada.jpg" : "arquivo-anexado",
@@ -457,29 +440,24 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                       };
                     }
                   }
-
-                  if (!attachment) return null;
-
-                  // Garantir que sempre tenha base64 se não tiver URL válida
-                  if (!attachment._base64 && serviceRequestId) {
+                  
+                  if (attachment && !attachment._base64 && serviceRequestId) {
                     const cachedBase64 = sessionStorage.getItem(`chat_attachment_${serviceRequestId}_${message.id}`);
                     if (cachedBase64) {
                       attachment._base64 = cachedBase64;
                     }
                   }
 
-                  // Determinar URL a usar (priorizar URL real, fallback para base64)
+                  if (!attachment) return null;
+
                   const getImageUrl = () => {
-                    // Primeiro tentar URL do S3 (mesmo que pareça inválida, pode carregar)
                     if (attachment.url && attachment.url !== "about:blank" && !attachment.url.includes("about:")) {
                       return attachment.url;
                     }
-                    // Se não tem URL válida, usar base64
                     if (attachment._base64) {
                       const mimeType = attachment.mimeType || (attachment.type === "image" ? "image/jpeg" : "application/octet-stream");
                       return `data:${mimeType};base64,${attachment._base64}`;
                     }
-                    // Se é imagem e tem URL (mesmo que pareça inválida), tentar usar
                     if (attachment.type === "image" && attachment.url) {
                       return attachment.url;
                     }
@@ -487,24 +465,19 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   };
 
                   const imageUrl = getImageUrl();
-                  // Para imagens, sempre considerar válido se tiver URL ou base64
                   const isValidUrl = imageUrl && imageUrl !== "about:blank" && !imageUrl.includes("about:");
                   const hasBase64 = !!attachment._base64;
                   const hasUrl = !!attachment.url && attachment.url !== "about:blank" && !attachment.url.includes("about:");
                   
-                  // Para imagens, sempre mostrar preview se tiver URL do S3 ou base64
                   const shouldShowImage = attachment.type === "image" && (hasUrl || hasBase64 || !!attachment.url);
                   
-                  // URL a usar para exibir
                   const imageUrlToUse = imageUrl || (attachment.type === "image" && attachment.url ? attachment.url : null);
 
-                  // Função para fazer download do anexo
                   const handleDownload = (e: React.MouseEvent) => {
                     e.preventDefault();
                     e.stopPropagation();
 
                     if (isValidUrl && imageUrl) {
-                      // Se tem URL válida, fazer download direto
                       const a = document.createElement("a");
                       a.href = imageUrl;
                       a.download = attachment.name;
@@ -512,7 +485,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                       a.click();
                       document.body.removeChild(a);
                     } else if (attachment._base64) {
-                      // Se não tem URL válida, usar base64
                       try {
                         const mimeType = attachment.mimeType || (attachment.type === "image" ? "image/jpeg" : "application/octet-stream");
                         const byteCharacters = atob(attachment._base64);
@@ -555,24 +527,20 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                                 }
                               }}
                               onError={(e) => {
-                                // Se a URL falhar, tentar usar base64
                                 if (attachment._base64) {
                                   const mimeType = attachment.mimeType || "image/jpeg";
                                   const fallbackUrl = `data:${mimeType};base64,${attachment._base64}`;
                                   if (e.currentTarget.src !== fallbackUrl) {
                                     e.currentTarget.src = fallbackUrl;
                                   } else {
-                                    // Se base64 também falhar, esconder imagem
                                     e.currentTarget.style.display = "none";
                                   }
                                 } else {
-                                  // Esconder imagem se não tem base64
                                   e.currentTarget.style.display = "none";
                                 }
                               }}
                             />
                           ) : (
-                            // Se não tem URL válida, mostrar placeholder com informações
                             <div className="message-attachment-image-placeholder">
                               <span className="message-attachment-icon">🖼️</span>
                               <div className="message-attachment-info">

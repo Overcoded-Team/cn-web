@@ -43,12 +43,10 @@ const Posts: React.FC = () => {
   }, [profilePicture]);
 
   const handlePhotoVideoClick = () => {
-    // TODO: Implementar upload de foto/vídeo
     console.log("Foto/vídeo clicked");
   };
 
   const handleEventUpdateClick = () => {
-    // TODO: Implementar atualização de acontecimento
     console.log("Atualização de acontecimento clicked");
   };
 

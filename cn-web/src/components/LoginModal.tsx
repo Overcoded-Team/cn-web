@@ -24,7 +24,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
     if (isOpen) {
       document.body.style.overflow = "hidden";
       setError("");
-      // Carregar dados salvos do localStorage
       const savedEmail = localStorage.getItem("login_form_email");
       const savedPassword = localStorage.getItem("login_form_password");
       if (savedEmail) setEmail(savedEmail);
@@ -38,7 +37,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
     };
   }, [isOpen]);
 
-  // Salvar no localStorage quando perder o foco
   const handleEmailBlur = () => {
     if (email) {
       localStorage.setItem("login_form_email", email);
@@ -51,7 +49,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
     }
   };
 
-  // Limpar localStorage quando a página for atualizada
   useEffect(() => {
     const handleBeforeUnload = () => {
       localStorage.removeItem("login_form_email");
@@ -70,7 +67,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
 
     try {
       await login(email, password);
-      // Limpar localStorage após login bem-sucedido
       localStorage.removeItem("login_form_email");
       localStorage.removeItem("login_form_password");
       onClose();

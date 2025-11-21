@@ -172,9 +172,7 @@ const AppointmentsPage: React.FC = () => {
     loadAppointments();
   }, []);
 
-  // Detectar atualizações e mostrar notificações quando os cards estiverem fechados
   useEffect(() => {
-    // Ignorar a primeira carga
     if (isInitialLoadRef.current) {
       prevPendingCountRef.current = pendingRequests.length;
       prevAwaitingClientCountRef.current = pendingClientApproval.length;
@@ -187,26 +185,22 @@ const AppointmentsPage: React.FC = () => {
     const currentAwaitingClientCount = pendingClientApproval.length;
     const currentConfirmedCount = appointments.length;
 
-    // Verificar se há novos itens pendentes
     if (currentPendingCount > prevPendingCountRef.current && !isPendingExpanded && prevPendingCountRef.current >= 0) {
       setHasPendingNotification(true);
     }
     prevPendingCountRef.current = currentPendingCount;
 
-    // Verificar se há novos itens aguardando cliente
     if (currentAwaitingClientCount > prevAwaitingClientCountRef.current && !isAwaitingClientExpanded && prevAwaitingClientCountRef.current >= 0) {
       setHasAwaitingClientNotification(true);
     }
     prevAwaitingClientCountRef.current = currentAwaitingClientCount;
 
-    // Verificar se há novos itens confirmados
     if (currentConfirmedCount > prevConfirmedCountRef.current && !isConfirmedExpanded && prevConfirmedCountRef.current >= 0) {
       setHasConfirmedNotification(true);
     }
     prevConfirmedCountRef.current = currentConfirmedCount;
   }, [pendingRequests.length, pendingClientApproval.length, appointments.length, isPendingExpanded, isAwaitingClientExpanded, isConfirmedExpanded]);
 
-  // Limpar notificações quando os cards forem abertos
   useEffect(() => {
     if (isPendingExpanded) {
       setHasPendingNotification(false);
@@ -434,7 +428,6 @@ const AppointmentsPage: React.FC = () => {
       setAppointments(mappedAppointments);
       handleCloseAcceptModal();
       
-      // Abrir chat automaticamente após aceitar a solicitação
       const acceptedRequest = allRequests.find((req: ServiceRequest) => req.id === selectedPendingRequest.id);
       if (acceptedRequest) {
         const clientName = acceptedRequest.client_profile?.user?.name || "Cliente";

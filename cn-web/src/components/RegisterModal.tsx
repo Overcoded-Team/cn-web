@@ -49,7 +49,6 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
     if (isOpen) {
       document.body.style.overflow = "hidden";
       setError("");
-      // Carregar dados salvos do localStorage
       const savedFormData = localStorage.getItem("register_form_data");
       const savedStep2Data = localStorage.getItem("register_step2_data");
       const savedStep = localStorage.getItem("register_current_step");
@@ -77,7 +76,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
           const parsed = JSON.parse(savedStep2Data);
           setStep2Data({
             ...parsed,
-            profilePicture: null, // Não salvar arquivo, apenas dados
+            profilePicture: null,
           });
         } catch (e) {
           console.error("Erro ao carregar dados do step 2:", e);
@@ -107,14 +106,12 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
     };
   }, [isOpen]);
 
-  // Salvar formData no localStorage quando mudar
   useEffect(() => {
     if (isOpen && formData.nome) {
       localStorage.setItem("register_form_data", JSON.stringify(formData));
     }
   }, [formData, isOpen]);
 
-  // Salvar step2Data no localStorage quando mudar (exceto profilePicture)
   useEffect(() => {
     if (isOpen && (step2Data.anosExperiencia || step2Data.especialidades.length > 0 || step2Data.portfolioDescription)) {
       const dataToSave = {
@@ -126,14 +123,12 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
     }
   }, [step2Data.anosExperiencia, step2Data.especialidades, step2Data.portfolioDescription, isOpen]);
 
-  // Salvar step atual
   useEffect(() => {
     if (isOpen) {
       localStorage.setItem("register_current_step", currentStep.toString());
     }
   }, [currentStep, isOpen]);
 
-  // Limpar localStorage quando a página for atualizada
   useEffect(() => {
     const handleBeforeUnload = () => {
       localStorage.removeItem("register_form_data");
@@ -289,7 +284,6 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
       authService.setUser(updatedUserData);
       await checkAuth();
 
-      // Limpar localStorage após cadastro bem-sucedido
       localStorage.removeItem("register_form_data");
       localStorage.removeItem("register_step2_data");
       localStorage.removeItem("register_current_step");

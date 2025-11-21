@@ -334,7 +334,6 @@ const ProfilePage: React.FC = () => {
       return;
     }
 
-    // Criar URL de pré-visualização
     const previewUrl = URL.createObjectURL(file);
     setPreviewProfilePicture(previewUrl);
     setSelectedProfilePictureFile(file);
@@ -349,10 +348,8 @@ const ProfilePage: React.FC = () => {
       setError("");
       await chefService.uploadProfilePicture(selectedProfilePictureFile);
       
-      // Atualizar o contexto de autenticação
       await checkAuth();
       
-      // Fechar modal e limpar
       setShowProfilePicturePreview(false);
       if (previewProfilePicture) {
         URL.revokeObjectURL(previewProfilePicture);
@@ -360,7 +357,6 @@ const ProfilePage: React.FC = () => {
       setPreviewProfilePicture(null);
       setSelectedProfilePictureFile(null);
       
-      // Limpar o input
       if (profilePictureFileInputRef.current) {
         profilePictureFileInputRef.current.value = "";
       }
@@ -378,14 +374,13 @@ const ProfilePage: React.FC = () => {
     if (previewProfilePicture) {
       URL.revokeObjectURL(previewProfilePicture);
     }
-    setPreviewProfilePicture(null);
-    setSelectedProfilePictureFile(null);
-    
-    // Limpar o input
-    if (profilePictureFileInputRef.current) {
-      profilePictureFileInputRef.current.value = "";
-    }
-  };
+      setPreviewProfilePicture(null);
+      setSelectedProfilePictureFile(null);
+      
+      if (profilePictureFileInputRef.current) {
+        profilePictureFileInputRef.current.value = "";
+      }
+    };
 
   const handleChangeProfilePictureClick = () => {
     profilePictureFileInputRef.current?.click();
@@ -447,7 +442,6 @@ const ProfilePage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validação por tipo MIME e extensão do arquivo
     const validTypes = [
       "application/pdf",
       "application/msword",
@@ -457,8 +451,6 @@ const ProfilePage: React.FC = () => {
     const validExtensions = [".pdf", ".doc", ".docx"];
     const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf("."));
     
-    // Verifica se o tipo MIME é válido OU se a extensão é válida
-    // Isso resolve o problema de alguns navegadores não detectarem corretamente o tipo MIME de PDFs
     const isValidType = validTypes.includes(file.type);
     const isValidExtension = validExtensions.includes(fileExtension);
     
@@ -473,7 +465,6 @@ const ProfilePage: React.FC = () => {
       return;
     }
 
-    // Verifica se o arquivo está vazio
     if (file.size === 0) {
       setError("O arquivo está vazio. Por favor, selecione um arquivo válido.");
       return;
@@ -501,7 +492,6 @@ const ProfilePage: React.FC = () => {
       const errorMessage = err instanceof Error ? err.message : "Erro ao fazer upload do cardápio";
       setError(errorMessage);
       
-      // Log adicional para debug
       if (err instanceof Error) {
         console.error("Detalhes do erro:", {
           name: err.name,
@@ -577,7 +567,6 @@ const ProfilePage: React.FC = () => {
     localStorage.setItem("dashboard-theme", theme);
   }, [theme]);
 
-  // Limpar URL de pré-visualização quando o componente for desmontado
   useEffect(() => {
     return () => {
       if (previewProfilePicture) {

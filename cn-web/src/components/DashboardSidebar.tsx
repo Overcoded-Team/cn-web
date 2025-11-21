@@ -41,7 +41,6 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   const fallbackImage = perfilVazio;
 
   useEffect(() => {
-    // Reset image error when profile picture URL changes
     setImageError(false);
   }, [profilePicture]);
 
@@ -68,9 +67,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
   const imageSrc = useMemo(() => {
     if (profilePicture && !imageError) {
-      // Add cache-busting parameter only when URL changes (not on every render)
       const separator = profilePicture.includes('?') ? '&' : '?';
-      // Use a hash of the URL to create a stable cache-busting parameter
       const urlHash = profilePicture.split('').reduce((acc, char) => {
         return ((acc << 5) - acc) + char.charCodeAt(0);
       }, 0);
@@ -253,7 +250,6 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                 }
               }}
               onLoad={() => {
-                // Reset error state if image loads successfully
                 if (imageError) {
                   setImageError(false);
                 }
@@ -331,14 +327,6 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           >
             Histórico
           </Link>
-          {/* <Link
-            to="/posts"
-            className={`nav-item ${
-              location.pathname === "/posts" ? "active" : ""
-            }`}
-          >
-            Posts
-          </Link> */}
         </nav>
 
         <button className="logout-button" onClick={logout} aria-label="Sair">

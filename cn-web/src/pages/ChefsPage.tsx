@@ -259,9 +259,7 @@ const ChefsPage: React.FC = () => {
     loadChefs();
   }, []);
 
-  // Detecta quando o usuário digita uma categoria e seleciona automaticamente
   useEffect(() => {
-    // Se a categoria foi selecionada manualmente, não interfere
     if (isCuisineManuallySelected) {
       return;
     }
@@ -274,18 +272,15 @@ const ChefsPage: React.FC = () => {
       );
       
       if (matchedCuisine) {
-        // Se encontrou uma categoria correspondente, seleciona ela automaticamente
         if (selectedCuisineId !== matchedCuisine.id) {
           setSelectedCuisineId(matchedCuisine.id);
         }
       } else {
-        // Se não encontrou correspondência, limpa a seleção automática
         if (selectedCuisineId) {
           setSelectedCuisineId(undefined);
         }
       }
     } else if (!searchQuery.trim()) {
-      // Se a busca foi limpa, limpa também a seleção automática
       if (selectedCuisineId && !isCuisineManuallySelected) {
         setSelectedCuisineId(undefined);
       }
@@ -415,7 +410,6 @@ const ChefsPage: React.FC = () => {
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
-                    // Quando o usuário digita, reseta a flag de seleção manual
                     if (e.target.value.trim() === "") {
                       setIsCuisineManuallySelected(false);
                     }
