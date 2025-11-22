@@ -3,20 +3,21 @@ import { useChatSocket, ChatMessage } from "../hooks/useChatSocket";
 import { ServiceRequestStatus, serviceRequestService, ServiceRequest } from "../services/serviceRequest.service";
 import { isChatReadOnly } from "../utils/chatUtils";
 import attachIcon from "../assets/attach-files.svg";
-import downloadIcon from "../assets/dowload.svg";
 import "./ChatWindow.css";
 
-const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+// Constantes alinhadas com o backend (service-request-chat.gateway.ts)
+const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5MB
 const ALLOWED_ATTACHMENT_MIMES: readonly string[] = [
   "image/jpeg",
   "image/png",
   "image/webp",
   "image/avif",
   "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+  "application/msword", // .doc
 ];
 
+// String para o atributo accept do input file
 const ACCEPT_FILE_TYPES = ALLOWED_ATTACHMENT_MIMES.join(",");
 
 interface ChatWindowProps {
@@ -48,10 +49,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [showImageModal, setShowImageModal] = useState(false);
-  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
-  const [selectedImageName, setSelectedImageName] = useState<string>("");
-  const [selectedImageBase64, setSelectedImageBase64] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -133,6 +130,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       const reader = new FileReader();
       reader.onload = () => {
         const result = reader.result as string;
+        // Remove o prefixo data:image/...;base64,
         const base64 = result.split(",")[1] || result;
         resolve(base64);
       };
@@ -141,24 +139,17 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     });
   };
 
-  const normalizeMimeType = (mimeType: string): string => {
-    if (mimeType === "image/jpg" || mimeType === "image/jpeg") {
-      return "image/jpeg";
-    }
-    return mimeType;
-  };
-
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const normalizedType = normalizeMimeType(file.type);
-
-    if (!ALLOWED_ATTACHMENT_MIMES.includes(normalizedType)) {
+    // Validar tipo de arquivo (alinhado com o backend)
+    if (!ALLOWED_ATTACHMENT_MIMES.includes(file.type)) {
       setError("Tipo de arquivo não permitido. Use imagens (JPEG, PNG, WebP, AVIF) ou documentos (PDF, DOC, DOCX).");
       return;
     }
 
+    // Validar tamanho (alinhado com o backend: 5MB)
     if (file.size > MAX_ATTACHMENT_BYTES) {
       setError("Arquivo muito grande. Tamanho máximo de 5MB.");
       return;
@@ -180,10 +171,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       
       if (selectedFile) {
         const base64 = await convertFileToBase64(selectedFile);
-        const normalizedMimeType = normalizeMimeType(selectedFile.type);
         attachment = {
           filename: selectedFile.name,
-          mimeType: normalizedMimeType,
+          mimeType: selectedFile.type,
           base64: base64,
           size: selectedFile.size,
         };
@@ -349,252 +339,40 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     {message.sender_type === "CLIENT" ? "Cliente" : "Chef"}
                   </div>
                 )}
-                {(() => {
-                  let metadata = message.metadata;
-                  if (typeof metadata === "string") {
-                    try {
-                      metadata = JSON.parse(metadata);
-                    } catch (e) {
-                    }
-                  }
-                  
-                  let hasAttachment = !!metadata?.attachment;
-                  
-                  if (!hasAttachment && (message.content === "📎 Arquivo anexado" || message.content === "Arquivo anexado")) {
-                    const cachedBase64 = serviceRequestId 
-                      ? sessionStorage.getItem(`chat_attachment_${serviceRequestId}_${message.id}`)
-                      : null;
-                    hasAttachment = !!cachedBase64;
-                  }
-                  
-                  return hasAttachment;
-                })() ? (
-                  message.content && 
-                  message.content !== "📎 Arquivo anexado" && 
-                  message.content !== "Arquivo anexado" && (
-                    <div className="message-content">{message.content}</div>
-                  )
-                ) : (
-                  message.content && (
-                    <div className="message-content">{message.content}</div>
-                  )
-                )}
-                {(() => {
-                  let metadata = message.metadata;
-                  if (typeof metadata === "string") {
-                    try {
-                      metadata = JSON.parse(metadata);
-                    } catch (e) {
-                      console.error("Erro ao parsear metadata:", e);
-                    }
-                  }
-
-                  let attachment = metadata?.attachment as {
-                    url?: string;
+                <div className="message-content">{message.content}</div>
+                {message.metadata?.attachment && (() => {
+                  const attachment = message.metadata.attachment as {
+                    url: string;
                     name: string;
                     type: "image" | "file";
                     sizeBytes: number;
-                    mimeType?: string;
-                    _base64?: string;
                   };
-                  
-                  if (!attachment && serviceRequestId) {
-                    let cachedBase64 = sessionStorage.getItem(`chat_attachment_${serviceRequestId}_${message.id}`);
-                    
-                    if (!cachedBase64) {
-                      const cacheKeys: { key: string; value: string; timestamp: number }[] = [];
-                      for (let i = 0; i < sessionStorage.length; i++) {
-                        const key = sessionStorage.key(i);
-                        if (key && key.startsWith(`chat_attachment_${serviceRequestId}_`)) {
-                          const value = sessionStorage.getItem(key);
-                          if (value && value.length > 100) {
-                            const msgIdMatch = key.match(/_(\d+)$/);
-                            const msgId = msgIdMatch ? parseInt(msgIdMatch[1]) : 0;
-                            cacheKeys.push({ key, value, timestamp: msgId });
-                          }
-                        }
-                      }
-                      cacheKeys.sort((a, b) => {
-                        const timeDiffA = Math.abs(a.timestamp - message.id);
-                        const timeDiffB = Math.abs(b.timestamp - message.id);
-                        return timeDiffA - timeDiffB;
-                      });
-                      if (cacheKeys.length > 0) {
-                        cachedBase64 = cacheKeys[0].value;
-                      }
-                    }
-                    
-                    if (cachedBase64) {
-                      const base64Start = cachedBase64.substring(0, 30);
-                      const isImage = base64Start.includes('/9j/') ||
-                                     base64Start.includes('iVBORw0KGgo') ||
-                                     base64Start.includes('UklGR') ||
-                                     base64Start.includes('AAAAIGZ0eXB');
-                      
-                      attachment = {
-                        name: isImage ? "imagem-anexada.jpg" : "arquivo-anexado",
-                        type: isImage ? "image" : "file",
-                        sizeBytes: Math.round((cachedBase64.length * 3) / 4),
-                        mimeType: isImage ? "image/jpeg" : "application/octet-stream",
-                        _base64: cachedBase64,
-                      };
-                    }
-                  }
-                  
-                  if (attachment && !attachment._base64 && serviceRequestId) {
-                    const cachedBase64 = sessionStorage.getItem(`chat_attachment_${serviceRequestId}_${message.id}`);
-                    if (cachedBase64) {
-                      attachment._base64 = cachedBase64;
-                    }
-                  }
-
-                  if (!attachment) return null;
-
-                  const getImageUrl = () => {
-                    if (attachment.url && attachment.url !== "about:blank" && !attachment.url.includes("about:")) {
-                      return attachment.url;
-                    }
-                    if (attachment._base64) {
-                      const mimeType = attachment.mimeType || (attachment.type === "image" ? "image/jpeg" : "application/octet-stream");
-                      return `data:${mimeType};base64,${attachment._base64}`;
-                    }
-                    if (attachment.type === "image" && attachment.url) {
-                      return attachment.url;
-                    }
-                    return null;
-                  };
-
-                  const imageUrl = getImageUrl();
-                  const isValidUrl = imageUrl && imageUrl !== "about:blank" && !imageUrl.includes("about:");
-                  const hasBase64 = !!attachment._base64;
-                  const hasUrl = !!attachment.url && attachment.url !== "about:blank" && !attachment.url.includes("about:");
-                  
-                  const shouldShowImage = attachment.type === "image" && (hasUrl || hasBase64 || !!attachment.url);
-                  
-                  const imageUrlToUse = imageUrl || (attachment.type === "image" && attachment.url ? attachment.url : null);
-
-                  const handleDownload = (e: React.MouseEvent) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    if (isValidUrl && imageUrl) {
-                      const a = document.createElement("a");
-                      a.href = imageUrl;
-                      a.download = attachment.name;
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                    } else if (attachment._base64) {
-                      try {
-                        const mimeType = attachment.mimeType || (attachment.type === "image" ? "image/jpeg" : "application/octet-stream");
-                        const byteCharacters = atob(attachment._base64);
-                        const byteNumbers = new Array(byteCharacters.length);
-                        for (let i = 0; i < byteCharacters.length; i++) {
-                          byteNumbers[i] = byteCharacters.charCodeAt(i);
-                        }
-                        const byteArray = new Uint8Array(byteNumbers);
-                        const blob = new Blob([byteArray], { type: mimeType });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = attachment.name;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-                      } catch (error) {
-                        console.error("Erro ao fazer download:", error);
-                        setError("Erro ao fazer download do arquivo.");
-                      }
-                    }
-                  };
-
                   return (
                     <div className="message-attachment">
                       {attachment.type === "image" ? (
-                        <div className="message-attachment-image-wrapper">
-                          {shouldShowImage && imageUrlToUse ? (
-                            <img
-                              src={imageUrlToUse}
-                              alt={attachment.name}
-                              className="message-attachment-image"
-                              onClick={() => {
-                                if (imageUrlToUse) {
-                                  setSelectedImageUrl(imageUrlToUse);
-                                  setSelectedImageName(attachment.name);
-                                  setSelectedImageBase64(attachment._base64 || null);
-                                  setShowImageModal(true);
-                                }
-                              }}
-                              onError={(e) => {
-                                if (attachment._base64) {
-                                  const mimeType = attachment.mimeType || "image/jpeg";
-                                  const fallbackUrl = `data:${mimeType};base64,${attachment._base64}`;
-                                  if (e.currentTarget.src !== fallbackUrl) {
-                                    e.currentTarget.src = fallbackUrl;
-                                  } else {
-                                    e.currentTarget.style.display = "none";
-                                  }
-                                } else {
-                                  e.currentTarget.style.display = "none";
-                                }
-                              }}
-                            />
-                          ) : (
-                            <div className="message-attachment-image-placeholder">
-                              <span className="message-attachment-icon">🖼️</span>
-                              <div className="message-attachment-info">
-                                <span className="message-attachment-name">
-                                  {attachment.name}
-                                </span>
-                                <span className="message-attachment-size">
-                                  {(attachment.sizeBytes / 1024).toFixed(1)} KB
-                                </span>
-                              </div>
-                            </div>
-                          )}
-                            <button
-                              className="message-attachment-download-btn"
-                              onClick={handleDownload}
-                              title="Baixar imagem"
-                              aria-label="Baixar imagem"
-                            >
-                              <img src={downloadIcon} alt="Download" className="download-icon" />
-                            </button>
-                        </div>
+                        <img
+                          src={attachment.url}
+                          alt={attachment.name}
+                          className="message-attachment-image"
+                          onClick={() => window.open(attachment.url, "_blank")}
+                        />
                       ) : (
-                        <div className="message-attachment-file-wrapper">
-                          <a
-                            href={isValidUrl ? imageUrl : undefined}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="message-attachment-link"
-                            onClick={(e) => {
-                              if (!isValidUrl) {
-                                e.preventDefault();
-                                handleDownload(e);
-                              }
-                            }}
-                          >
-                            <span className="message-attachment-icon">📄</span>
-                            <div className="message-attachment-info">
-                              <span className="message-attachment-name">
-                                {attachment.name}
-                              </span>
-                              <span className="message-attachment-size">
-                                {(attachment.sizeBytes / 1024).toFixed(1)} KB
-                              </span>
-                            </div>
-                          </a>
-                          <button
-                            className="message-attachment-download-btn"
-                            onClick={handleDownload}
-                            title="Baixar arquivo"
-                            aria-label="Baixar arquivo"
-                          >
-                            <img src={downloadIcon} alt="Download" className="download-icon" />
-                          </button>
-                        </div>
+                        <a
+                          href={attachment.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="message-attachment-link"
+                        >
+                          <span className="message-attachment-icon">📄</span>
+                          <div className="message-attachment-info">
+                            <span className="message-attachment-name">
+                              {attachment.name}
+                            </span>
+                            <span className="message-attachment-size">
+                              {(attachment.sizeBytes / 1024).toFixed(1)} KB
+                            </span>
+                          </div>
+                        </a>
                       )}
                     </div>
                   );
@@ -816,75 +594,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               >
                 {isSendingQuote ? "Enviando..." : "Enviar Orçamento"}
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showImageModal && selectedImageUrl && (
-        <div className="image-modal-overlay" onClick={() => setShowImageModal(false)}>
-          <div className="image-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="image-modal-header">
-              <h3 className="image-modal-title">{selectedImageName}</h3>
-              <div className="image-modal-actions">
-                <button
-                  className="image-modal-download-btn"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (selectedImageUrl) {
-                      const a = document.createElement("a");
-                      a.href = selectedImageUrl;
-                      a.download = selectedImageName;
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                    } else if (selectedImageBase64) {
-                      try {
-                        const byteCharacters = atob(selectedImageBase64);
-                        const byteNumbers = new Array(byteCharacters.length);
-                        for (let i = 0; i < byteCharacters.length; i++) {
-                          byteNumbers[i] = byteCharacters.charCodeAt(i);
-                        }
-                        const byteArray = new Uint8Array(byteNumbers);
-                        const blob = new Blob([byteArray], { type: "image/jpeg" });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = selectedImageName;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-                      } catch (error) {
-                        console.error("Erro ao fazer download:", error);
-                        setError("Erro ao fazer download do arquivo.");
-                      }
-                    }
-                  }}
-                  title="Baixar imagem"
-                  aria-label="Baixar imagem"
-                >
-                  <img src={downloadIcon} alt="Download" className="download-icon" />
-                </button>
-                <button
-                  className="image-modal-close"
-                  onClick={() => setShowImageModal(false)}
-                  aria-label="Fechar"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-            <div className="image-modal-content">
-              <img
-                src={selectedImageUrl}
-                alt={selectedImageName}
-                className="image-modal-image"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                }}
-              />
             </div>
           </div>
         </div>
