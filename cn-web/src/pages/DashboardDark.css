@@ -82,7 +82,6 @@ html::-webkit-scrollbar {
   max-width: calc((100vw - 280px) / 0.8) !important;
 }
 
-
 .dashboard-dark-header {
   display: flex;
   justify-content: space-between;
@@ -636,7 +635,8 @@ html::-webkit-scrollbar {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     opacity: 0.9;
   }
@@ -647,7 +647,8 @@ html::-webkit-scrollbar {
 }
 
 @keyframes fadeInOut {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.5;
   }
   50% {
@@ -1799,4 +1800,3 @@ body:has(.dashboard-light) {
 .dashboard-light .dashboard-dark-progress-goal-label {
   color: #ff6b35;
 }
-

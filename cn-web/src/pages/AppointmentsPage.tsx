@@ -40,7 +40,9 @@ const AppointmentsPage: React.FC = () => {
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [pendingRequests, setPendingRequests] = useState<ServiceRequest[]>([]);
-  const [pendingClientApproval, setPendingClientApproval] = useState<ServiceRequest[]>([]);
+  const [pendingClientApproval, setPendingClientApproval] = useState<
+    ServiceRequest[]
+  >([]);
   const [allChefRequests, setAllChefRequests] = useState<ServiceRequest[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -67,12 +69,16 @@ const AppointmentsPage: React.FC = () => {
     return (savedTheme as "dark" | "light") || "dark";
   });
   const [isPendingExpanded, setIsPendingExpanded] = useState<boolean>(true);
-  const [isAwaitingClientExpanded, setIsAwaitingClientExpanded] = useState<boolean>(true);
+  const [isAwaitingClientExpanded, setIsAwaitingClientExpanded] =
+    useState<boolean>(true);
   const [isConfirmedExpanded, setIsConfirmedExpanded] = useState<boolean>(true);
-  const [hasPendingNotification, setHasPendingNotification] = useState<boolean>(false);
-  const [hasAwaitingClientNotification, setHasAwaitingClientNotification] = useState<boolean>(false);
-  const [hasConfirmedNotification, setHasConfirmedNotification] = useState<boolean>(false);
-  
+  const [hasPendingNotification, setHasPendingNotification] =
+    useState<boolean>(false);
+  const [hasAwaitingClientNotification, setHasAwaitingClientNotification] =
+    useState<boolean>(false);
+  const [hasConfirmedNotification, setHasConfirmedNotification] =
+    useState<boolean>(false);
+
   const prevPendingCountRef = useRef<number>(-1);
   const prevAwaitingClientCountRef = useRef<number>(-1);
   const prevConfirmedCountRef = useRef<number>(-1);
@@ -82,11 +88,12 @@ const AppointmentsPage: React.FC = () => {
     if (!value || value.trim() === "") return "0,00";
     const numericValue = parseFloat(value.replace(",", "."));
     if (isNaN(numericValue) || numericValue <= 0) return "0,00";
-    
+
     const feePercentage = 0.15;
-    const fixedFee = 0.80;
-    const totalWithFees = numericValue + (numericValue * feePercentage) + fixedFee;
-    
+    const fixedFee = 0.8;
+    const totalWithFees =
+      numericValue + numericValue * feePercentage + fixedFee;
+
     return totalWithFees.toFixed(2).replace(".", ",");
   };
 
@@ -116,7 +123,7 @@ const AppointmentsPage: React.FC = () => {
 
         const allRequests = response.items || [];
         setAllChefRequests(allRequests);
-        
+
         const filteredRequests = allRequests.filter((req: ServiceRequest) =>
           confirmedStatuses.includes(req.status)
         );
@@ -188,21 +195,40 @@ const AppointmentsPage: React.FC = () => {
     const currentAwaitingClientCount = pendingClientApproval.length;
     const currentConfirmedCount = appointments.length;
 
-    if (currentPendingCount > prevPendingCountRef.current && !isPendingExpanded && prevPendingCountRef.current >= 0) {
+    if (
+      currentPendingCount > prevPendingCountRef.current &&
+      !isPendingExpanded &&
+      prevPendingCountRef.current >= 0
+    ) {
       setHasPendingNotification(true);
     }
     prevPendingCountRef.current = currentPendingCount;
 
-    if (currentAwaitingClientCount > prevAwaitingClientCountRef.current && !isAwaitingClientExpanded && prevAwaitingClientCountRef.current >= 0) {
+    if (
+      currentAwaitingClientCount > prevAwaitingClientCountRef.current &&
+      !isAwaitingClientExpanded &&
+      prevAwaitingClientCountRef.current >= 0
+    ) {
       setHasAwaitingClientNotification(true);
     }
     prevAwaitingClientCountRef.current = currentAwaitingClientCount;
 
-    if (currentConfirmedCount > prevConfirmedCountRef.current && !isConfirmedExpanded && prevConfirmedCountRef.current >= 0) {
+    if (
+      currentConfirmedCount > prevConfirmedCountRef.current &&
+      !isConfirmedExpanded &&
+      prevConfirmedCountRef.current >= 0
+    ) {
       setHasConfirmedNotification(true);
     }
     prevConfirmedCountRef.current = currentConfirmedCount;
-  }, [pendingRequests.length, pendingClientApproval.length, appointments.length, isPendingExpanded, isAwaitingClientExpanded, isConfirmedExpanded]);
+  }, [
+    pendingRequests.length,
+    pendingClientApproval.length,
+    appointments.length,
+    isPendingExpanded,
+    isAwaitingClientExpanded,
+    isConfirmedExpanded,
+  ]);
 
   useEffect(() => {
     if (isPendingExpanded) {
@@ -261,7 +287,9 @@ const AppointmentsPage: React.FC = () => {
     const newDate = new Date(currentYear, currentMonth, day);
     setSelectedDate(newDate);
     const dateISO = dateToISOString(newDate);
-    const appointmentsForDate = appointments.filter((a) => a.dateISO === dateISO);
+    const appointmentsForDate = appointments.filter(
+      (a) => a.dateISO === dateISO
+    );
     if (appointmentsForDate.length > 0) {
       const sortedByTime = appointmentsForDate.sort((a, b) => {
         const timeA = new Date(a.requestedDate).getTime();
@@ -414,8 +442,7 @@ const AppointmentsPage: React.FC = () => {
       setPendingRequests(pending);
 
       const pendingApproval = allRequests.filter(
-        (req: ServiceRequest) =>
-          req.status === ServiceRequestStatus.QUOTE_SENT
+        (req: ServiceRequest) => req.status === ServiceRequestStatus.QUOTE_SENT
       );
       setPendingClientApproval(pendingApproval);
 
@@ -450,11 +477,15 @@ const AppointmentsPage: React.FC = () => {
 
       setAppointments(mappedAppointments);
       handleCloseAcceptModal();
-      
-      const acceptedRequest = allRequests.find((req: ServiceRequest) => req.id === selectedPendingRequest.id);
+
+      const acceptedRequest = allRequests.find(
+        (req: ServiceRequest) => req.id === selectedPendingRequest.id
+      );
       if (acceptedRequest) {
-        const clientName = acceptedRequest.client_profile?.user?.name || "Cliente";
-        const clientProfilePicture = acceptedRequest.client_profile?.user?.profilePictureUrl;
+        const clientName =
+          acceptedRequest.client_profile?.user?.name || "Cliente";
+        const clientProfilePicture =
+          acceptedRequest.client_profile?.user?.profilePictureUrl;
         setChatContext({
           serviceRequestId: acceptedRequest.id,
           status: acceptedRequest.status,
@@ -502,8 +533,7 @@ const AppointmentsPage: React.FC = () => {
       setPendingRequests(pending);
 
       const pendingApproval = allRequests.filter(
-        (req: ServiceRequest) =>
-          req.status === ServiceRequestStatus.QUOTE_SENT
+        (req: ServiceRequest) => req.status === ServiceRequestStatus.QUOTE_SENT
       );
       setPendingClientApproval(pendingApproval);
     } catch (err) {
@@ -522,22 +552,60 @@ const AppointmentsPage: React.FC = () => {
   }, [theme]);
 
   return (
-    <div className={`dashboard-layout ${theme === "light" ? "dashboard-light" : "dashboard-dark"}`}>
+    <div
+      className={`dashboard-layout ${
+        theme === "light" ? "dashboard-light" : "dashboard-dark"
+      }`}
+    >
       <DashboardSidebar />
-      <main className={`dashboard-main ${theme === "light" ? "dashboard-light-main" : "dashboard-dark-main"}`}>
-        <div className={`dashboard-content ${theme === "light" ? "dashboard-light-content" : "dashboard-dark-content"}`}>
-          <div className={`dashboard-header ${theme === "light" ? "dashboard-light-header" : "dashboard-dark-header"}`}>
-            <h1 className={`dashboard-title ${theme === "light" ? "dashboard-light-title" : "dashboard-dark-title"}`}>Agendamentos</h1>
+      <main
+        className={`dashboard-main ${
+          theme === "light" ? "dashboard-light-main" : "dashboard-dark-main"
+        }`}
+      >
+        <div
+          className={`dashboard-content ${
+            theme === "light"
+              ? "dashboard-light-content"
+              : "dashboard-dark-content"
+          }`}
+        >
+          <div
+            className={`dashboard-header ${
+              theme === "light"
+                ? "dashboard-light-header"
+                : "dashboard-dark-header"
+            }`}
+          >
+            <h1
+              className={`dashboard-title ${
+                theme === "light"
+                  ? "dashboard-light-title"
+                  : "dashboard-dark-title"
+              }`}
+            >
+              Agendamentos
+            </h1>
             <div className="theme-toggle-container">
               <span className="theme-toggle-label">Tema</span>
               <button
-                className={`theme-toggle-switch ${theme === "light" ? "theme-toggle-on" : "theme-toggle-off"}`}
+                className={`theme-toggle-switch ${
+                  theme === "light" ? "theme-toggle-on" : "theme-toggle-off"
+                }`}
                 onClick={toggleTheme}
-                title={theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro"}
+                title={
+                  theme === "dark"
+                    ? "Alternar para tema claro"
+                    : "Alternar para tema escuro"
+                }
                 type="button"
                 role="switch"
                 aria-checked={theme === "light"}
-                aria-label={theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro"}
+                aria-label={
+                  theme === "dark"
+                    ? "Alternar para tema claro"
+                    : "Alternar para tema escuro"
+                }
               >
                 <span className="theme-toggle-slider"></span>
               </button>
@@ -550,7 +618,10 @@ const AppointmentsPage: React.FC = () => {
                   <div className="section-title-with-notification">
                     <h2 className="dashboard-dark-card-title">Pendentes</h2>
                     {hasPendingNotification && !isPendingExpanded && (
-                      <span className="section-notification-badge" aria-label="Novos itens">
+                      <span
+                        className="section-notification-badge"
+                        aria-label="Novos itens"
+                      >
                         <span className="notification-dot"></span>
                       </span>
                     )}
@@ -567,7 +638,9 @@ const AppointmentsPage: React.FC = () => {
                       viewBox="0 0 24 24"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
-                      className={`section-chevron-icon ${isPendingExpanded ? "expanded" : ""}`}
+                      className={`section-chevron-icon ${
+                        isPendingExpanded ? "expanded" : ""
+                      }`}
                     >
                       <path
                         d="M6 9L12 15L18 9"
@@ -580,89 +653,103 @@ const AppointmentsPage: React.FC = () => {
                   </button>
                 </div>
                 {isPendingExpanded && (
-                <>
-                {isLoading ? (
-                  <div className="empty-state">Carregando...</div>
-                ) : pendingRequests.length === 0 ? (
-                  <div className="empty-state">
-                    Nenhum pedido pendente.
-                  </div>
-                ) : (
-                  <div className="pending-requests-list">
-                    {pendingRequests.map((req) => {
-                      const requestedDate = new Date(req.requested_date);
-                      const clientName =
-                        req.client_profile?.user?.name || "Cliente";
-                      const clientProfilePicture =
-                        req.client_profile?.user?.profilePictureUrl;
+                  <>
+                    {isLoading ? (
+                      <div className="empty-state">Carregando...</div>
+                    ) : pendingRequests.length === 0 ? (
+                      <div className="empty-state">Nenhum pedido pendente.</div>
+                    ) : (
+                      <div className="pending-requests-list">
+                        {pendingRequests.map((req) => {
+                          const requestedDate = new Date(req.requested_date);
+                          const clientName =
+                            req.client_profile?.user?.name || "Cliente";
+                          const clientProfilePicture =
+                            req.client_profile?.user?.profilePictureUrl;
 
-                      return (
-                        <div key={req.id} className="pending-request-card">
-                          <div className="pending-card-left">
-                            {clientProfilePicture ? (
-                              <img
-                                src={clientProfilePicture}
-                                alt={clientName}
-                                className="pending-client-avatar"
-                              />
-                            ) : (
-                              <div className="pending-client-avatar-placeholder">
-                                {clientName.charAt(0).toUpperCase()}
+                          return (
+                            <div key={req.id} className="pending-request-card">
+                              <div className="pending-card-left">
+                                {clientProfilePicture ? (
+                                  <img
+                                    src={clientProfilePicture}
+                                    alt={clientName}
+                                    className="pending-client-avatar"
+                                  />
+                                ) : (
+                                  <div className="pending-client-avatar-placeholder">
+                                    {clientName.charAt(0).toUpperCase()}
+                                  </div>
+                                )}
+                                <div className="pending-info">
+                                  <div className="pending-code">
+                                    #
+                                    {requestSequentialNumbers.get(req.id) ||
+                                      req.id}
+                                  </div>
+                                  <div className="pending-client">
+                                    {clientName}
+                                  </div>
+                                  <div className="pending-service-type">
+                                    {req.service_type}
+                                  </div>
+                                  <div className="pending-date">
+                                    {formatDateTimeBR(requestedDate)}
+                                  </div>
+                                  <div className="pending-address">
+                                    {req.location}
+                                  </div>
+                                </div>
                               </div>
-                            )}
-                            <div className="pending-info">
-                              <div className="pending-code">#{requestSequentialNumbers.get(req.id) || req.id}</div>
-                              <div className="pending-client">{clientName}</div>
-                              <div className="pending-service-type">
-                                {req.service_type}
-                              </div>
-                              <div className="pending-date">
-                                {formatDateTimeBR(requestedDate)}
-                              </div>
-                              <div className="pending-address">
-                                {req.location}
+                              <div className="pending-card-actions">
+                                <button
+                                  className="accept-button"
+                                  onClick={() => handleOpenAcceptModal(req)}
+                                  disabled={isProcessing}
+                                >
+                                  Aceitar
+                                </button>
+                                <button
+                                  className="reject-button"
+                                  onClick={() => handleRejectRequest(req.id)}
+                                  disabled={isProcessing}
+                                >
+                                  Rejeitar
+                                </button>
                               </div>
                             </div>
-                          </div>
-                          <div className="pending-card-actions">
-                            <button
-                              className="accept-button"
-                              onClick={() => handleOpenAcceptModal(req)}
-                              disabled={isProcessing}
-                            >
-                              Aceitar
-                            </button>
-                            <button
-                              className="reject-button"
-                              onClick={() => handleRejectRequest(req.id)}
-                              disabled={isProcessing}
-                            >
-                              Rejeitar
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                </>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
               <div className="dashboard-dark-card pending-section">
                 <div className="section-header-with-chevron">
                   <div className="section-title-with-notification">
-                    <h2 className="dashboard-dark-card-title">Aguardando Cliente</h2>
-                    {hasAwaitingClientNotification && !isAwaitingClientExpanded && (
-                      <span className="section-notification-badge" aria-label="Novos itens">
-                        <span className="notification-dot"></span>
-                      </span>
-                    )}
+                    <h2 className="dashboard-dark-card-title">
+                      Aguardando Cliente
+                    </h2>
+                    {hasAwaitingClientNotification &&
+                      !isAwaitingClientExpanded && (
+                        <span
+                          className="section-notification-badge"
+                          aria-label="Novos itens"
+                        >
+                          <span className="notification-dot"></span>
+                        </span>
+                      )}
                   </div>
                   <button
                     className="section-chevron-button"
-                    onClick={() => setIsAwaitingClientExpanded(!isAwaitingClientExpanded)}
-                    aria-label={isAwaitingClientExpanded ? "Ocultar" : "Mostrar"}
+                    onClick={() =>
+                      setIsAwaitingClientExpanded(!isAwaitingClientExpanded)
+                    }
+                    aria-label={
+                      isAwaitingClientExpanded ? "Ocultar" : "Mostrar"
+                    }
                     type="button"
                   >
                     <svg
@@ -671,7 +758,9 @@ const AppointmentsPage: React.FC = () => {
                       viewBox="0 0 24 24"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
-                      className={`section-chevron-icon ${isAwaitingClientExpanded ? "expanded" : ""}`}
+                      className={`section-chevron-icon ${
+                        isAwaitingClientExpanded ? "expanded" : ""
+                      }`}
                     >
                       <path
                         d="M6 9L12 15L18 9"
@@ -684,84 +773,94 @@ const AppointmentsPage: React.FC = () => {
                   </button>
                 </div>
                 {isAwaitingClientExpanded && (
-                <>
-                {isLoading ? (
-                  <div className="empty-state">Carregando...</div>
-                ) : pendingClientApproval.length === 0 ? (
-                  <div className="empty-state">
-                    Nenhum pedido aguardando aprovação do cliente.
-                  </div>
-                ) : (
-                  <div className="pending-requests-list">
-                    {pendingClientApproval.map((req) => {
-                      const requestedDate = new Date(req.requested_date);
-                      const clientName =
-                        req.client_profile?.user?.name || "Cliente";
-                      const clientProfilePicture =
-                        req.client_profile?.user?.profilePictureUrl;
-                      const priceCents = req.quote?.amount_cents || 0;
-                      const priceBRL = priceCents / 100;
+                  <>
+                    {isLoading ? (
+                      <div className="empty-state">Carregando...</div>
+                    ) : pendingClientApproval.length === 0 ? (
+                      <div className="empty-state">
+                        Nenhum pedido aguardando aprovação do cliente.
+                      </div>
+                    ) : (
+                      <div className="pending-requests-list">
+                        {pendingClientApproval.map((req) => {
+                          const requestedDate = new Date(req.requested_date);
+                          const clientName =
+                            req.client_profile?.user?.name || "Cliente";
+                          const clientProfilePicture =
+                            req.client_profile?.user?.profilePictureUrl;
+                          const priceCents = req.quote?.amount_cents || 0;
+                          const priceBRL = priceCents / 100;
 
-                      return (
-                        <div key={req.id} className="pending-request-card">
-                          <div className="pending-card-left">
-                            {clientProfilePicture ? (
-                              <img
-                                src={clientProfilePicture}
-                                alt={clientName}
-                                className="pending-client-avatar"
-                              />
-                            ) : (
-                              <div className="pending-client-avatar-placeholder">
-                                {clientName.charAt(0).toUpperCase()}
-                              </div>
-                            )}
-                            <div className="pending-info">
-                              <div className="pending-code">#{requestSequentialNumbers.get(req.id) || req.id}</div>
-                              <div className="pending-client">{clientName}</div>
-                              <div className="pending-service-type">
-                                {req.service_type}
-                              </div>
-                              <div className="pending-date">
-                                {formatDateTimeBR(requestedDate)}
-                              </div>
-                              <div className="pending-address">
-                                {req.location}
-                              </div>
-                              {priceBRL > 0 && (
-                                <div className="pending-price">
-                                  Valor: R${" "}
-                                  {priceBRL.toFixed(2).replace(".", ",")}
+                          return (
+                            <div key={req.id} className="pending-request-card">
+                              <div className="pending-card-left">
+                                {clientProfilePicture ? (
+                                  <img
+                                    src={clientProfilePicture}
+                                    alt={clientName}
+                                    className="pending-client-avatar"
+                                  />
+                                ) : (
+                                  <div className="pending-client-avatar-placeholder">
+                                    {clientName.charAt(0).toUpperCase()}
+                                  </div>
+                                )}
+                                <div className="pending-info">
+                                  <div className="pending-code">
+                                    #
+                                    {requestSequentialNumbers.get(req.id) ||
+                                      req.id}
+                                  </div>
+                                  <div className="pending-client">
+                                    {clientName}
+                                  </div>
+                                  <div className="pending-service-type">
+                                    {req.service_type}
+                                  </div>
+                                  <div className="pending-date">
+                                    {formatDateTimeBR(requestedDate)}
+                                  </div>
+                                  <div className="pending-address">
+                                    {req.location}
+                                  </div>
+                                  {priceBRL > 0 && (
+                                    <div className="pending-price">
+                                      Valor: R${" "}
+                                      {priceBRL.toFixed(2).replace(".", ",")}
+                                    </div>
+                                  )}
                                 </div>
-                              )}
+                              </div>
+                              <div className="pending-card-status">
+                                <div className="status-badge waiting">
+                                  Aguardando aprovação
+                                </div>
+                              </div>
+                              <button
+                                className="pending-chat-fab"
+                                aria-label="Abrir chat"
+                                onClick={() => {
+                                  setChatContext({
+                                    serviceRequestId: req.id,
+                                    status: req.status,
+                                    participantName: clientName,
+                                    participantAvatarUrl: clientProfilePicture,
+                                  });
+                                  setShowChatModal(true);
+                                }}
+                              >
+                                <img
+                                  src={chatIcon}
+                                  alt=""
+                                  className="chat-icon"
+                                />
+                              </button>
                             </div>
-                          </div>
-                          <div className="pending-card-status">
-                            <div className="status-badge waiting">
-                              Aguardando aprovação
-                            </div>
-                          </div>
-                          <button
-                            className="pending-chat-fab"
-                            aria-label="Abrir chat"
-                            onClick={() => {
-                              setChatContext({
-                                serviceRequestId: req.id,
-                                status: req.status,
-                                participantName: clientName,
-                                participantAvatarUrl: clientProfilePicture,
-                              });
-                              setShowChatModal(true);
-                            }}
-                          >
-                            <img src={chatIcon} alt="" className="chat-icon" />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                </>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -770,7 +869,10 @@ const AppointmentsPage: React.FC = () => {
                   <div className="section-title-with-notification">
                     <h2 className="dashboard-dark-card-title">Confirmados</h2>
                     {hasConfirmedNotification && !isConfirmedExpanded && (
-                      <span className="section-notification-badge" aria-label="Novos itens">
+                      <span
+                        className="section-notification-badge"
+                        aria-label="Novos itens"
+                      >
                         <span className="notification-dot"></span>
                       </span>
                     )}
@@ -787,7 +889,9 @@ const AppointmentsPage: React.FC = () => {
                       viewBox="0 0 24 24"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
-                      className={`section-chevron-icon ${isConfirmedExpanded ? "expanded" : ""}`}
+                      className={`section-chevron-icon ${
+                        isConfirmedExpanded ? "expanded" : ""
+                      }`}
                     >
                       <path
                         d="M6 9L12 15L18 9"
@@ -801,88 +905,99 @@ const AppointmentsPage: React.FC = () => {
                 </div>
 
                 {isConfirmedExpanded && (
-                <>
-                {isLoading ? (
-                  <div className="empty-state">Carregando...</div>
-                ) : error ? (
-                  <div className="empty-state">{error}</div>
-                ) : confirmedSorted.length === 0 ? (
-                  <div className="empty-state">
-                    Nenhum agendamento confirmado.
-                  </div>
-                ) : (
-                  <ul className="appointments-list">
-                  {confirmedSorted.map((a) => (
-                    <li
-                      key={a.id}
-                      className={`appointment-card ${
-                        selectedAppointmentId === a.id ? "selected" : ""
-                      }`}
-                      onClick={() => {
-                        setSelectedAppointmentId(a.id);
-                        const appointmentDate = new Date(
-                          a.dateISO + "T00:00:00"
-                        );
-                        setSelectedDate(appointmentDate);
-                        setCurrentMonth(appointmentDate.getMonth());
-                        setCurrentYear(appointmentDate.getFullYear());
-                      }}
-                    >
-                      <div className="card-left">
-                        {a.clientProfilePicture ? (
-                          <img
-                            src={a.clientProfilePicture}
-                            alt={a.clientName}
-                            className="appt-client-avatar"
-                          />
-                        ) : (
-                          <div className="appt-client-avatar-placeholder">
-                            {a.clientName.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <div className="appt-info">
-                          <div className="appt-code">#{requestSequentialNumbers.get(a.serviceRequestId) || a.serviceRequestId}</div>
-                          <div className="appt-client">{a.clientName}</div>
-                          <div className="appt-service-type">
-                            {a.serviceType}
-                          </div>
-                          <div className="appt-address">{a.address}</div>
-                          {a.expectedDurationMinutes && (
-                            <div className="appt-duration">
-                              Duração: {a.expectedDurationMinutes} min
+                  <>
+                    {isLoading ? (
+                      <div className="empty-state">Carregando...</div>
+                    ) : error ? (
+                      <div className="empty-state">{error}</div>
+                    ) : confirmedSorted.length === 0 ? (
+                      <div className="empty-state">
+                        Nenhum agendamento confirmado.
+                      </div>
+                    ) : (
+                      <ul className="appointments-list">
+                        {confirmedSorted.map((a) => (
+                          <li
+                            key={a.id}
+                            className={`appointment-card ${
+                              selectedAppointmentId === a.id ? "selected" : ""
+                            }`}
+                            onClick={() => {
+                              setSelectedAppointmentId(a.id);
+                              const appointmentDate = new Date(
+                                a.dateISO + "T00:00:00"
+                              );
+                              setSelectedDate(appointmentDate);
+                              setCurrentMonth(appointmentDate.getMonth());
+                              setCurrentYear(appointmentDate.getFullYear());
+                            }}
+                          >
+                            <div className="card-left">
+                              {a.clientProfilePicture ? (
+                                <img
+                                  src={a.clientProfilePicture}
+                                  alt={a.clientName}
+                                  className="appt-client-avatar"
+                                />
+                              ) : (
+                                <div className="appt-client-avatar-placeholder">
+                                  {a.clientName.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <div className="appt-info">
+                                <div className="appt-code">
+                                  #
+                                  {requestSequentialNumbers.get(
+                                    a.serviceRequestId
+                                  ) || a.serviceRequestId}
+                                </div>
+                                <div className="appt-client">
+                                  {a.clientName}
+                                </div>
+                                <div className="appt-service-type">
+                                  {a.serviceType}
+                                </div>
+                                <div className="appt-address">{a.address}</div>
+                                {a.expectedDurationMinutes && (
+                                  <div className="appt-duration">
+                                    Duração: {a.expectedDurationMinutes} min
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="card-right">
-                        <div className="appt-date">
-                          {formatDateTimeBR(a.requestedDate)}
-                        </div>
-                        <div className="appt-price">
-                          R$ {a.priceBRL.toFixed(2).replace(".", ",")}
-                        </div>
-                      </div>
-                      <button
-                        className="pending-chat-fab"
-                        aria-label="Abrir chat"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setChatContext({
-                            serviceRequestId: a.serviceRequestId,
-                            status: a.status,
-                            participantName: a.clientName,
-                            participantAvatarUrl: a.clientProfilePicture,
-                          });
-                          setShowChatModal(true);
-                        }}
-                      >
-                        <img src={chatIcon} alt="" className="chat-icon" />
-                      </button>
-                    </li>
-                  ))}
-                  </ul>
-                )}
-                </>
+                            <div className="card-right">
+                              <div className="appt-date">
+                                {formatDateTimeBR(a.requestedDate)}
+                              </div>
+                              <div className="appt-price">
+                                R$ {a.priceBRL.toFixed(2).replace(".", ",")}
+                              </div>
+                            </div>
+                            <button
+                              className="pending-chat-fab"
+                              aria-label="Abrir chat"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setChatContext({
+                                  serviceRequestId: a.serviceRequestId,
+                                  status: a.status,
+                                  participantName: a.clientName,
+                                  participantAvatarUrl: a.clientProfilePicture,
+                                });
+                                setShowChatModal(true);
+                              }}
+                            >
+                              <img
+                                src={chatIcon}
+                                alt=""
+                                className="chat-icon"
+                              />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
                 )}
               </div>
             </section>
@@ -921,7 +1036,11 @@ const AppointmentsPage: React.FC = () => {
                   ))}
                   {Array.from({ length: daysInMonth }).map((_, idx) => {
                     const day = idx + 1;
-                    const currentDate = new Date(currentYear, currentMonth, day);
+                    const currentDate = new Date(
+                      currentYear,
+                      currentMonth,
+                      day
+                    );
                     const isSelected =
                       selectedDate.getFullYear() === currentYear &&
                       selectedDate.getMonth() === currentMonth &&
@@ -1008,11 +1127,17 @@ const AppointmentsPage: React.FC = () => {
                       )}
                     </div>
 
-                    {(selectedAppointment.description ||
-                      selectedAppointment.observation) ? (
+                    {selectedAppointment.description ||
+                    selectedAppointment.observation ? (
                       <div className="appointment-observation">
                         {selectedAppointment.description && (
-                          <div style={{ marginBottom: selectedAppointment.observation ? "16px" : "0" }}>
+                          <div
+                            style={{
+                              marginBottom: selectedAppointment.observation
+                                ? "16px"
+                                : "0",
+                            }}
+                          >
                             <strong>Descrição do Cliente:</strong>
                             <p>{selectedAppointment.description}</p>
                           </div>
@@ -1121,16 +1246,17 @@ const AppointmentsPage: React.FC = () => {
                     placeholder="0,00"
                     disabled={isProcessing}
                   />
-                  {quoteAmount && parseFloat(quoteAmount.replace(",", ".")) > 0 && (
-                    <div className="accept-value-with-fees">
-                      <span className="accept-fees-label">
-                        Valor incluindo as taxas para o cliente:
-                      </span>
-                      <span className="accept-fees-value">
-                        R$ {calculateValueWithFees(quoteAmount)}
-                      </span>
-                    </div>
-                  )}
+                  {quoteAmount &&
+                    parseFloat(quoteAmount.replace(",", ".")) > 0 && (
+                      <div className="accept-value-with-fees">
+                        <span className="accept-fees-label">
+                          Valor incluindo as taxas para o cliente:
+                        </span>
+                        <span className="accept-fees-value">
+                          R$ {calculateValueWithFees(quoteAmount)}
+                        </span>
+                      </div>
+                    )}
                 </div>
               </div>
 
