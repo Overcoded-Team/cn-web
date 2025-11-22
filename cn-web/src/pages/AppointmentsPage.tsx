@@ -41,6 +41,7 @@ const AppointmentsPage: React.FC = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [pendingRequests, setPendingRequests] = useState<ServiceRequest[]>([]);
   const [pendingClientApproval, setPendingClientApproval] = useState<ServiceRequest[]>([]);
+  const [allChefRequests, setAllChefRequests] = useState<ServiceRequest[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [modalError, setModalError] = useState<string>("");
@@ -114,6 +115,8 @@ const AppointmentsPage: React.FC = () => {
         ];
 
         const allRequests = response.items || [];
+        setAllChefRequests(allRequests);
+        
         const filteredRequests = allRequests.filter((req: ServiceRequest) =>
           confirmedStatuses.includes(req.status)
         );
@@ -270,6 +273,21 @@ const AppointmentsPage: React.FC = () => {
       setSelectedAppointmentId(null);
     }
   };
+
+  const requestSequentialNumbers = useMemo(() => {
+    const sortedRequests = [...allChefRequests].sort((a, b) => {
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return dateA - dateB;
+    });
+
+    const numberMap = new Map<number, number>();
+    sortedRequests.forEach((req, index) => {
+      numberMap.set(req.id, index + 1);
+    });
+
+    return numberMap;
+  }, [allChefRequests]);
 
   const formatDateBR = (date: Date | string): string => {
     let d: Date;
@@ -593,7 +611,7 @@ const AppointmentsPage: React.FC = () => {
                               </div>
                             )}
                             <div className="pending-info">
-                              <div className="pending-code">#{req.id}</div>
+                              <div className="pending-code">#{requestSequentialNumbers.get(req.id) || req.id}</div>
                               <div className="pending-client">{clientName}</div>
                               <div className="pending-service-type">
                                 {req.service_type}
@@ -699,7 +717,7 @@ const AppointmentsPage: React.FC = () => {
                               </div>
                             )}
                             <div className="pending-info">
-                              <div className="pending-code">#{req.id}</div>
+                              <div className="pending-code">#{requestSequentialNumbers.get(req.id) || req.id}</div>
                               <div className="pending-client">{clientName}</div>
                               <div className="pending-service-type">
                                 {req.service_type}
@@ -823,7 +841,7 @@ const AppointmentsPage: React.FC = () => {
                           </div>
                         )}
                         <div className="appt-info">
-                          <div className="appt-code">#{a.serviceRequestId}</div>
+                          <div className="appt-code">#{requestSequentialNumbers.get(a.serviceRequestId) || a.serviceRequestId}</div>
                           <div className="appt-client">{a.clientName}</div>
                           <div className="appt-service-type">
                             {a.serviceType}
