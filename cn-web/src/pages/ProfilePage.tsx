@@ -17,7 +17,6 @@ import {
   userAddressService,
   UserAddress,
   CreateUserAddressDTO,
-  UpdateUserAddressDTO,
 } from "../services/user-address.service";
 
 interface ChefCuisineRelation {
