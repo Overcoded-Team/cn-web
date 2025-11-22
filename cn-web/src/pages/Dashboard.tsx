@@ -229,6 +229,17 @@ const Dashboard: React.FC = () => {
     const completedCount = completedWithQuote.length;
     const pendingCount = pendingWithQuote.length;
 
+    const rejectedByChef = serviceRequests.filter(
+      (sr) => sr.status === ServiceRequestStatus.REJECTED_BY_CHEF
+    );
+
+    const rejectedByClient = serviceRequests.filter(
+      (sr) =>
+        sr.status === ServiceRequestStatus.CANCELLED && sr.quote
+    );
+
+    const rejectedCount = rejectedByChef.length + rejectedByClient.length;
+
     const totalEarnings = paidWithQuote.reduce((sum, sr) => {
       if (!sr.quote) return sum;
       return sum + (sr.quote.amount_cents || 0);
@@ -253,6 +264,10 @@ const Dashboard: React.FC = () => {
     });
 
     const yearCompleted = yearRequests.filter(
+      (sr) => sr.status === ServiceRequestStatus.COMPLETED
+    ).length;
+
+    const monthCompleted = monthRequests.filter(
       (sr) => sr.status === ServiceRequestStatus.COMPLETED
     ).length;
 
@@ -492,6 +507,8 @@ const Dashboard: React.FC = () => {
       monthlyEarnings: monthlyEarnings.map((e) => e / 100),
       maxMonthlyEarning: maxMonthlyEarning / 100,
       yearTotal: yearRequests.length,
+      monthCompleted,
+      yearCompleted,
       pendingApprovals: pendingApprovals.length,
       pendingChefReview: pendingChefReview.length,
       upcomingAppointments,
@@ -503,6 +520,7 @@ const Dashboard: React.FC = () => {
       pendingEarnings: pendingEarnings / 100,
       completedCount,
       pendingCount,
+      rejectedCount,
       dailyEarnings: dailyEarnings.map((e) => e / 100),
     };
   }, [serviceRequests, profile, selectedYear, selectedChartMonth, reviews, monthlyGoal]);
@@ -1188,6 +1206,11 @@ const Dashboard: React.FC = () => {
                     </td>
                     <td>{metrics.pendingCount}</td>
                   </tr>
+                  <tr>
+                    <td>Recusados</td>
+                    <td>-</td>
+                    <td>{metrics.rejectedCount}</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -1442,26 +1465,26 @@ const Dashboard: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>Este Mês</td>
-                  <td>
-                    R${" "}
-                    {metrics.monthEarnings.toLocaleString("pt-BR", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </td>
-                  <td>{metrics.totalRequests}</td>
-                </tr>
-                <tr>
-                  <td>Este Ano</td>
-                  <td>
-                    R${" "}
-                    {metrics.totalEarnings.toLocaleString("pt-BR", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </td>
-                  <td>{metrics.yearTotal}</td>
-                </tr>
+                 <tr>
+                   <td>Este Mês</td>
+                   <td>
+                     R${" "}
+                     {metrics.monthEarnings.toLocaleString("pt-BR", {
+                       minimumFractionDigits: 2,
+                     })}
+                   </td>
+                   <td>{metrics.monthCompleted}</td>
+                 </tr>
+                 <tr>
+                   <td>Este Ano</td>
+                   <td>
+                     R${" "}
+                     {metrics.totalEarnings.toLocaleString("pt-BR", {
+                       minimumFractionDigits: 2,
+                     })}
+                   </td>
+                   <td>{metrics.yearCompleted}</td>
+                 </tr>
               </tbody>
             </table>
           </div>
