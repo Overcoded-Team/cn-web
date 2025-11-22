@@ -52,6 +52,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [sequentialNumber, setSequentialNumber] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -71,6 +72,35 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    const loadSequentialNumber = async () => {
+      if (currentUserRole === "CHEF") {
+        try {
+          const response = await serviceRequestService.listChefServiceRequests(
+            1,
+            1000
+          );
+          const sortedRequests = [...response.items].sort((a, b) => {
+            const dateA = new Date(a.created_at).getTime();
+            const dateB = new Date(b.created_at).getTime();
+            return dateA - dateB;
+          });
+
+          const index = sortedRequests.findIndex(
+            (req) => req.id === serviceRequestId
+          );
+          if (index !== -1) {
+            setSequentialNumber(index + 1);
+          }
+        } catch (err) {
+          console.error("Erro ao carregar número sequencial:", err);
+        }
+      }
+    };
+
+    loadSequentialNumber();
+  }, [serviceRequestId, currentUserRole]);
 
   useEffect(() => {
     const loadServiceRequestDetails = async () => {
@@ -270,9 +300,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     return false;
   };
 
+  const displayNumber = sequentialNumber || serviceRequestId;
   const chatTitle = participantName
-    ? `${participantName} - Chat do Pedido #${serviceRequestId}`
-    : `Chat do Pedido #${serviceRequestId}`;
+    ? `${participantName} - Chat do Pedido #${displayNumber}`
+    : `Chat do Pedido #${displayNumber}`;
 
   const participantInitial = participantName?.charAt(0).toUpperCase();
 
