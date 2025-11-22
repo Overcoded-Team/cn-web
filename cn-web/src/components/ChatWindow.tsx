@@ -1,23 +1,25 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useChatSocket, ChatMessage } from "../hooks/useChatSocket";
-import { ServiceRequestStatus, serviceRequestService, ServiceRequest } from "../services/serviceRequest.service";
+import {
+  ServiceRequestStatus,
+  serviceRequestService,
+  ServiceRequest,
+} from "../services/serviceRequest.service";
 import { isChatReadOnly } from "../utils/chatUtils";
 import attachIcon from "../assets/attach-files.svg";
 import "./ChatWindow.css";
 
-// Constantes alinhadas com o backend (service-request-chat.gateway.ts)
-const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5MB
+const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 const ALLOWED_ATTACHMENT_MIMES: readonly string[] = [
   "image/jpeg",
   "image/png",
   "image/webp",
   "image/avif",
   "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
-  "application/msword", // .doc
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/msword",
 ];
 
-// String para o atributo accept do input file
 const ACCEPT_FILE_TYPES = ALLOWED_ATTACHMENT_MIMES.join(",");
 
 interface ChatWindowProps {
@@ -45,7 +47,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const [quoteAmount, setQuoteAmount] = useState("");
   const [quoteNotes, setQuoteNotes] = useState("");
   const [isSendingQuote, setIsSendingQuote] = useState(false);
-  const [serviceRequestDetails, setServiceRequestDetails] = useState<ServiceRequest | null>(null);
+  const [serviceRequestDetails, setServiceRequestDetails] =
+    useState<ServiceRequest | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -74,8 +77,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       if (showQuoteModal && currentUserRole === "CHEF") {
         try {
           setIsLoadingDetails(true);
-          const response = await serviceRequestService.listChefServiceRequests(1, 1000);
-          const request = response.items.find((req) => req.id === serviceRequestId);
+          const response = await serviceRequestService.listChefServiceRequests(
+            1,
+            1000
+          );
+          const request = response.items.find(
+            (req) => req.id === serviceRequestId
+          );
           if (request) {
             setServiceRequestDetails(request);
           }
@@ -94,11 +102,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     if (!value || value.trim() === "") return "0,00";
     const numericValue = parseFloat(value.replace(",", "."));
     if (isNaN(numericValue) || numericValue <= 0) return "0,00";
-    
+
     const feePercentage = 0.15;
-    const fixedFee = 0.80;
-    const totalWithFees = numericValue + (numericValue * feePercentage) + fixedFee;
-    
+    const fixedFee = 0.8;
+    const totalWithFees =
+      numericValue + numericValue * feePercentage + fixedFee;
+
     return totalWithFees.toFixed(2).replace(".", ",");
   };
 
@@ -130,7 +139,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       const reader = new FileReader();
       reader.onload = () => {
         const result = reader.result as string;
-        // Remove o prefixo data:image/...;base64,
         const base64 = result.split(",")[1] || result;
         resolve(base64);
       };
@@ -143,13 +151,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validar tipo de arquivo (alinhado com o backend)
     if (!ALLOWED_ATTACHMENT_MIMES.includes(file.type)) {
-      setError("Tipo de arquivo não permitido. Use imagens (JPEG, PNG, WebP, AVIF) ou documentos (PDF, DOC, DOCX).");
+      setError(
+        "Tipo de arquivo não permitido. Use imagens (JPEG, PNG, WebP, AVIF) ou documentos (PDF, DOC, DOCX)."
+      );
       return;
     }
 
-    // Validar tamanho (alinhado com o backend: 5MB)
     if (file.size > MAX_ATTACHMENT_BYTES) {
       setError("Arquivo muito grande. Tamanho máximo de 5MB.");
       return;
@@ -161,14 +169,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!messageInput.trim() && !selectedFile) || !isConnected || isReadOnly) return;
+    if ((!messageInput.trim() && !selectedFile) || !isConnected || isReadOnly)
+      return;
 
     setError(null);
     setIsUploading(true);
 
     try {
       let attachment = undefined;
-      
+
       if (selectedFile) {
         const base64 = await convertFileToBase64(selectedFile);
         attachment = {
@@ -304,7 +313,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               onClick={() => setShowQuoteModal(true)}
               title="Enviar Orçamento"
             >
-               Enviar Orçamento
+              Enviar Orçamento
             </button>
           )}
           {onClose && (
@@ -340,43 +349,46 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   </div>
                 )}
                 <div className="message-content">{message.content}</div>
-                {message.metadata?.attachment && (() => {
-                  const attachment = message.metadata.attachment as {
-                    url: string;
-                    name: string;
-                    type: "image" | "file";
-                    sizeBytes: number;
-                  };
-                  return (
-                    <div className="message-attachment">
-                      {attachment.type === "image" ? (
-                        <img
-                          src={attachment.url}
-                          alt={attachment.name}
-                          className="message-attachment-image"
-                          onClick={() => window.open(attachment.url, "_blank")}
-                        />
-                      ) : (
-                        <a
-                          href={attachment.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="message-attachment-link"
-                        >
-                          <span className="message-attachment-icon">📄</span>
-                          <div className="message-attachment-info">
-                            <span className="message-attachment-name">
-                              {attachment.name}
-                            </span>
-                            <span className="message-attachment-size">
-                              {(attachment.sizeBytes / 1024).toFixed(1)} KB
-                            </span>
-                          </div>
-                        </a>
-                      )}
-                    </div>
-                  );
-                })()}
+                {message.metadata?.attachment &&
+                  (() => {
+                    const attachment = message.metadata.attachment as {
+                      url: string;
+                      name: string;
+                      type: "image" | "file";
+                      sizeBytes: number;
+                    };
+                    return (
+                      <div className="message-attachment">
+                        {attachment.type === "image" ? (
+                          <img
+                            src={attachment.url}
+                            alt={attachment.name}
+                            className="message-attachment-image"
+                            onClick={() =>
+                              window.open(attachment.url, "_blank")
+                            }
+                          />
+                        ) : (
+                          <a
+                            href={attachment.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="message-attachment-link"
+                          >
+                            <span className="message-attachment-icon">📄</span>
+                            <div className="message-attachment-info">
+                              <span className="message-attachment-name">
+                                {attachment.name}
+                              </span>
+                              <span className="message-attachment-size">
+                                {(attachment.sizeBytes / 1024).toFixed(1)} KB
+                              </span>
+                            </div>
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })()}
                 <div className="message-time">
                   {formatMessageTime(message.created_at)}
                 </div>
@@ -460,7 +472,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           <button
             type="submit"
             className="chat-send-button"
-            disabled={!isConnected || (!messageInput.trim() && !selectedFile) || isUploading}
+            disabled={
+              !isConnected ||
+              (!messageInput.trim() && !selectedFile) ||
+              isUploading
+            }
           >
             {isUploading ? "Enviando..." : "Enviar"}
           </button>
@@ -468,7 +484,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       )}
 
       {showQuoteModal && (
-        <div className="quote-modal-overlay" onClick={() => setShowQuoteModal(false)}>
+        <div
+          className="quote-modal-overlay"
+          onClick={() => setShowQuoteModal(false)}
+        >
           <div className="quote-modal" onClick={(e) => e.stopPropagation()}>
             <div className="quote-modal-header">
               <h2 className="quote-modal-title">Enviar Orçamento</h2>
@@ -481,12 +500,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               </button>
             </div>
             <div className="quote-modal-content">
-              {error && (
-                <div className="quote-modal-error">{error}</div>
-              )}
+              {error && <div className="quote-modal-error">{error}</div>}
 
               {isLoadingDetails ? (
-                <div style={{ textAlign: "center", padding: "2rem", color: "#b0b3b8" }}>
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "2rem",
+                    color: "#b0b3b8",
+                  }}
+                >
                   Carregando informações do pedido...
                 </div>
               ) : serviceRequestDetails ? (
@@ -495,11 +518,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     <div className="accept-info-item">
                       <span className="accept-info-label">Cliente:</span>
                       <span className="accept-info-value">
-                        {serviceRequestDetails.client_profile?.user?.name || "Cliente"}
+                        {serviceRequestDetails.client_profile?.user?.name ||
+                          "Cliente"}
                       </span>
                     </div>
                     <div className="accept-info-item">
-                      <span className="accept-info-label">Tipo de Serviço:</span>
+                      <span className="accept-info-label">
+                        Tipo de Serviço:
+                      </span>
                       <span className="accept-info-value">
                         {serviceRequestDetails.service_type}
                       </span>
@@ -540,22 +566,25 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                             .replace(/[^\d,]/g, "")
                             .replace(",", ".");
                           if (value === "" || !isNaN(parseFloat(value))) {
-                            setQuoteAmount(e.target.value.replace(/[^\d,]/g, ""));
+                            setQuoteAmount(
+                              e.target.value.replace(/[^\d,]/g, "")
+                            );
                           }
                         }}
                         placeholder="0,00"
                         disabled={isSendingQuote}
                       />
-                      {quoteAmount && parseFloat(quoteAmount.replace(",", ".")) > 0 && (
-                        <div className="accept-value-with-fees">
-                          <span className="accept-fees-label">
-                            Valor incluindo as taxas para o cliente:
-                          </span>
-                          <span className="accept-fees-value">
-                            R$ {calculateValueWithFees(quoteAmount)}
-                          </span>
-                        </div>
-                      )}
+                      {quoteAmount &&
+                        parseFloat(quoteAmount.replace(",", ".")) > 0 && (
+                          <div className="accept-value-with-fees">
+                            <span className="accept-fees-label">
+                              Valor incluindo as taxas para o cliente:
+                            </span>
+                            <span className="accept-fees-value">
+                              R$ {calculateValueWithFees(quoteAmount)}
+                            </span>
+                          </div>
+                        )}
                     </div>
                   </div>
 
@@ -574,7 +603,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   </div>
                 </>
               ) : (
-                <div style={{ textAlign: "center", padding: "2rem", color: "#b0b3b8" }}>
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "2rem",
+                    color: "#b0b3b8",
+                  }}
+                >
                   Erro ao carregar informações do pedido.
                 </div>
               )}

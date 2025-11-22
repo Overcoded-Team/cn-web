@@ -13,6 +13,12 @@ import { useAuth } from "../contexts/AuthContext";
 import { authService } from "../services/auth.service";
 import editIcon from "../assets/edit.svg";
 import { DashboardSidebar } from "../components/DashboardSidebar";
+import {
+  userAddressService,
+  UserAddress,
+  CreateUserAddressDTO,
+  UpdateUserAddressDTO,
+} from "../services/user-address.service";
 
 interface ChefCuisineRelation {
   id: number;
@@ -89,6 +95,19 @@ const ProfilePage: React.FC = () => {
     const savedTheme = localStorage.getItem("dashboard-theme");
     return (savedTheme as "dark" | "light") || "dark";
   });
+  const [addresses, setAddresses] = useState<UserAddress[]>([]);
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState<boolean>(false);
+  const [showAddressForm, setShowAddressForm] = useState<boolean>(false);
+  const [editingAddress, setEditingAddress] = useState<UserAddress | null>(null);
+  const [addressFormData, setAddressFormData] = useState<CreateUserAddressDTO>({
+    address: "",
+    addressNumber: 0,
+    district: "",
+    uf: "",
+    cepCode: "",
+  });
+  const [isSavingAddress, setIsSavingAddress] = useState<boolean>(false);
+  const [isFetchingCep, setIsFetchingCep] = useState<boolean>(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -140,8 +159,26 @@ const ProfilePage: React.FC = () => {
     if (user) {
       loadProfile();
       loadGallery();
+      loadAddresses();
     }
   }, [user]);
+
+  const loadAddresses = async () => {
+    try {
+      setIsLoadingAddresses(true);
+      setError("");
+      const addressesData = await userAddressService.listAddresses();
+      console.log("Endereços carregados:", addressesData);
+      setAddresses(Array.isArray(addressesData) ? addressesData : []);
+    } catch (err: any) {
+      console.error("Erro ao carregar endereços:", err);
+      const errorMessage = err?.response?.data?.message || err?.message || "Erro ao carregar endereços";
+      setError(errorMessage);
+      setAddresses([]);
+    } finally {
+      setIsLoadingAddresses(false);
+    }
+  };
 
   useEffect(() => {
     const loadAvailableCuisines = async () => {
@@ -575,6 +612,178 @@ const ProfilePage: React.FC = () => {
     };
   }, [previewProfilePicture]);
 
+  const handleOpenAddressForm = (address?: UserAddress) => {
+    setError("");
+    if (address) {
+      setEditingAddress(address);
+      setAddressFormData({
+        address: address.address,
+        addressNumber: address.addressNumber,
+        district: address.district,
+        uf: address.uf,
+        cepCode: address.cepCode,
+      });
+    } else {
+      setEditingAddress(null);
+      setAddressFormData({
+        address: "",
+        addressNumber: 0,
+        district: "",
+        uf: "",
+        cepCode: "",
+      });
+    }
+    setShowAddressForm(true);
+  };
+
+  const handleCloseAddressForm = () => {
+    setShowAddressForm(false);
+    setEditingAddress(null);
+    setError("");
+    setAddressFormData({
+      address: "",
+      addressNumber: 0,
+      district: "",
+      uf: "",
+      cepCode: "",
+    });
+  };
+
+  const handleSaveAddress = async () => {
+    try {
+      setIsSavingAddress(true);
+      setError("");
+
+      if (!addressFormData.address?.trim()) {
+        setError("O campo Rua/Avenida é obrigatório");
+        setIsSavingAddress(false);
+        return;
+      }
+
+      if (!addressFormData.addressNumber || addressFormData.addressNumber <= 0) {
+        setError("O campo Número é obrigatório e deve ser maior que zero");
+        setIsSavingAddress(false);
+        return;
+      }
+
+      if (!addressFormData.district?.trim()) {
+        setError("O campo Bairro é obrigatório");
+        setIsSavingAddress(false);
+        return;
+      }
+
+      if (!addressFormData.uf?.trim() || addressFormData.uf.length !== 2) {
+        setError("O campo UF é obrigatório e deve ter 2 caracteres");
+        setIsSavingAddress(false);
+        return;
+      }
+
+      if (!addressFormData.cepCode?.trim()) {
+        setError("O campo CEP é obrigatório");
+        setIsSavingAddress(false);
+        return;
+      }
+
+      const cepCleaned = addressFormData.cepCode.replace(/\D/g, "");
+      if (cepCleaned.length !== 8) {
+        setError("O CEP deve ter 8 dígitos");
+        setIsSavingAddress(false);
+        return;
+      }
+
+      if (editingAddress) {
+        await userAddressService.updateAddress(editingAddress.id, {
+          address: addressFormData.address.trim(),
+          addressNumber: addressFormData.addressNumber,
+          district: addressFormData.district.trim(),
+          uf: addressFormData.uf.toUpperCase().trim(),
+          cepCode: cepCleaned,
+        });
+      } else {
+        await userAddressService.createAddress({
+          address: addressFormData.address.trim(),
+          addressNumber: addressFormData.addressNumber,
+          district: addressFormData.district.trim(),
+          uf: addressFormData.uf.toUpperCase().trim(),
+          cepCode: cepCleaned,
+        });
+      }
+
+      handleCloseAddressForm();
+      await loadAddresses();
+    } catch (err: any) {
+      const errorMessage = err?.response?.data?.message || err?.message || "Erro ao salvar endereço";
+      setError(errorMessage);
+    } finally {
+      setIsSavingAddress(false);
+    }
+  };
+
+  const handleDeleteAddress = async (id: number) => {
+    if (!confirm("Tem certeza que deseja remover este endereço?")) {
+      return;
+    }
+
+    try {
+      setError("");
+      await userAddressService.deleteAddress(id);
+      await loadAddresses();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao remover endereço");
+    }
+  };
+
+  const handleTogglePrimaryAddress = async (id: number) => {
+    try {
+      setError("");
+      await userAddressService.togglePrimaryAddress(id);
+      await loadAddresses();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao alterar endereço primário");
+    }
+  };
+
+  const formatCep = (cep: string): string => {
+    const cleaned = cep.replace(/\D/g, "");
+    if (cleaned.length === 8) {
+      return `${cleaned.slice(0, 5)}-${cleaned.slice(5)}`;
+    }
+    return cleaned;
+  };
+
+  const fetchAddressByCep = async (cep: string) => {
+    const cleaned = cep.replace(/\D/g, "");
+    if (cleaned.length !== 8) {
+      return;
+    }
+
+    setIsFetchingCep(true);
+    setError("");
+
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cleaned}/json/`);
+      const data = await response.json();
+
+      if (data.erro) {
+        setError("CEP não encontrado");
+        setIsFetchingCep(false);
+        return;
+      }
+
+      setAddressFormData((prev) => ({
+        ...prev,
+        address: data.logradouro || prev.address,
+        district: data.bairro || prev.district,
+        uf: data.uf || prev.uf,
+      }));
+    } catch (err) {
+      console.error("Erro ao buscar CEP:", err);
+      setError("Erro ao buscar endereço pelo CEP");
+    } finally {
+      setIsFetchingCep(false);
+    }
+  };
+
   return (
     <div className={`dashboard-layout ${theme === "light" ? "dashboard-light" : "dashboard-dark"}`}>
       <DashboardSidebar 
@@ -1004,6 +1213,151 @@ const ProfilePage: React.FC = () => {
               {!isEditing && (
                 <>
                   <div className="dashboard-dark-card">
+                    <h2 className="dashboard-dark-card-title">Endereços</h2>
+                    <p className="dashboard-dark-card-description">
+                      Gerencie seus endereços para facilitar o agendamento de serviços
+                    </p>
+
+                    {isLoadingAddresses ? (
+                      <div style={{ textAlign: "center", padding: "2rem", color: theme === "dark" ? "#b0b3b8" : "#666666" }}>
+                        Carregando endereços...
+                      </div>
+                    ) : addresses.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "2rem", color: theme === "dark" ? "#b0b3b8" : "#666666" }}>
+                        <p>Nenhum endereço cadastrado ainda.</p>
+                        <button
+                          className="add-address-button"
+                          onClick={() => handleOpenAddressForm()}
+                          style={{
+                            marginTop: "1rem",
+                            padding: "0.75rem 1.5rem",
+                            background: "#ff6b35",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "8px",
+                            cursor: "pointer",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Adicionar Endereço
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="addresses-list">
+                        {addresses.map((address) => (
+                          <div
+                            key={address.id}
+                            className="address-item"
+                            style={{
+                              padding: "1rem",
+                              marginBottom: "1rem",
+                              background: theme === "dark" ? "#1a1d24" : "#ffffff",
+                              borderRadius: "8px",
+                              border: `2px solid ${address.isPrimary ? "#ff6b35" : theme === "dark" ? "#2d3139" : "#e0e0e0"}`,
+                            }}
+                          >
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                              <div style={{ flex: 1 }}>
+                                {address.isPrimary && (
+                                  <span
+                                    style={{
+                                      display: "inline-block",
+                                      padding: "0.25rem 0.75rem",
+                                      background: "#ff6b35",
+                                      color: "white",
+                                      borderRadius: "12px",
+                                      fontSize: "0.75rem",
+                                      fontWeight: 600,
+                                      marginBottom: "0.5rem",
+                                    }}
+                                  >
+                                    Principal
+                                  </span>
+                                )}
+                                <p style={{ margin: "0.5rem 0", color: theme === "dark" ? "#ffffff" : "#333333", fontWeight: 600 }}>
+                                  {address.address}, {address.addressNumber}
+                                </p>
+                                <p style={{ margin: "0.25rem 0", color: theme === "dark" ? "#b0b3b8" : "#666666", fontSize: "0.9rem" }}>
+                                  {address.district} - {address.uf}
+                                </p>
+                                <p style={{ margin: "0.25rem 0", color: theme === "dark" ? "#b0b3b8" : "#666666", fontSize: "0.9rem" }}>
+                                  CEP: {formatCep(address.cepCode)}
+                                </p>
+                              </div>
+                              <div style={{ display: "flex", gap: "0.5rem", flexDirection: "column" }}>
+                                {!address.isPrimary && (
+                                  <button
+                                    onClick={() => handleTogglePrimaryAddress(address.id)}
+                                    style={{
+                                      padding: "0.5rem 1rem",
+                                      background: "transparent",
+                                      color: "#ff6b35",
+                                      border: "1px solid #ff6b35",
+                                      borderRadius: "6px",
+                                      cursor: "pointer",
+                                      fontSize: "0.85rem",
+                                      fontWeight: 500,
+                                    }}
+                                  >
+                                    Tornar Principal
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleOpenAddressForm(address)}
+                                  style={{
+                                    padding: "0.5rem 1rem",
+                                    background: "transparent",
+                                    color: theme === "dark" ? "#b0b3b8" : "#666666",
+                                    border: `1px solid ${theme === "dark" ? "#2d3139" : "#e0e0e0"}`,
+                                    borderRadius: "6px",
+                                    cursor: "pointer",
+                                    fontSize: "0.85rem",
+                                    fontWeight: 500,
+                                  }}
+                                >
+                                  Editar
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteAddress(address.id)}
+                                  style={{
+                                    padding: "0.5rem 1rem",
+                                    background: "transparent",
+                                    color: "#f44336",
+                                    border: "1px solid #f44336",
+                                    borderRadius: "6px",
+                                    cursor: "pointer",
+                                    fontSize: "0.85rem",
+                                    fontWeight: 500,
+                                  }}
+                                >
+                                  Excluir
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        <button
+                          className="add-address-button"
+                          onClick={() => handleOpenAddressForm()}
+                          style={{
+                            width: "100%",
+                            padding: "0.75rem 1.5rem",
+                            background: "#ff6b35",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "8px",
+                            cursor: "pointer",
+                            fontWeight: 600,
+                            marginTop: "1rem",
+                          }}
+                        >
+                          + Adicionar Novo Endereço
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="dashboard-dark-card">
                     <div className="add-photos-section">
                     <input
                       ref={galleryFileInputRef}
@@ -1112,6 +1466,237 @@ const ProfilePage: React.FC = () => {
           )}
         </div>
       </main>
+
+      {showAddressForm && (
+        <div
+          className="address-form-modal-overlay"
+          onClick={handleCloseAddressForm}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.8)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 3000,
+          }}
+        >
+          <div
+            className="address-form-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: theme === "dark" ? "#242831" : "#ffffff",
+              borderRadius: "16px",
+              padding: "2rem",
+              maxWidth: "500px",
+              width: "90%",
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+              <h2 style={{ color: theme === "dark" ? "#ffffff" : "#333333", margin: 0 }}>
+                {editingAddress ? "Editar Endereço" : "Novo Endereço"}
+              </h2>
+              <button
+                onClick={handleCloseAddressForm}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: theme === "dark" ? "#b0b3b8" : "#666666",
+                  cursor: "pointer",
+                  fontSize: "24px",
+                  padding: 0,
+                  width: "32px",
+                  height: "32px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div>
+                <label style={{ display: "block", marginBottom: "0.5rem", color: theme === "dark" ? "#b0b3b8" : "#666666", fontWeight: 500 }}>
+                  Rua/Avenida *
+                </label>
+                <input
+                  type="text"
+                  value={addressFormData.address}
+                  onChange={(e) => setAddressFormData({ ...addressFormData, address: e.target.value })}
+                  style={{
+                    width: "100%",
+                    padding: "0.75rem",
+                    background: theme === "dark" ? "#1a1d24" : "#f5f7fa",
+                    border: `2px solid ${theme === "dark" ? "#2d3139" : "#e0e0e0"}`,
+                    borderRadius: "8px",
+                    color: theme === "dark" ? "#ffffff" : "#333333",
+                    fontSize: "1rem",
+                  }}
+                  placeholder="Ex: Av. Colombo"
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", marginBottom: "0.5rem", color: theme === "dark" ? "#b0b3b8" : "#666666", fontWeight: 500 }}>
+                  Número *
+                </label>
+                <input
+                  type="number"
+                  value={addressFormData.addressNumber || ""}
+                  onChange={(e) => setAddressFormData({ ...addressFormData, addressNumber: parseInt(e.target.value) || 0 })}
+                  style={{
+                    width: "100%",
+                    padding: "0.75rem",
+                    background: theme === "dark" ? "#1a1d24" : "#f5f7fa",
+                    border: `2px solid ${theme === "dark" ? "#2d3139" : "#e0e0e0"}`,
+                    borderRadius: "8px",
+                    color: theme === "dark" ? "#ffffff" : "#333333",
+                    fontSize: "1rem",
+                  }}
+                  placeholder="Ex: 1000"
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", marginBottom: "0.5rem", color: theme === "dark" ? "#b0b3b8" : "#666666", fontWeight: 500 }}>
+                  Bairro *
+                </label>
+                <input
+                  type="text"
+                  value={addressFormData.district}
+                  onChange={(e) => setAddressFormData({ ...addressFormData, district: e.target.value })}
+                  style={{
+                    width: "100%",
+                    padding: "0.75rem",
+                    background: theme === "dark" ? "#1a1d24" : "#f5f7fa",
+                    border: `2px solid ${theme === "dark" ? "#2d3139" : "#e0e0e0"}`,
+                    borderRadius: "8px",
+                    color: theme === "dark" ? "#ffffff" : "#333333",
+                    fontSize: "1rem",
+                  }}
+                  placeholder="Ex: Zona 7"
+                />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <div>
+                  <label style={{ display: "block", marginBottom: "0.5rem", color: theme === "dark" ? "#b0b3b8" : "#666666", fontWeight: 500 }}>
+                    UF *
+                  </label>
+                  <input
+                    type="text"
+                    value={addressFormData.uf}
+                    onChange={(e) => setAddressFormData({ ...addressFormData, uf: e.target.value.toUpperCase().slice(0, 2) })}
+                    maxLength={2}
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem",
+                      background: theme === "dark" ? "#1a1d24" : "#f5f7fa",
+                      border: `2px solid ${theme === "dark" ? "#2d3139" : "#e0e0e0"}`,
+                      borderRadius: "8px",
+                      color: theme === "dark" ? "#ffffff" : "#333333",
+                      fontSize: "1rem",
+                      textTransform: "uppercase",
+                    }}
+                    placeholder="Ex: PR"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: "block", marginBottom: "0.5rem", color: theme === "dark" ? "#b0b3b8" : "#666666", fontWeight: 500 }}>
+                    CEP * {isFetchingCep && <span style={{ fontSize: "0.85rem", color: "#ff6b35" }}>(Buscando...)</span>}
+                  </label>
+                  <input
+                    type="text"
+                    value={addressFormData.cepCode}
+                    onChange={(e) => {
+                      const formatted = formatCep(e.target.value);
+                      setAddressFormData({ ...addressFormData, cepCode: formatted });
+                    }}
+                    onBlur={(e) => {
+                      const cleaned = e.target.value.replace(/\D/g, "");
+                      if (cleaned.length === 8) {
+                        fetchAddressByCep(cleaned);
+                      }
+                    }}
+                    maxLength={9}
+                    disabled={isFetchingCep}
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem",
+                      background: theme === "dark" ? "#1a1d24" : "#f5f7fa",
+                      border: `2px solid ${theme === "dark" ? "#2d3139" : "#e0e0e0"}`,
+                      borderRadius: "8px",
+                      color: theme === "dark" ? "#ffffff" : "#333333",
+                      fontSize: "1rem",
+                      opacity: isFetchingCep ? 0.7 : 1,
+                    }}
+                    placeholder="Ex: 87020-000"
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div style={{
+                  padding: "0.75rem",
+                  background: theme === "dark" ? "rgba(244, 67, 54, 0.1)" : "rgba(244, 67, 54, 0.1)",
+                  border: `1px solid #f44336`,
+                  borderRadius: "8px",
+                  color: "#f44336",
+                  fontSize: "0.9rem",
+                  marginTop: "1rem",
+                }}>
+                  {error}
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+                <button
+                  onClick={handleCloseAddressForm}
+                  disabled={isSavingAddress}
+                  style={{
+                    flex: 1,
+                    padding: "0.75rem",
+                    background: theme === "dark" ? "#2d3139" : "#f5f7fa",
+                    color: theme === "dark" ? "#ffffff" : "#333333",
+                    border: `1px solid ${theme === "dark" ? "#3d4149" : "#e0e0e0"}`,
+                    borderRadius: "8px",
+                    cursor: isSavingAddress ? "not-allowed" : "pointer",
+                    fontWeight: 600,
+                    opacity: isSavingAddress ? 0.6 : 1,
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveAddress}
+                  disabled={isSavingAddress}
+                  style={{
+                    flex: 1,
+                    padding: "0.75rem",
+                    background: "#ff6b35",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: isSavingAddress ? "not-allowed" : "pointer",
+                    fontWeight: 600,
+                    opacity: isSavingAddress ? 0.6 : 1,
+                  }}
+                >
+                  {isSavingAddress ? "Salvando..." : editingAddress ? "Atualizar" : "Adicionar"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showMenuPreview && profile?.menuUrl && (
         <div className="menu-preview-modal-overlay" onClick={() => setShowMenuPreview(false)}>
