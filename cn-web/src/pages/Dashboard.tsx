@@ -508,7 +508,6 @@ const Dashboard: React.FC = () => {
       maxMonthlyEarning: maxMonthlyEarning / 100,
       yearTotal: yearRequests.length,
       monthCompleted,
-      yearCompleted,
       pendingApprovals: pendingApprovals.length,
       pendingChefReview: pendingChefReview.length,
       upcomingAppointments,
