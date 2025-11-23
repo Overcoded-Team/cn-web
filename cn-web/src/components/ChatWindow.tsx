@@ -441,7 +441,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   </div>
                 )}
                 <div className="message-content-wrapper">
-                  <div className="message-content">{message.content}</div>
+                  {message.content && message.content.trim() && (
+                    <div className="message-content">{message.content}</div>
+                  )}
                   {message.metadata?.attachment &&
                     (() => {
                       const attachment = message.metadata.attachment as {

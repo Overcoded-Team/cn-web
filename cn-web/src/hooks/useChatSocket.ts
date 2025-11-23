@@ -387,7 +387,7 @@ export const useChatSocket = ({
 
       socketRef.current.emit("message", {
         serviceRequestId,
-        content: trimmedContent || (attachment ? "" : undefined),
+        content: trimmedContent || (attachment ? " " : undefined),
         attachment: attachment
           ? {
               filename: attachment.filename,
