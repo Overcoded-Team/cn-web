@@ -203,7 +203,7 @@ export const chefService = {
 
     const token = localStorage.getItem("access_token");
     const API_BASE_URL =
-      import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+      import.meta.env.VITE_API_BASE_URL || "https://api.chefnow.cloud";
 
     const response = await fetch(`${API_BASE_URL}/user/profile/picture`, {
       method: "PATCH",
@@ -267,7 +267,7 @@ export const chefService = {
 
     const token = localStorage.getItem("access_token");
     const API_BASE_URL =
-      import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+      import.meta.env.VITE_API_BASE_URL || "https://api.chefnow.cloud";
 
     const response = await fetch(`${API_BASE_URL}/chefs/my-gallery`, {
       method: "POST",
