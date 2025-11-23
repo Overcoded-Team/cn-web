@@ -359,7 +359,7 @@ export const useChatSocket = ({
           service_request_id: serviceRequestId,
           sender_type: "CHEF",
           sender_user_id: undefined,
-          content: trimmedContent,
+          content: trimmedContent || "\u200B",
           metadata: {
             attachment: {
               url: tempUrl,
