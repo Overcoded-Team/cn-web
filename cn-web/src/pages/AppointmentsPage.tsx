@@ -51,6 +51,9 @@ const AppointmentsPage: React.FC = () => {
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<
     string | null
   >(null);
+  const [showAppointmentModal, setShowAppointmentModal] =
+    useState<boolean>(false);
+  const [filterByDate, setFilterByDate] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [showChatModal, setShowChatModal] = useState<boolean>(false);
   const [chatContext, setChatContext] = useState<{
@@ -258,6 +261,7 @@ const AppointmentsPage: React.FC = () => {
     } else {
       setCurrentMonth(newMonth);
     }
+    setFilterByDate(false);
   };
 
   const handleNextMonth = () => {
@@ -268,12 +272,22 @@ const AppointmentsPage: React.FC = () => {
     } else {
       setCurrentMonth(newMonth);
     }
+    setFilterByDate(false);
   };
 
   const handleSelectDate = (day: number) => {
     const newDate = new Date(currentYear, currentMonth, day);
-    setSelectedDate(newDate);
     const dateISO = dateToISOString(newDate);
+    const selectedDateISO = dateToISOString(selectedDate);
+
+    if (filterByDate && dateISO === selectedDateISO) {
+      setFilterByDate(false);
+      setSelectedAppointmentId(null);
+      return;
+    }
+
+    setSelectedDate(newDate);
+    setFilterByDate(true);
     const appointmentsForDate = appointments.filter(
       (a) => a.dateISO === dateISO
     );
@@ -360,14 +374,21 @@ const AppointmentsPage: React.FC = () => {
   }, [appointments, selectedDateISO, selectedAppointmentId]);
 
   const confirmedSorted = useMemo(() => {
-    return [...appointments].sort((a, b) => {
+    let filtered = [...appointments];
+
+    if (filterByDate) {
+      const dateISO = dateToISOString(selectedDate);
+      filtered = filtered.filter((a) => a.dateISO === dateISO);
+    }
+
+    return filtered.sort((a, b) => {
       const dateA = new Date(a.requestedDate).getTime();
       const dateB = new Date(b.requestedDate).getTime();
       if (dateA < dateB) return -1;
       if (dateA > dateB) return 1;
       return 0;
     });
-  }, [appointments]);
+  }, [appointments, filterByDate, selectedDate]);
 
   const handleAcceptRequest = async (requestId: number) => {
     if (!confirm("Tem certeza que deseja aceitar este pedido?")) {
@@ -861,116 +882,106 @@ const AppointmentsPage: React.FC = () => {
               {activeTab === "confirmados" && (
                 <div className="appointments-grid">
                   <section className="appointments-list-section">
-                    <div className="dashboard-dark-card">
-                      {isLoading ? (
-                        <div className="empty-state">Carregando...</div>
-                      ) : error ? (
-                        <div className="empty-state">{error}</div>
-                      ) : confirmedSorted.length === 0 ? (
-                        <div className="empty-state">
-                          Nenhum agendamento confirmado.
-                        </div>
-                      ) : (
-                        <ul className="appointments-list">
-                          {confirmedSorted.map((a) => (
-                            <li
-                              key={a.id}
-                              className={`appointment-card ${
-                                selectedAppointmentId === a.id ? "selected" : ""
-                              }`}
-                              onClick={() => {
-                                setSelectedAppointmentId(a.id);
-                                const appointmentDate = new Date(
-                                  a.dateISO + "T00:00:00"
-                                );
-                                setSelectedDate(appointmentDate);
-                                setCurrentMonth(appointmentDate.getMonth());
-                                setCurrentYear(appointmentDate.getFullYear());
+                    {isLoading ? (
+                      <div className="empty-state">Carregando...</div>
+                    ) : error ? (
+                      <div className="empty-state">{error}</div>
+                    ) : confirmedSorted.length === 0 ? (
+                      <div className="empty-state">
+                        {filterByDate
+                          ? "Sem serviços agendados nesta data"
+                          : "Nenhum agendamento confirmado."}
+                      </div>
+                    ) : (
+                      <ul className="appointments-list">
+                        {confirmedSorted.map((a) => (
+                          <li
+                            key={a.id}
+                            className="appointment-card"
+                            onClick={() => {
+                              setSelectedAppointmentId(a.id);
+                              setShowAppointmentModal(true);
+                            }}
+                          >
+                            <div className="card-left">
+                              {a.clientProfilePicture ? (
+                                <img
+                                  src={a.clientProfilePicture}
+                                  alt={a.clientName}
+                                  className="appt-client-avatar"
+                                />
+                              ) : (
+                                <div className="appt-client-avatar-placeholder">
+                                  {a.clientName.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <div className="appt-info">
+                                <div className="appt-code">
+                                  #
+                                  {requestSequentialNumbers.get(
+                                    a.serviceRequestId
+                                  ) || a.serviceRequestId}
+                                </div>
+                                <div className="appt-client">
+                                  {a.clientName}
+                                </div>
+                                <div className="appt-service-type">
+                                  {a.serviceType}
+                                </div>
+                                <div className="appt-address">{a.address}</div>
+                                {a.expectedDurationMinutes && (
+                                  <div className="appt-duration">
+                                    Duração: {a.expectedDurationMinutes} min
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="card-right">
+                              <div className="appt-date">
+                                {formatDateTimeBR(a.requestedDate)}
+                              </div>
+                              <div className="appt-price">
+                                R$ {a.priceBRL.toFixed(2).replace(".", ",")}
+                              </div>
+                              {(a.status === ServiceRequestStatus.SCHEDULED ||
+                                a.status ===
+                                  ServiceRequestStatus.PAYMENT_CONFIRMED) && (
+                                <button
+                                  className="complete-service-button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCompleteService(a.serviceRequestId);
+                                  }}
+                                  disabled={isProcessing}
+                                >
+                                  Finalizar Serviço
+                                </button>
+                              )}
+                            </div>
+                            <button
+                              className="pending-chat-fab"
+                              aria-label="Abrir chat"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setChatContext({
+                                  serviceRequestId: a.serviceRequestId,
+                                  status: a.status,
+                                  participantName: a.clientName,
+                                  participantAvatarUrl: a.clientProfilePicture,
+                                });
+                                setShowChatModal(true);
                               }}
                             >
-                              <div className="card-left">
-                                {a.clientProfilePicture ? (
-                                  <img
-                                    src={a.clientProfilePicture}
-                                    alt={a.clientName}
-                                    className="appt-client-avatar"
-                                  />
-                                ) : (
-                                  <div className="appt-client-avatar-placeholder">
-                                    {a.clientName.charAt(0).toUpperCase()}
-                                  </div>
-                                )}
-                                <div className="appt-info">
-                                  <div className="appt-code">
-                                    #
-                                    {requestSequentialNumbers.get(
-                                      a.serviceRequestId
-                                    ) || a.serviceRequestId}
-                                  </div>
-                                  <div className="appt-client">
-                                    {a.clientName}
-                                  </div>
-                                  <div className="appt-service-type">
-                                    {a.serviceType}
-                                  </div>
-                                  <div className="appt-address">
-                                    {a.address}
-                                  </div>
-                                  {a.expectedDurationMinutes && (
-                                    <div className="appt-duration">
-                                      Duração: {a.expectedDurationMinutes} min
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="card-right">
-                                <div className="appt-date">
-                                  {formatDateTimeBR(a.requestedDate)}
-                                </div>
-                                <div className="appt-price">
-                                  R$ {a.priceBRL.toFixed(2).replace(".", ",")}
-                                </div>
-                                {(a.status === ServiceRequestStatus.SCHEDULED ||
-                                  a.status ===
-                                    ServiceRequestStatus.PAYMENT_CONFIRMED) && (
-                                  <button
-                                    className="complete-service-button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleCompleteService(a.serviceRequestId);
-                                    }}
-                                    disabled={isProcessing}
-                                  >
-                                    Finalizar Serviço
-                                  </button>
-                                )}
-                              </div>
-                              <button
-                                className="pending-chat-fab"
-                                aria-label="Abrir chat"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setChatContext({
-                                    serviceRequestId: a.serviceRequestId,
-                                    status: a.status,
-                                    participantName: a.clientName,
-                                    participantAvatarUrl:
-                                      a.clientProfilePicture,
-                                  });
-                                  setShowChatModal(true);
-                                }}
-                              >
-                                <img
-                                  src={chatIcon}
-                                  alt=""
-                                  className="chat-icon"
-                                />
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
+                              <img
+                                src={chatIcon}
+                                alt=""
+                                className="chat-icon"
+                              />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </section>
 
                   <section className="appointments-right-panel">
@@ -1042,112 +1053,6 @@ const AppointmentsPage: React.FC = () => {
                           );
                         })}
                       </div>
-                    </div>
-
-                    <div className="dashboard-dark-card notes-card">
-                      {selectedAppointment ? (
-                        <>
-                          <div className="notes-header">
-                            <div className="notes-title">
-                              {selectedAppointment.clientName}
-                            </div>
-                            <div className="notes-date">
-                              {formatDateTimeBR(
-                                selectedAppointment.requestedDate
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="appointment-details">
-                            <div className="detail-item">
-                              <span className="detail-label">
-                                Tipo de Serviço:
-                              </span>
-                              <span className="detail-value">
-                                {selectedAppointment.serviceType}
-                              </span>
-                            </div>
-
-                            {selectedAppointment.clientEmail && (
-                              <div className="detail-item">
-                                <span className="detail-label">Email:</span>
-                                <span className="detail-value">
-                                  {selectedAppointment.clientEmail}
-                                </span>
-                              </div>
-                            )}
-
-                            <div className="detail-item">
-                              <span className="detail-label">Endereço:</span>
-                              <span className="detail-value">
-                                {selectedAppointment.address}
-                              </span>
-                            </div>
-
-                            {selectedAppointment.expectedDurationMinutes && (
-                              <div className="detail-item">
-                                <span className="detail-label">Duração:</span>
-                                <span className="detail-value">
-                                  {selectedAppointment.expectedDurationMinutes}{" "}
-                                  minutos
-                                </span>
-                              </div>
-                            )}
-
-                            {selectedAppointment.priceBRL > 0 && (
-                              <div className="detail-item">
-                                <span className="detail-label">Valor:</span>
-                                <span className="detail-value price">
-                                  R${" "}
-                                  {selectedAppointment.priceBRL
-                                    .toFixed(2)
-                                    .replace(".", ",")}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-
-                          {selectedAppointment.description ||
-                          selectedAppointment.observation ? (
-                            <div className="appointment-observation">
-                              {selectedAppointment.description && (
-                                <div
-                                  style={{
-                                    marginBottom:
-                                      selectedAppointment.observation
-                                        ? "16px"
-                                        : "0",
-                                  }}
-                                >
-                                  <strong>Descrição do Cliente:</strong>
-                                  <p>{selectedAppointment.description}</p>
-                                </div>
-                              )}
-                              {selectedAppointment.observation && (
-                                <div>
-                                  <strong>Observações do Chef:</strong>
-                                  <p>{selectedAppointment.observation}</p>
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="appointment-observation-empty">
-                              <p>Nenhuma observação disponível.</p>
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          <div className="notes-title">
-                            {formatDateBR(selectedDate)} - Observações
-                          </div>
-                          <div className="appointment-observation-empty">
-                            <p>
-                              Selecione um agendamento para ver os detalhes.
-                            </p>
-                          </div>
-                        </>
-                      )}
                     </div>
                   </section>
                 </div>
@@ -1274,6 +1179,110 @@ const AppointmentsPage: React.FC = () => {
               >
                 {isSendingQuote ? "Enviando..." : "Enviar Orçamento"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAppointmentModal && selectedAppointment && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowAppointmentModal(false)}
+        >
+          <div
+            className="appointment-details-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="appointment-modal-header">
+              <div className="appointment-modal-title-section">
+                <h2 className="appointment-modal-title">
+                  {selectedAppointment.clientName}
+                </h2>
+                <div className="appointment-modal-date">
+                  {formatDateTimeBR(selectedAppointment.requestedDate)}
+                </div>
+              </div>
+              <button
+                className="appointment-modal-close"
+                onClick={() => setShowAppointmentModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="appointment-modal-content">
+              <div className="appointment-details">
+                <div className="detail-item">
+                  <span className="detail-label">Tipo de Serviço:</span>
+                  <span className="detail-value">
+                    {selectedAppointment.serviceType}
+                  </span>
+                </div>
+
+                {selectedAppointment.clientEmail && (
+                  <div className="detail-item">
+                    <span className="detail-label">Email:</span>
+                    <span className="detail-value">
+                      {selectedAppointment.clientEmail}
+                    </span>
+                  </div>
+                )}
+
+                <div className="detail-item">
+                  <span className="detail-label">Endereço:</span>
+                  <span className="detail-value">
+                    {selectedAppointment.address}
+                  </span>
+                </div>
+
+                {selectedAppointment.expectedDurationMinutes && (
+                  <div className="detail-item">
+                    <span className="detail-label">Duração:</span>
+                    <span className="detail-value">
+                      {selectedAppointment.expectedDurationMinutes} minutos
+                    </span>
+                  </div>
+                )}
+
+                {selectedAppointment.priceBRL > 0 && (
+                  <div className="detail-item">
+                    <span className="detail-label">Valor:</span>
+                    <span className="detail-value price">
+                      R${" "}
+                      {selectedAppointment.priceBRL
+                        .toFixed(2)
+                        .replace(".", ",")}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {selectedAppointment.description ||
+              selectedAppointment.observation ? (
+                <div className="appointment-observation">
+                  {selectedAppointment.description && (
+                    <div
+                      style={{
+                        marginBottom: selectedAppointment.observation
+                          ? "16px"
+                          : "0",
+                      }}
+                    >
+                      <strong>Descrição do Cliente:</strong>
+                      <p>{selectedAppointment.description}</p>
+                    </div>
+                  )}
+                  {selectedAppointment.observation && (
+                    <div>
+                      <strong>Observações do Chef:</strong>
+                      <p>{selectedAppointment.observation}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="appointment-observation-empty">
+                  <p>Nenhuma observação disponível.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

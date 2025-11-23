@@ -14,16 +14,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 560px;
-  overflow: auto;
   padding-right: 4px;
   padding-top: 2px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.appointments-list::-webkit-scrollbar {
-  display: none;
 }
 .appointment-card {
   position: relative;
@@ -237,7 +229,7 @@
   padding: 4px 0;
 }
 .cal-day {
-  border: none;
+  border: 2px solid transparent;
   border-radius: 8px;
   background: #1a1d24;
   padding: 8px 0;
@@ -249,17 +241,29 @@
 .cal-day:hover {
   background: #2d3139;
 }
-.cal-day.selected {
-  background: #ff6b35;
+.cal-day.selected:not(.has-appointment):not(.today) {
+  border-color: #ff6b35;
+  background: #1a1d24;
   color: #fff;
   font-weight: 700;
 }
-.cal-day.today:not(.selected):not(.has-appointment) {
+.cal-day.today:not(.has-appointment) {
   background: #666;
   color: #fff;
   font-weight: 600;
 }
-.cal-day.has-appointment:not(.selected) {
+.cal-day.today.selected:not(.has-appointment) {
+  background: #666;
+  border-color: #ff6b35;
+  color: #fff;
+  font-weight: 600;
+}
+.cal-day.has-appointment {
+  background: #ff6b35;
+  color: #fff;
+  font-weight: 600;
+}
+.cal-day.has-appointment.selected {
   background: #ff6b35;
   color: #fff;
   font-weight: 600;
@@ -1514,22 +1518,36 @@
 .dashboard-light .cal-day {
   background: #f5f7fa;
   color: #333333;
+  border: 2px solid transparent;
 }
 
 .dashboard-light .cal-day:hover {
   background: #e8e8e8;
 }
 
-.dashboard-light .cal-day.selected {
-  background: #ff6b35;
-  color: #fff;
+.dashboard-light .cal-day.selected:not(.has-appointment):not(.today) {
+  border-color: #ff6b35;
+  background: #f5f7fa;
+  color: #333333;
+  font-weight: 700;
 }
-.dashboard-light .cal-day.today:not(.selected):not(.has-appointment) {
+.dashboard-light .cal-day.today:not(.has-appointment) {
   background: #999;
   color: #fff;
   font-weight: 600;
 }
-.dashboard-light .cal-day.has-appointment:not(.selected) {
+.dashboard-light .cal-day.today.selected:not(.has-appointment) {
+  background: #999;
+  border-color: #ff6b35;
+  color: #fff;
+  font-weight: 600;
+}
+.dashboard-light .cal-day.has-appointment {
+  background: #ff6b35;
+  color: #fff;
+  font-weight: 600;
+}
+.dashboard-light .cal-day.has-appointment.selected {
   background: #ff6b35;
   color: #fff;
   font-weight: 600;
@@ -1748,4 +1766,95 @@
 .dashboard-light .tab-button.active {
   color: #ff6b35;
   border-bottom-color: #ff6b35;
+}
+
+.appointment-details-modal {
+  background: #242831;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  border: 1px solid #2d3139;
+  display: flex;
+  flex-direction: column;
+}
+
+.appointment-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 24px;
+  border-bottom: 1px solid #2d3139;
+}
+
+.appointment-modal-title-section {
+  flex: 1;
+}
+
+.appointment-modal-title {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #ff6b35;
+}
+
+.appointment-modal-date {
+  font-size: 14px;
+  color: #b0b3b8;
+}
+
+.appointment-modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #b0b3b8;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.appointment-modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.appointment-modal-content {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.dashboard-light .appointment-details-modal {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+}
+
+.dashboard-light .appointment-modal-header {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dashboard-light .appointment-modal-title {
+  color: #ff6b35;
+}
+
+.dashboard-light .appointment-modal-date {
+  color: #666666;
+}
+
+.dashboard-light .appointment-modal-close {
+  color: #666666;
+}
+
+.dashboard-light .appointment-modal-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #333333;
 }
