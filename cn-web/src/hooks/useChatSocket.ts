@@ -355,9 +355,9 @@ export const useChatSocket = ({
           : `data:${attachment.mimeType};base64,${attachment.base64}`;
 
         const optimisticMessage: ChatMessage = {
-          id: Date.now(), // ID temporário
+          id: Date.now(),
           service_request_id: serviceRequestId,
-          sender_type: "CHEF", // Será substituído pela mensagem real
+          sender_type: "CHEF",
           sender_user_id: undefined,
           content: trimmedContent,
           metadata: {
@@ -367,8 +367,8 @@ export const useChatSocket = ({
               mimeType: attachment.mimeType,
               sizeBytes: attachment.size,
               type: isImage ? "image" : "file",
-              _optimistic: true, // Flag para identificar mensagem otimista
-              _base64: attachment.base64, // Guardar base64 para fallback
+              _optimistic: true,
+              _base64: attachment.base64,
             },
           },
           created_at: new Date().toISOString(),
@@ -387,7 +387,7 @@ export const useChatSocket = ({
 
       socketRef.current.emit("message", {
         serviceRequestId,
-        content: trimmedContent || (attachment ? " " : undefined),
+        content: trimmedContent || (attachment ? "\u200B" : undefined),
         attachment: attachment
           ? {
               filename: attachment.filename,
