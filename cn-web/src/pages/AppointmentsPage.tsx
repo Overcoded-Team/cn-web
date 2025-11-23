@@ -318,27 +318,6 @@ const AppointmentsPage: React.FC = () => {
     return numberMap;
   }, [allChefRequests]);
 
-  const formatDateBR = (date: Date | string): string => {
-    let d: Date;
-    if (typeof date === "string") {
-      d = new Date(date);
-      if (isNaN(d.getTime())) {
-        d = new Date(date + "T00:00:00");
-      }
-    } else {
-      d = date;
-    }
-
-    if (isNaN(d.getTime())) {
-      return "Data inválida";
-    }
-
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
-
   const formatDateTimeBR = (date: Date | string): string => {
     let d: Date;
     if (typeof date === "string") {
