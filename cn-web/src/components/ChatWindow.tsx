@@ -6,6 +6,7 @@ import {
   ServiceRequest,
 } from "../services/serviceRequest.service";
 import { isChatReadOnly } from "../utils/chatUtils";
+import { useAuth } from "../contexts/AuthContext";
 import attachIcon from "../assets/attach-files.svg";
 import "./ChatWindow.css";
 
@@ -43,21 +44,23 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 }) => {
   const [messageInput, setMessageInput] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [showQuoteModal, setShowQuoteModal] = useState(false);
-  const [quoteAmount, setQuoteAmount] = useState("");
-  const [quoteNotes, setQuoteNotes] = useState("");
-  const [isSendingQuote, setIsSendingQuote] = useState(false);
-  const [serviceRequestDetails, setServiceRequestDetails] =
-    useState<ServiceRequest | null>(null);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [sequentialNumber, setSequentialNumber] = useState<number | null>(null);
+  const [showEditQuoteModal, setShowEditQuoteModal] = useState(false);
+  const [serviceRequestDetails, setServiceRequestDetails] =
+    useState<ServiceRequest | null>(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [editQuoteAmount, setEditQuoteAmount] = useState<string>("");
+  const [editQuoteNotes, setEditQuoteNotes] = useState<string>("");
+  const [isUpdatingQuote, setIsUpdatingQuote] = useState(false);
+  const [editQuoteError, setEditQuoteError] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isReadOnly = isChatReadOnly(status);
+  const { user } = useAuth();
 
   const { messages, isConnected, isLoading, sendMessage } = useChatSocket({
     serviceRequestId,
@@ -104,9 +107,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
   useEffect(() => {
     const loadServiceRequestDetails = async () => {
-      if (showQuoteModal && currentUserRole === "CHEF") {
+      if (
+        showEditQuoteModal &&
+        status === ServiceRequestStatus.QUOTE_SENT &&
+        currentUserRole === "CHEF"
+      ) {
+        setIsLoadingDetails(true);
         try {
-          setIsLoadingDetails(true);
           const response = await serviceRequestService.listChefServiceRequests(
             1,
             1000
@@ -116,9 +123,17 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           );
           if (request) {
             setServiceRequestDetails(request);
+            if (request.quote) {
+              const amountInReais = (request.quote.amount_cents / 100)
+                .toFixed(2)
+                .replace(".", ",");
+              setEditQuoteAmount(amountInReais);
+              setEditQuoteNotes(request.quote.notes || "");
+            }
           }
         } catch (err) {
-          console.error("Erro ao carregar detalhes do pedido:", err);
+          console.error("Erro ao carregar detalhes do serviço:", err);
+          setEditQuoteError("Erro ao carregar detalhes do serviço");
         } finally {
           setIsLoadingDetails(false);
         }
@@ -126,43 +141,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     };
 
     loadServiceRequestDetails();
-  }, [showQuoteModal, serviceRequestId, currentUserRole]);
-
-  const calculateValueWithFees = (value: string): string => {
-    if (!value || value.trim() === "") return "0,00";
-    const numericValue = parseFloat(value.replace(",", "."));
-    if (isNaN(numericValue) || numericValue <= 0) return "0,00";
-
-    const feePercentage = 0.15;
-    const fixedFee = 0.8;
-    const totalWithFees =
-      numericValue + numericValue * feePercentage + fixedFee;
-
-    return totalWithFees.toFixed(2).replace(".", ",");
-  };
-
-  const formatDateTimeBR = (date: Date | string): string => {
-    let d: Date;
-    if (typeof date === "string") {
-      d = new Date(date);
-      if (isNaN(d.getTime())) {
-        d = new Date(date + "T00:00:00");
-      }
-    } else {
-      d = date;
-    }
-
-    if (isNaN(d.getTime())) {
-      return "Data inválida";
-    }
-
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = d.getFullYear();
-    const hours = String(d.getHours()).padStart(2, "0");
-    const minutes = String(d.getMinutes()).padStart(2, "0");
-    return `${day}/${month}/${year} às ${hours}:${minutes}`;
-  };
+  }, [showEditQuoteModal, serviceRequestId, status, currentUserRole]);
 
   const convertFileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -235,41 +214,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   };
 
-  const handleSendQuote = async () => {
-    if (!quoteAmount.trim()) {
-      setError("Por favor, informe o valor do orçamento.");
-      return;
-    }
-
-    const amount = parseFloat(quoteAmount.replace(",", "."));
-    if (isNaN(amount) || amount < 1) {
-      setError("Valor inválido. O valor mínimo é R$ 1,00");
-      return;
-    }
-
-    try {
-      setIsSendingQuote(true);
-      setError(null);
-
-      await serviceRequestService.sendQuote(serviceRequestId, {
-        amount_cents: Math.round(amount * 100),
-        notes: quoteNotes.trim() || undefined,
-      });
-
-      setShowQuoteModal(false);
-      setQuoteAmount("");
-      setQuoteNotes("");
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Erro ao enviar orçamento. Tente novamente."
-      );
-    } finally {
-      setIsSendingQuote(false);
-    }
-  };
-
   const formatMessageTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -298,6 +242,99 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       return message.sender_user_id === currentUserId;
     }
     return false;
+  };
+
+  const handleOpenEditQuoteModal = () => {
+    setShowEditQuoteModal(true);
+    setEditQuoteError("");
+  };
+
+  const handleCloseEditQuoteModal = () => {
+    setShowEditQuoteModal(false);
+    setServiceRequestDetails(null);
+    setEditQuoteAmount("");
+    setEditQuoteNotes("");
+    setEditQuoteError("");
+  };
+
+  const formatDateTimeBR = (date: Date | string): string => {
+    let d: Date;
+    if (typeof date === "string") {
+      d = new Date(date);
+      if (isNaN(d.getTime())) {
+        d = new Date(date + "T00:00:00");
+      }
+    } else {
+      d = date;
+    }
+
+    if (isNaN(d.getTime())) {
+      return "Data inválida";
+    }
+
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    return `${day}/${month}/${year} às ${hours}:${minutes}`;
+  };
+
+  const calculateValueWithFees = (value: string): string => {
+    if (!value || value.trim() === "") return "0,00";
+    const numericValue = parseFloat(value.replace(",", "."));
+    if (isNaN(numericValue) || numericValue <= 0) return "0,00";
+
+    const feePercentage = 0.15;
+    const fixedFee = 0.8;
+    const totalWithFees =
+      numericValue + numericValue * feePercentage + fixedFee;
+
+    return totalWithFees.toFixed(2).replace(".", ",");
+  };
+
+  const handleUpdateQuote = async () => {
+    if (!editQuoteAmount || editQuoteAmount.trim() === "") {
+      setEditQuoteError("Por favor, informe o valor do serviço");
+      return;
+    }
+
+    const numericValue = parseFloat(editQuoteAmount.replace(",", "."));
+    if (isNaN(numericValue) || numericValue <= 0) {
+      setEditQuoteError("O valor deve ser maior que zero");
+      return;
+    }
+
+    if (numericValue < 1) {
+      setEditQuoteError("O valor mínimo é R$ 1,00");
+      return;
+    }
+
+    setIsUpdatingQuote(true);
+    setEditQuoteError("");
+
+    try {
+      const amountCents = Math.round(numericValue * 100);
+      await serviceRequestService.sendQuote(serviceRequestId, {
+        amount_cents: amountCents,
+        notes: editQuoteNotes.trim() || undefined,
+      });
+
+      handleCloseEditQuoteModal();
+      if (onClose) {
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      }
+    } catch (err: any) {
+      setEditQuoteError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Erro ao atualizar orçamento. Tente novamente."
+      );
+    } finally {
+      setIsUpdatingQuote(false);
+    }
   };
 
   const displayNumber = sequentialNumber || serviceRequestId;
@@ -338,15 +375,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           </div>
         </div>
         <div className="chat-header-actions">
-          {currentUserRole === "CHEF" && !isReadOnly && (
-            <button
-              className="chat-send-quote-button"
-              onClick={() => setShowQuoteModal(true)}
-              title="Enviar Orçamento"
-            >
-              Enviar Orçamento
-            </button>
-          )}
+          {status === ServiceRequestStatus.QUOTE_SENT &&
+            currentUserRole === "CHEF" && (
+              <button
+                className="chat-edit-quote-button"
+                onClick={handleOpenEditQuoteModal}
+                title="Editar Orçamento"
+              >
+                Editar Orçamento
+              </button>
+            )}
           {onClose && (
             <button className="chat-close-button" onClick={onClose}>
               ×
@@ -367,6 +405,18 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             const isMyMsg = isMyMessage(message);
             const isSystem = message.sender_type === "SYSTEM";
 
+            const senderAvatarUrl = isMyMsg
+              ? user?.profilePictureUrl
+              : message.sender_type === "CLIENT"
+              ? participantAvatarUrl
+              : user?.profilePictureUrl;
+            const senderName = isMyMsg
+              ? user?.name || "Você"
+              : message.sender_type === "CLIENT"
+              ? participantName || "Cliente"
+              : user?.name || "Chef";
+            const senderInitial = senderName?.charAt(0).toUpperCase() || "?";
+
             return (
               <div
                 key={message.id}
@@ -375,53 +425,67 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 }`}
               >
                 {!isSystem && (
-                  <div className="message-sender">
-                    {message.sender_type === "CLIENT" ? "Cliente" : "Chef"}
+                  <div className="message-sender-avatar">
+                    {senderAvatarUrl ? (
+                      <img
+                        src={senderAvatarUrl}
+                        alt={senderName}
+                        className="message-avatar-image"
+                      />
+                    ) : (
+                      <div className="message-avatar-placeholder">
+                        {senderInitial}
+                      </div>
+                    )}
                   </div>
                 )}
-                <div className="message-content">{message.content}</div>
-                {message.metadata?.attachment &&
-                  (() => {
-                    const attachment = message.metadata.attachment as {
-                      url: string;
-                      name: string;
-                      type: "image" | "file";
-                      sizeBytes: number;
-                    };
-                    return (
-                      <div className="message-attachment">
-                        {attachment.type === "image" ? (
-                          <img
-                            src={attachment.url}
-                            alt={attachment.name}
-                            className="message-attachment-image"
-                            onClick={() =>
-                              window.open(attachment.url, "_blank")
-                            }
-                          />
-                        ) : (
-                          <a
-                            href={attachment.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="message-attachment-link"
-                          >
-                            <span className="message-attachment-icon">📄</span>
-                            <div className="message-attachment-info">
-                              <span className="message-attachment-name">
-                                {attachment.name}
+                <div className="message-content-wrapper">
+                  <div className="message-content">{message.content}</div>
+                  {message.metadata?.attachment &&
+                    (() => {
+                      const attachment = message.metadata.attachment as {
+                        url: string;
+                        name: string;
+                        type: "image" | "file";
+                        sizeBytes: number;
+                      };
+                      return (
+                        <div className="message-attachment">
+                          {attachment.type === "image" ? (
+                            <img
+                              src={attachment.url}
+                              alt={attachment.name}
+                              className="message-attachment-image"
+                              onClick={() =>
+                                window.open(attachment.url, "_blank")
+                              }
+                            />
+                          ) : (
+                            <a
+                              href={attachment.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="message-attachment-link"
+                            >
+                              <span className="message-attachment-icon">
+                                📄
                               </span>
-                              <span className="message-attachment-size">
-                                {(attachment.sizeBytes / 1024).toFixed(1)} KB
-                              </span>
-                            </div>
-                          </a>
-                        )}
-                      </div>
-                    );
-                  })()}
-                <div className="message-time">
-                  {formatMessageTime(message.created_at)}
+                              <div className="message-attachment-info">
+                                <span className="message-attachment-name">
+                                  {attachment.name}
+                                </span>
+                                <span className="message-attachment-size">
+                                  {(attachment.sizeBytes / 1024).toFixed(1)} KB
+                                </span>
+                              </div>
+                            </a>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  <div className="message-time">
+                    {formatMessageTime(message.created_at)}
+                  </div>
                 </div>
               </div>
             );
@@ -514,151 +578,157 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         </form>
       )}
 
-      {showQuoteModal && (
+      {showEditQuoteModal && (
         <div
-          className="quote-modal-overlay"
-          onClick={() => setShowQuoteModal(false)}
+          className="chat-edit-quote-modal-overlay"
+          onClick={handleCloseEditQuoteModal}
         >
-          <div className="quote-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="quote-modal-header">
-              <h2 className="quote-modal-title">Enviar Orçamento</h2>
+          <div
+            className="chat-edit-quote-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="chat-edit-quote-modal-header">
+              <h2 className="chat-edit-quote-modal-title">Editar Orçamento</h2>
               <button
-                className="quote-modal-close"
-                onClick={() => setShowQuoteModal(false)}
-                disabled={isSendingQuote}
+                className="chat-edit-quote-modal-close"
+                onClick={handleCloseEditQuoteModal}
+                disabled={isUpdatingQuote}
               >
                 ×
               </button>
             </div>
-            <div className="quote-modal-content">
-              {error && <div className="quote-modal-error">{error}</div>}
+            <div className="chat-edit-quote-modal-content">
+              {editQuoteError && (
+                <div className="chat-edit-quote-modal-error">
+                  {editQuoteError}
+                </div>
+              )}
 
               {isLoadingDetails ? (
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: "2rem",
-                    color: "#b0b3b8",
-                  }}
-                >
-                  Carregando informações do pedido...
+                <div className="chat-edit-quote-loading">
+                  Carregando detalhes...
                 </div>
               ) : serviceRequestDetails ? (
                 <>
-                  <div className="accept-request-info">
-                    <div className="accept-info-item">
-                      <span className="accept-info-label">Cliente:</span>
-                      <span className="accept-info-value">
+                  <div className="chat-edit-quote-info">
+                    <div className="chat-edit-quote-info-item">
+                      <span className="chat-edit-quote-info-label">
+                        Cliente:
+                      </span>
+                      <span className="chat-edit-quote-info-value">
                         {serviceRequestDetails.client_profile?.user?.name ||
                           "Cliente"}
                       </span>
                     </div>
-                    <div className="accept-info-item">
-                      <span className="accept-info-label">
+                    <div className="chat-edit-quote-info-item">
+                      <span className="chat-edit-quote-info-label">
                         Tipo de Serviço:
                       </span>
-                      <span className="accept-info-value">
+                      <span className="chat-edit-quote-info-value">
                         {serviceRequestDetails.service_type}
                       </span>
                     </div>
-                    <div className="accept-info-item">
-                      <span className="accept-info-label">Data e Horário:</span>
-                      <span className="accept-info-value">
+                    <div className="chat-edit-quote-info-item">
+                      <span className="chat-edit-quote-info-label">
+                        Data e Horário:
+                      </span>
+                      <span className="chat-edit-quote-info-value">
                         {formatDateTimeBR(serviceRequestDetails.requested_date)}
                       </span>
                     </div>
-                    <div className="accept-info-item">
-                      <span className="accept-info-label">Endereço:</span>
-                      <span className="accept-info-value">
+                    <div className="chat-edit-quote-info-item">
+                      <span className="chat-edit-quote-info-label">
+                        Endereço:
+                      </span>
+                      <span className="chat-edit-quote-info-value">
                         {serviceRequestDetails.location}
                       </span>
                     </div>
                     {serviceRequestDetails.description && (
-                      <div className="accept-info-item">
-                        <span className="accept-info-label">Descrição:</span>
-                        <span className="accept-info-value">
+                      <div className="chat-edit-quote-info-item">
+                        <span className="chat-edit-quote-info-label">
+                          Descrição:
+                        </span>
+                        <span className="chat-edit-quote-info-value">
                           {serviceRequestDetails.description}
                         </span>
                       </div>
                     )}
                   </div>
 
-                  <div className="quote-form-group">
-                    <label className="quote-form-label">
+                  <div className="chat-edit-quote-form-group">
+                    <label className="chat-edit-quote-form-label">
                       Valor do Serviço (R$)
                     </label>
-                    <div className="accept-value-container">
+                    <div className="chat-edit-quote-value-container">
                       <input
                         type="text"
-                        className="quote-form-input"
-                        value={quoteAmount}
+                        className="chat-edit-quote-form-input"
+                        value={editQuoteAmount}
                         onChange={(e) => {
                           const value = e.target.value
                             .replace(/[^\d,]/g, "")
-                            .replace(",", ".");
-                          if (value === "" || !isNaN(parseFloat(value))) {
-                            setQuoteAmount(
-                              e.target.value.replace(/[^\d,]/g, "")
-                            );
+                            .replace(/,/g, ",")
+                            .replace(/(\d)(\d{2})$/, "$1,$2")
+                            .replace(/(?=(\d{3})+(\D))(,)/, "$1");
+                          if (value.split(",")[0].length <= 8) {
+                            setEditQuoteAmount(value);
                           }
                         }}
                         placeholder="0,00"
-                        disabled={isSendingQuote}
+                        disabled={isUpdatingQuote}
                       />
-                      {quoteAmount &&
-                        parseFloat(quoteAmount.replace(",", ".")) > 0 && (
-                          <div className="accept-value-with-fees">
-                            <span className="accept-fees-label">
+                      {editQuoteAmount &&
+                        parseFloat(editQuoteAmount.replace(",", ".")) > 0 && (
+                          <div className="chat-edit-quote-value-with-fees">
+                            <span className="chat-edit-quote-fees-label">
                               Valor incluindo as taxas para o cliente:
                             </span>
-                            <span className="accept-fees-value">
-                              R$ {calculateValueWithFees(quoteAmount)}
+                            <span className="chat-edit-quote-fees-value">
+                              R$ {calculateValueWithFees(editQuoteAmount)}
                             </span>
                           </div>
                         )}
                     </div>
                   </div>
 
-                  <div className="quote-form-group">
-                    <label className="quote-form-label">
+                  <div className="chat-edit-quote-form-group">
+                    <label className="chat-edit-quote-form-label">
                       Observações (opcional)
                     </label>
                     <textarea
-                      className="quote-form-textarea"
-                      value={quoteNotes}
-                      onChange={(e) => setQuoteNotes(e.target.value)}
-                      placeholder="Adicione observações sobre este serviço..."
+                      className="chat-edit-quote-form-textarea"
+                      value={editQuoteNotes}
+                      onChange={(e) => setEditQuoteNotes(e.target.value)}
+                      placeholder="Adicione observações sobre o orçamento..."
                       rows={4}
-                      disabled={isSendingQuote}
+                      disabled={isUpdatingQuote}
+                      maxLength={500}
                     />
                   </div>
                 </>
               ) : (
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: "2rem",
-                    color: "#b0b3b8",
-                  }}
-                >
-                  Erro ao carregar informações do pedido.
+                <div className="chat-edit-quote-error">
+                  Erro ao carregar detalhes do serviço
                 </div>
               )}
             </div>
-            <div className="quote-modal-actions">
+            <div className="chat-edit-quote-modal-actions">
               <button
-                className="quote-modal-cancel"
-                onClick={() => setShowQuoteModal(false)}
-                disabled={isSendingQuote}
+                className="chat-edit-quote-modal-cancel"
+                onClick={handleCloseEditQuoteModal}
+                disabled={isUpdatingQuote}
               >
                 Cancelar
               </button>
               <button
-                className="quote-modal-submit"
-                onClick={handleSendQuote}
-                disabled={isSendingQuote || !quoteAmount}
+                className="chat-edit-quote-modal-submit"
+                onClick={handleUpdateQuote}
+                disabled={
+                  isUpdatingQuote || !editQuoteAmount || isLoadingDetails
+                }
               >
-                {isSendingQuote ? "Enviando..." : "Enviar Orçamento"}
+                {isUpdatingQuote ? "Atualizando..." : "Atualizar Orçamento"}
               </button>
             </div>
           </div>

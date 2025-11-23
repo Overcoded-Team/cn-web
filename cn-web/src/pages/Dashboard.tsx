@@ -1040,7 +1040,7 @@ const Dashboard: React.FC = () => {
                   style={{
                     width: "190px",
                     height: "150px",
-                    filter: "brightness(0) invert(1)",
+                    filter: theme === "light" ? "brightness(0) saturate(100%)" : "brightness(0) invert(1)",
                     objectFit: "contain",
                     opacity: 0.3,
                   }}
