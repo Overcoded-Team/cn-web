@@ -56,6 +56,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const [isUpdatingQuote, setIsUpdatingQuote] = useState(false);
   const [editQuoteError, setEditQuoteError] = useState<string>("");
   const [selectedImage, setSelectedImage] = useState<{ url: string; name: string } | null>(null);
+  const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -454,21 +455,42 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                         type: "image" | "file";
                         sizeBytes: number;
                       };
+                      const attachmentAny = attachment as any;
+                      const imageUrl = attachment.url || attachmentAny._cachedUrl || "";
+                      
                       return (
                         <div className="message-attachment">
-                          {attachment.type === "image" ? (
+                          {attachment.type === "image" && imageUrl ? (
                             <img
-                              src={attachment.url}
+                              src={imageUrl}
                               alt={attachment.name}
                               className="message-attachment-image"
                               onClick={() =>
                                 setSelectedImage({
-                                  url: attachment.url,
+                                  url: attachment.url || attachmentAny._cachedUrl || "",
                                   name: attachment.name,
                                 })
                               }
+                              onError={(e) => {
+                                const img = e.currentTarget;
+                                const messageId = message.id;
+                                if (!imageErrors.has(messageId)) {
+                                  setImageErrors((prev) => new Set(prev).add(messageId));
+                                  const cachedUrl = attachmentAny._cachedUrl;
+                                  const cachedBase64 = attachmentAny._base64;
+                                  if (cachedUrl) {
+                                    img.src = cachedUrl;
+                                  } else if (cachedBase64) {
+                                    const isImage = attachmentAny.mimeType?.startsWith("image/");
+                                    const mimeType = attachmentAny.mimeType || (isImage ? "image/jpeg" : "application/octet-stream");
+                                    img.src = `data:${mimeType};base64,${cachedBase64}`;
+                                  } else {
+                                    console.error("Image failed to load and no cache available:", message.id);
+                                  }
+                                }
+                              }}
                             />
-                          ) : (
+                          ) : attachment.type === "image" ? null : (
                             <a
                               href={attachment.url}
                               target="_blank"

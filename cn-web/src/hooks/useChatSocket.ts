@@ -137,28 +137,149 @@ export const useChatSocket = ({
       }
 
       const restoredHistory = (history || []).map((msg) => {
-        if (!msg.metadata) return msg;
+        const cachedBase64 = getAttachmentFromCache(serviceRequestId, msg.id);
+        const cacheKey = `chat_attachment_url_${serviceRequestId}_${msg.id}`;
+        let cachedUrl: string | null = null;
+        try {
+          cachedUrl = sessionStorage.getItem(cacheKey);
+        } catch (e) {
+        }
+        
+        if (!msg.metadata) {
+          if (cachedBase64) {
+            const isImage = true;
+            const mimeType = "image/jpeg";
+            return {
+              ...msg,
+              metadata: {
+                attachment: {
+                  url: `data:${mimeType};base64,${cachedBase64}`,
+                  _cachedUrl: `data:${mimeType};base64,${cachedBase64}`,
+                  _base64: cachedBase64,
+                  type: "image",
+                  name: "image.jpg",
+                  mimeType: mimeType,
+                  sizeBytes: 0,
+                },
+              },
+            };
+          } else if (cachedUrl) {
+            return {
+              ...msg,
+              metadata: {
+                attachment: {
+                  url: cachedUrl,
+                  type: "image",
+                  name: "image.jpg",
+                  mimeType: "image/jpeg",
+                  sizeBytes: 0,
+                },
+              },
+            };
+          }
+          return msg;
+        }
 
         let metadata = msg.metadata;
         if (typeof metadata === "string") {
           try {
             metadata = JSON.parse(metadata);
           } catch (e) {
+            if (cachedBase64) {
+              const isImage = true;
+              const mimeType = "image/jpeg";
+              return {
+                ...msg,
+                metadata: {
+                  attachment: {
+                    url: `data:${mimeType};base64,${cachedBase64}`,
+                    _cachedUrl: `data:${mimeType};base64,${cachedBase64}`,
+                    _base64: cachedBase64,
+                    type: "image",
+                    name: "image.jpg",
+                    mimeType: mimeType,
+                    sizeBytes: 0,
+                  },
+                },
+              };
+            }
             return msg;
           }
         }
 
-        if (!metadata?.attachment) return msg;
+        if (!metadata?.attachment) {
+          if (cachedBase64) {
+            const isImage = true;
+            const mimeType = "image/jpeg";
+            return {
+              ...msg,
+              metadata: {
+                ...metadata,
+                attachment: {
+                  url: `data:${mimeType};base64,${cachedBase64}`,
+                  _cachedUrl: `data:${mimeType};base64,${cachedBase64}`,
+                  _base64: cachedBase64,
+                  type: "image",
+                  name: "image.jpg",
+                  mimeType: mimeType,
+                  sizeBytes: 0,
+                },
+              },
+            };
+          } else if (cachedUrl) {
+            return {
+              ...msg,
+              metadata: {
+                ...metadata,
+                attachment: {
+                  url: cachedUrl,
+                  type: "image",
+                  name: "image.jpg",
+                  mimeType: "image/jpeg",
+                  sizeBytes: 0,
+                },
+              },
+            };
+          }
+          return msg;
+        }
 
         const attachment = metadata.attachment as any;
-        if (!attachment) return msg;
+        if (!attachment) {
+          if (cachedBase64) {
+            const isImage = true;
+            const mimeType = "image/jpeg";
+            return {
+              ...msg,
+              metadata: {
+                ...metadata,
+                attachment: {
+                  url: `data:${mimeType};base64,${cachedBase64}`,
+                  _cachedUrl: `data:${mimeType};base64,${cachedBase64}`,
+                  _base64: cachedBase64,
+                  type: "image",
+                  name: "image.jpg",
+                  mimeType: mimeType,
+                  sizeBytes: 0,
+                },
+              },
+            };
+          }
+          return msg;
+        }
 
+        if (cachedBase64) {
+          attachment._base64 = cachedBase64;
+          const isImage = attachment.type === "image" || attachment.mimeType?.startsWith("image/");
+          const mimeType = attachment.mimeType || (isImage ? "image/jpeg" : "application/octet-stream");
+          attachment._cachedUrl = `data:${mimeType};base64,${cachedBase64}`;
+        }
+        
         if (
           !attachment.url ||
           attachment.url === "about:blank" ||
           attachment.url.includes("about:")
         ) {
-          const cachedBase64 = getAttachmentFromCache(serviceRequestId, msg.id);
           if (cachedBase64) {
             const isImage =
               attachment.type === "image" ||
@@ -167,17 +288,6 @@ export const useChatSocket = ({
               attachment.mimeType ||
               (isImage ? "image/jpeg" : "application/octet-stream");
             attachment.url = `data:${mimeType};base64,${cachedBase64}`;
-            attachment._base64 = cachedBase64;
-          }
-        } else {
-          if (!attachment._base64) {
-            const cachedBase64 = getAttachmentFromCache(
-              serviceRequestId,
-              msg.id
-            );
-            if (cachedBase64) {
-              attachment._base64 = cachedBase64;
-            }
           }
         }
 
@@ -277,14 +387,15 @@ export const useChatSocket = ({
               attachment._base64 = cachedBase64;
             }
           } else {
-            if (!attachment._base64) {
-              const cachedBase64 = getAttachmentFromCache(
-                serviceRequestId,
-                message.id
-              );
-              if (cachedBase64) {
-                attachment._base64 = cachedBase64;
-              }
+            const cachedBase64 = getAttachmentFromCache(
+              serviceRequestId,
+              message.id
+            );
+            if (cachedBase64) {
+              attachment._base64 = cachedBase64;
+              const isImage = attachment.type === "image" || attachment.mimeType?.startsWith("image/");
+              const mimeType = attachment.mimeType || (isImage ? "image/jpeg" : "application/octet-stream");
+              attachment._cachedUrl = `data:${mimeType};base64,${cachedBase64}`;
             }
           }
 
@@ -294,6 +405,13 @@ export const useChatSocket = ({
               message.id,
               attachment._base64
             );
+          } else if (attachment.url && attachment.url.startsWith("http")) {
+            const cacheKey = `chat_attachment_url_${serviceRequestId}_${message.id}`;
+            try {
+              sessionStorage.setItem(cacheKey, attachment.url);
+            } catch (e) {
+              console.warn("Erro ao salvar URL do attachment no cache:", e);
+            }
           }
 
           message.metadata.attachment = attachment;
