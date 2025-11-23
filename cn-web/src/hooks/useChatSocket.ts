@@ -147,7 +147,6 @@ export const useChatSocket = ({
         
         if (!msg.metadata) {
           if (cachedBase64) {
-            const isImage = true;
             const mimeType = "image/jpeg";
             return {
               ...msg,
@@ -186,7 +185,6 @@ export const useChatSocket = ({
             metadata = JSON.parse(metadata);
           } catch (e) {
             if (cachedBase64) {
-              const isImage = true;
               const mimeType = "image/jpeg";
               return {
                 ...msg,
@@ -209,7 +207,6 @@ export const useChatSocket = ({
 
         if (!metadata?.attachment) {
           if (cachedBase64) {
-            const isImage = true;
             const mimeType = "image/jpeg";
             return {
               ...msg,
@@ -247,7 +244,6 @@ export const useChatSocket = ({
         const attachment = metadata.attachment as any;
         if (!attachment) {
           if (cachedBase64) {
-            const isImage = true;
             const mimeType = "image/jpeg";
             return {
               ...msg,
