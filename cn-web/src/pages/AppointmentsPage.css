@@ -241,19 +241,20 @@
 .cal-day:hover {
   background: #2d3139;
 }
-.cal-day.selected:not(.has-appointment):not(.today) {
+.cal-day.selected:not(.has-appointment) {
+  background: #ff6b35;
   border-color: #ff6b35;
-  background: #1a1d24;
   color: #fff;
   font-weight: 700;
 }
-.cal-day.today:not(.has-appointment) {
-  background: #666;
+.cal-day.today:not(.has-appointment):not(.selected) {
+  background: #1a1d24;
+  border-color: #ff6b35;
   color: #fff;
   font-weight: 600;
 }
 .cal-day.today.selected:not(.has-appointment) {
-  background: #666;
+  background: #ff6b35;
   border-color: #ff6b35;
   color: #fff;
   font-weight: 600;
@@ -265,6 +266,19 @@
 }
 .cal-day.has-appointment.selected {
   background: #ff6b35;
+  border-color: #ff6b35;
+  color: #fff;
+  font-weight: 600;
+}
+.cal-day.today.has-appointment:not(.selected) {
+  background: #1a1d24;
+  border-color: #ff6b35;
+  color: #fff;
+  font-weight: 600;
+}
+.cal-day.today.has-appointment.selected {
+  background: #ff6b35;
+  border-color: #ff6b35;
   color: #fff;
   font-weight: 600;
 }
@@ -1562,19 +1576,20 @@
   background: #e8e8e8;
 }
 
-.dashboard-light .cal-day.selected:not(.has-appointment):not(.today) {
+.dashboard-light .cal-day.selected:not(.has-appointment) {
+  background: #ff6b35;
   border-color: #ff6b35;
-  background: #f5f7fa;
-  color: #333333;
+  color: #fff;
   font-weight: 700;
 }
-.dashboard-light .cal-day.today:not(.has-appointment) {
-  background: #999;
-  color: #fff;
+.dashboard-light .cal-day.today:not(.has-appointment):not(.selected) {
+  background: #ffffff;
+  border-color: #ff6b35;
+  color: #333333;
   font-weight: 600;
 }
 .dashboard-light .cal-day.today.selected:not(.has-appointment) {
-  background: #999;
+  background: #ff6b35;
   border-color: #ff6b35;
   color: #fff;
   font-weight: 600;
@@ -1586,6 +1601,19 @@
 }
 .dashboard-light .cal-day.has-appointment.selected {
   background: #ff6b35;
+  border-color: #ff6b35;
+  color: #fff;
+  font-weight: 600;
+}
+.dashboard-light .cal-day.today.has-appointment:not(.selected) {
+  background: #ffffff;
+  border-color: #ff6b35;
+  color: #333333;
+  font-weight: 600;
+}
+.dashboard-light .cal-day.today.has-appointment.selected {
+  background: #ff6b35;
+  border-color: #ff6b35;
   color: #fff;
   font-weight: 600;
 }
@@ -1894,4 +1922,88 @@
 .dashboard-light .appointment-modal-close:hover {
   background: rgba(0, 0, 0, 0.05);
   color: #333333;
+}
+
+/* Estilos do tema claro para o modal de envio de orçamento */
+.dashboard-light .quote-modal {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-light .quote-modal-header {
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dashboard-light .quote-modal-title {
+  color: #333333;
+}
+
+.dashboard-light .quote-modal-close {
+  color: #666666;
+}
+
+.dashboard-light .quote-modal-close:hover:not(:disabled) {
+  background: #f0f0f0;
+  color: #333333;
+}
+
+.dashboard-light .quote-modal-content .accept-request-info {
+  background: #f5f7fa;
+  border: 1px solid #e0e0e0;
+}
+
+.dashboard-light .quote-modal-content .accept-info-label {
+  color: #666666;
+}
+
+.dashboard-light .quote-modal-content .accept-info-value {
+  color: #333333;
+}
+
+.dashboard-light .quote-modal-content .accept-fees-label {
+  color: #666666;
+}
+
+.dashboard-light .quote-modal-error {
+  background: rgba(244, 67, 54, 0.1);
+  color: #d32f2f;
+}
+
+.dashboard-light .quote-form-label {
+  color: #333333;
+}
+
+.dashboard-light .quote-form-input,
+.dashboard-light .quote-form-textarea {
+  border: 2px solid #e0e0e0;
+  background: #ffffff;
+  color: #333333;
+}
+
+.dashboard-light .quote-form-input::placeholder,
+.dashboard-light .quote-form-textarea::placeholder {
+  color: #999999;
+}
+
+.dashboard-light .quote-form-input:focus,
+.dashboard-light .quote-form-textarea:focus {
+  border-color: #ff6b35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.dashboard-light .quote-modal-actions {
+  border-top: 1px solid #e0e0e0;
+}
+
+.dashboard-light .quote-modal-cancel {
+  background: #f5f7fa;
+  color: #333333;
+  border: 1px solid #e0e0e0;
+}
+
+.dashboard-light .quote-modal-cancel:hover:not(:disabled) {
+  background: #e8e8e8;
+  border-color: #d0d0d0;
 }

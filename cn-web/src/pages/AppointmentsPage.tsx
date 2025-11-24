@@ -151,12 +151,29 @@ const AppointmentsPage: React.FC = () => {
           (req: ServiceRequest) => {
             // Garante que a data seja tratada corretamente, normalizando para UTC
             const requestedDateStr = req.requested_date;
-            const requestedDate = new Date(requestedDateStr);
-            // Normaliza para meia-noite UTC para comparação consistente
-            const normalizedDate = new Date(Date.UTC(
+            // Se a string não tiver timezone, adiciona 'T00:00:00Z' para forçar UTC
+            let dateStr = requestedDateStr;
+            if (!dateStr.includes('T')) {
+              dateStr = dateStr + 'T00:00:00Z';
+            } else if (!dateStr.includes('Z') && !dateStr.includes('+') && !dateStr.includes('-', 10)) {
+              dateStr = dateStr + 'Z';
+            }
+            const requestedDate = new Date(dateStr);
+            // Preserva o horário original mas cria uma data normalizada apenas para comparação de data
+            // A data normalizada é usada apenas para dateISO, mas requestedDate mantém o horário
+            const normalizedDateForComparison = new Date(Date.UTC(
               requestedDate.getUTCFullYear(),
               requestedDate.getUTCMonth(),
               requestedDate.getUTCDate()
+            ));
+            // Mantém o requestedDate original com horário para exibição
+            const requestedDateWithTime = new Date(Date.UTC(
+              requestedDate.getUTCFullYear(),
+              requestedDate.getUTCMonth(),
+              requestedDate.getUTCDate(),
+              requestedDate.getUTCHours(),
+              requestedDate.getUTCMinutes(),
+              requestedDate.getUTCSeconds()
             ));
             
             const clientName = req.client_profile?.user?.name || "Cliente";
@@ -174,8 +191,8 @@ const AppointmentsPage: React.FC = () => {
               clientProfilePicture,
               address: req.location,
               serviceType: req.service_type,
-              dateISO: dateToISOString(normalizedDate),
-              requestedDate: normalizedDate,
+              dateISO: dateToISOString(normalizedDateForComparison),
+              requestedDate: requestedDateWithTime,
               expectedDurationMinutes: req.expected_duration_minutes,
               priceBRL,
               observation: req.quote?.notes,
@@ -306,16 +323,24 @@ const AppointmentsPage: React.FC = () => {
     const selectedDateISO = dateToISOString(selectedDate);
 
     if (filterByDate && dateISO === selectedDateISO) {
+      // Se clicar na mesma data, desativa o filtro
       setFilterByDate(false);
       setSelectedAppointmentId(null);
+      setSelectedDate(today);
       return;
     }
 
+    // Atualiza a data selecionada e ativa o filtro
     setSelectedDate(newDate);
     setFilterByDate(true);
+    
     const appointmentsForDate = appointments.filter(
-      (a) => a.dateISO === dateISO
+      (a) => {
+        const appointmentDateNormalized = dateToISOString(a.requestedDate);
+        return appointmentDateNormalized === dateISO;
+      }
     );
+    
     if (appointmentsForDate.length > 0) {
       const sortedByTime = appointmentsForDate.sort((a, b) => {
         const timeA = new Date(a.requestedDate).getTime();
@@ -377,21 +402,71 @@ const AppointmentsPage: React.FC = () => {
     return appointments.find((a) => a.dateISO === selectedDateISO) || null;
   }, [appointments, selectedDateISO, selectedAppointmentId]);
 
+  // Ordena solicitações pendentes pelos mais próximos da data atual (requested_date)
+  const sortedPendingRequests = useMemo(() => {
+    const now = new Date().getTime();
+    const sorted = [...pendingRequests].sort((a, b) => {
+      const dateA = new Date(a.requested_date).getTime();
+      const dateB = new Date(b.requested_date).getTime();
+      // Calcula a diferença absoluta da data atual
+      const diffA = Math.abs(dateA - now);
+      const diffB = Math.abs(dateB - now);
+      // Ordena pelos mais próximos da data atual primeiro
+      return diffA - diffB;
+    });
+    return sorted;
+  }, [pendingRequests]);
+
+  // Ordena aguardando aprovação do cliente pelos mais próximos da data atual
+  const sortedPendingClientApproval = useMemo(() => {
+    const now = new Date().getTime();
+    const sorted = [...pendingClientApproval].sort((a, b) => {
+      const dateA = new Date(a.requested_date).getTime();
+      const dateB = new Date(b.requested_date).getTime();
+      // Calcula a diferença absoluta da data atual
+      const diffA = Math.abs(dateA - now);
+      const diffB = Math.abs(dateB - now);
+      // Ordena pelos mais próximos da data atual primeiro
+      return diffA - diffB;
+    });
+    return sorted;
+  }, [pendingClientApproval]);
+
   const confirmedSorted = useMemo(() => {
     let filtered = [...appointments];
 
     if (filterByDate) {
       const dateISO = dateToISOString(selectedDate);
-      filtered = filtered.filter((a) => a.dateISO === dateISO);
+      // Filtra agendamentos pela data ISO exata
+      filtered = filtered.filter((a) => {
+        // Recalcula a data ISO a partir do requestedDate para garantir consistência
+        const appointmentDateNormalized = dateToISOString(a.requestedDate);
+        // Usa a data normalizada recalculada como fonte principal
+        return appointmentDateNormalized === dateISO;
+      });
     }
 
-    return filtered.sort((a, b) => {
-      const dateA = new Date(a.requestedDate).getTime();
-      const dateB = new Date(b.requestedDate).getTime();
-      if (dateA < dateB) return -1;
-      if (dateA > dateB) return 1;
-      return 0;
-    });
+    // Se não houver filtro, ordena pelos mais próximos da data atual primeiro
+    // Se houver filtro, ordena por horário (mais cedo primeiro)
+    if (filterByDate) {
+      return filtered.sort((a, b) => {
+        const dateA = new Date(a.requestedDate).getTime();
+        const dateB = new Date(b.requestedDate).getTime();
+        // Ordena por horário (mais cedo primeiro) quando filtrado por data
+        return dateA - dateB;
+      });
+    } else {
+      const now = new Date().getTime();
+      return filtered.sort((a, b) => {
+        const dateA = new Date(a.requestedDate).getTime();
+        const dateB = new Date(b.requestedDate).getTime();
+        // Calcula a diferença absoluta da data atual
+        const diffA = Math.abs(dateA - now);
+        const diffB = Math.abs(dateB - now);
+        // Ordena pelos mais próximos da data atual primeiro
+        return diffA - diffB;
+      });
+    }
   }, [appointments, filterByDate, selectedDate]);
 
   const monthlyEarnings = useMemo(() => {
@@ -465,7 +540,14 @@ const AppointmentsPage: React.FC = () => {
         (req: ServiceRequest) => {
           // Garante que a data seja tratada corretamente, normalizando para UTC
           const requestedDateStr = req.requested_date;
-          const requestedDate = new Date(requestedDateStr);
+          // Se a string não tiver timezone, adiciona 'T00:00:00Z' para forçar UTC
+          let dateStr = requestedDateStr;
+          if (!dateStr.includes('T')) {
+            dateStr = dateStr + 'T00:00:00Z';
+          } else if (!dateStr.includes('Z') && !dateStr.includes('+') && !dateStr.includes('-', 10)) {
+            dateStr = dateStr + 'Z';
+          }
+          const requestedDate = new Date(dateStr);
           // Normaliza para meia-noite UTC para comparação consistente
           const normalizedDate = new Date(Date.UTC(
             requestedDate.getUTCFullYear(),
@@ -630,7 +712,76 @@ const AppointmentsPage: React.FC = () => {
 
       await serviceRequestService.completeService(serviceRequestId);
 
-      navigate("/historico");
+      // Recarrega os agendamentos para atualizar a lista
+      const response = await serviceRequestService.listChefServiceRequests(
+        1,
+        1000
+      );
+
+      const confirmedStatuses = [
+        ServiceRequestStatus.SCHEDULED,
+        ServiceRequestStatus.PAYMENT_CONFIRMED,
+        ServiceRequestStatus.QUOTE_ACCEPTED,
+        ServiceRequestStatus.PAYMENT_PENDING,
+      ];
+
+      const allRequests = response.items || [];
+      setAllChefRequests(allRequests);
+
+      const filteredRequests = allRequests.filter((req: ServiceRequest) =>
+        confirmedStatuses.includes(req.status)
+      );
+
+      const mappedAppointments: Appointment[] = filteredRequests.map(
+        (req: ServiceRequest) => {
+          // Garante que a data seja tratada corretamente, normalizando para UTC
+          const requestedDateStr = req.requested_date;
+          // Se a string não tiver timezone, adiciona 'T00:00:00Z' para forçar UTC
+          let dateStr = requestedDateStr;
+          if (!dateStr.includes('T')) {
+            dateStr = dateStr + 'T00:00:00Z';
+          } else if (!dateStr.includes('Z') && !dateStr.includes('+') && !dateStr.includes('-', 10)) {
+            dateStr = dateStr + 'Z';
+          }
+          const requestedDate = new Date(dateStr);
+          // Normaliza para meia-noite UTC para comparação consistente
+          const normalizedDate = new Date(Date.UTC(
+            requestedDate.getUTCFullYear(),
+            requestedDate.getUTCMonth(),
+            requestedDate.getUTCDate()
+          ));
+          
+          const clientName = req.client_profile?.user?.name || "Cliente";
+          const clientEmail = req.client_profile?.user?.email;
+          const clientProfilePicture =
+            req.client_profile?.user?.profilePictureUrl;
+          const priceCents = req.quote?.amount_cents || 0;
+          const priceBRL = priceCents / 100;
+
+          return {
+            id: `appt-${req.id}`,
+            serviceRequestId: req.id,
+            clientName,
+            clientEmail,
+            clientProfilePicture,
+            address: req.location,
+            serviceType: req.service_type,
+            dateISO: dateToISOString(normalizedDate),
+            requestedDate: normalizedDate,
+            expectedDurationMinutes: req.expected_duration_minutes,
+            priceBRL,
+            observation: req.quote?.notes,
+            description: req.description,
+            status: req.status,
+          };
+        }
+      );
+
+      setAppointments(mappedAppointments);
+      
+      // Fecha o modal se estiver aberto
+      setShowAppointmentModal(false);
+      setSelectedAppointmentId(null);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erro ao finalizar serviço"
@@ -760,7 +911,7 @@ const AppointmentsPage: React.FC = () => {
                     <div className="empty-state">Nenhum pedido pendente.</div>
                   ) : (
                     <div className="pending-requests-list">
-                      {pendingRequests.map((req) => {
+                      {sortedPendingRequests.map((req) => {
                         const requestedDate = new Date(req.requested_date);
                         const clientName =
                           req.client_profile?.user?.name || "Cliente";
@@ -829,13 +980,13 @@ const AppointmentsPage: React.FC = () => {
                 <div className="tab-panel">
                   {isLoading ? (
                     <div className="empty-state">Carregando...</div>
-                  ) : pendingClientApproval.length === 0 ? (
+                  ) : sortedPendingClientApproval.length === 0 ? (
                     <div className="empty-state">
                       Nenhum pedido aguardando aprovação do cliente.
                     </div>
                   ) : (
                     <div className="pending-requests-list">
-                      {pendingClientApproval.map((req) => {
+                      {sortedPendingClientApproval.map((req) => {
                         const requestedDate = new Date(req.requested_date);
                         const clientName =
                           req.client_profile?.user?.name || "Cliente";
@@ -985,8 +1136,9 @@ const AppointmentsPage: React.FC = () => {
                                 R$ {a.priceBRL.toFixed(2).replace(".", ",")}
                               </div>
                               {(a.status === ServiceRequestStatus.SCHEDULED ||
-                                a.status ===
-                                  ServiceRequestStatus.PAYMENT_CONFIRMED) && (
+                                a.status === ServiceRequestStatus.PAYMENT_CONFIRMED ||
+                                a.status === ServiceRequestStatus.QUOTE_ACCEPTED ||
+                                a.status === ServiceRequestStatus.PAYMENT_PENDING) && (
                                 <button
                                   className="complete-service-button"
                                   onClick={(e) => {
@@ -1094,15 +1246,6 @@ const AppointmentsPage: React.FC = () => {
                             </button>
                           );
                         })}
-                      </div>
-                      <div className="calendar-monthly-summary">
-                        <div className="calendar-summary-label">Ganhos do Mês</div>
-                        <div className="calendar-summary-value">
-                          R$ {monthlyEarnings.toLocaleString("pt-BR", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </div>
                       </div>
                     </div>
                   </section>

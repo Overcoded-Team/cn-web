@@ -1213,7 +1213,7 @@ const Dashboard: React.FC = () => {
                       <span className="progress-message-success">
                          Parabéns! Meta atingida!
                       </span>
-                    ) : metrics.salesProgress >= 50 ? (
+                    ) : metrics.salesProgress >= 50 && metrics.salesProgress < 100 ? (
                       <span className="progress-message-encouragement">
                          Você está na metade! Continue assim!
                       </span>
@@ -1673,8 +1673,7 @@ const Dashboard: React.FC = () => {
               gap: "1.5rem",
               marginTop: "0.75rem",
               marginBottom: "0.5rem",
-              flexWrap: "wrap",
-              opacity: 0.7
+              flexWrap: "wrap"
             }}>
               <label style={{
                 display: "flex",
@@ -1683,22 +1682,13 @@ const Dashboard: React.FC = () => {
                 cursor: "pointer",
                 color: "#8a8d91",
                 fontSize: "0.75rem",
-                fontFamily: '"Comfortaa", sans-serif',
-                transition: "opacity 0.2s"
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.opacity = "1"}
-              onMouseLeave={(e) => e.currentTarget.style.opacity = "0.7"}
-              >
+                fontFamily: '"Comfortaa", sans-serif'
+              }}>
                 <input
                   type="checkbox"
                   checked={showEarningsLine}
                   onChange={(e) => setShowEarningsLine(e.target.checked)}
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    cursor: "pointer",
-                    accentColor: "#ff6b35"
-                  }}
+                  className="custom-checkbox-orange"
                 />
                 <span style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
                   <span style={{
@@ -1717,22 +1707,13 @@ const Dashboard: React.FC = () => {
                 cursor: "pointer",
                 color: "#8a8d91",
                 fontSize: "0.75rem",
-                fontFamily: '"Comfortaa", sans-serif',
-                transition: "opacity 0.2s"
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.opacity = "1"}
-              onMouseLeave={(e) => e.currentTarget.style.opacity = "0.7"}
-              >
+                fontFamily: '"Comfortaa", sans-serif'
+              }}>
                 <input
                   type="checkbox"
                   checked={showEventsLine}
                   onChange={(e) => setShowEventsLine(e.target.checked)}
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    cursor: "pointer",
-                    accentColor: "#4A90E2"
-                  }}
+                  className="custom-checkbox-blue"
                 />
                 <span style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
                   <span style={{
