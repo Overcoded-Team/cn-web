@@ -456,41 +456,98 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                         sizeBytes: number;
                       };
                       const attachmentAny = attachment as any;
-                      const imageUrl = attachment.url || attachmentAny._cachedUrl || "";
+                      
+                      const getBestImageUrl = (): string => {
+                        if (attachmentAny._base64) {
+                          const isImage = attachmentAny.mimeType?.startsWith("image/");
+                          const mimeType = attachmentAny.mimeType || (isImage ? "image/jpeg" : "application/octet-stream");
+                          return `data:${mimeType};base64,${attachmentAny._base64}`;
+                        }
+                        
+                        if (attachmentAny._cachedUrl) {
+                          return attachmentAny._cachedUrl;
+                        }
+                        
+                        try {
+                          const cacheKey = `chat_attachment_${serviceRequestId}_${message.id}`;
+                          const cachedBase64 = localStorage.getItem(cacheKey);
+                          if (cachedBase64) {
+                            const isImage = attachmentAny.mimeType?.startsWith("image/");
+                            const mimeType = attachmentAny.mimeType || (isImage ? "image/jpeg" : "application/octet-stream");
+                            attachmentAny._base64 = cachedBase64;
+                            attachmentAny._cachedUrl = `data:${mimeType};base64,${cachedBase64}`;
+                            return `data:${mimeType};base64,${cachedBase64}`;
+                          }
+                        } catch (e) {
+                          console.warn("Erro ao recuperar imagem do localStorage:", e);
+                        }
+                        
+                        return attachment.url || "";
+                      };
+                      
+                      const imageUrl = getBestImageUrl();
+                      
+                      const shouldShowImage = attachment.type === "image" && (imageUrl || attachmentAny._base64 || attachmentAny._cachedUrl);
                       
                       return (
                         <div className="message-attachment">
-                          {attachment.type === "image" && imageUrl ? (
+                          {shouldShowImage ? (
                             <img
-                              src={imageUrl}
+                              src={imageUrl || attachmentAny._cachedUrl || (attachmentAny._base64 ? `data:${attachmentAny.mimeType || "image/jpeg"};base64,${attachmentAny._base64}` : "")}
                               alt={attachment.name}
                               className="message-attachment-image"
-                              onClick={() =>
-                                setSelectedImage({
-                                  url: attachment.url || attachmentAny._cachedUrl || "",
-                                  name: attachment.name,
-                                })
-                              }
+                              onClick={() => {
+                                const bestUrl = getBestImageUrl();
+                                if (bestUrl) {
+                                  setSelectedImage({
+                                    url: bestUrl,
+                                    name: attachment.name,
+                                  });
+                                }
+                              }}
                               onError={(e) => {
                                 const img = e.currentTarget;
                                 const messageId = message.id;
                                 if (!imageErrors.has(messageId)) {
                                   setImageErrors((prev) => new Set(prev).add(messageId));
-                                  const cachedUrl = attachmentAny._cachedUrl;
-                                  const cachedBase64 = attachmentAny._base64;
-                                  if (cachedUrl) {
-                                    img.src = cachedUrl;
-                                  } else if (cachedBase64) {
+                                  
+                                  try {
+                                    const cacheKey = `chat_attachment_${serviceRequestId}_${message.id}`;
+                                    const cachedBase64 = localStorage.getItem(cacheKey);
+                                    if (cachedBase64) {
+                                      const isImage = attachmentAny.mimeType?.startsWith("image/");
+                                      const mimeType = attachmentAny.mimeType || (isImage ? "image/jpeg" : "application/octet-stream");
+                                      const dataUrl = `data:${mimeType};base64,${cachedBase64}`;
+                                      img.src = dataUrl;
+                                      attachmentAny._base64 = cachedBase64;
+                                      attachmentAny._cachedUrl = dataUrl;
+                                      return;
+                                    }
+                                  } catch (e) {
+                                    console.warn("Erro ao recuperar imagem do localStorage:", e);
+                                  }
+                                  
+                                  if (attachmentAny._cachedUrl) {
+                                    img.src = attachmentAny._cachedUrl;
+                                  } else if (attachmentAny._base64) {
                                     const isImage = attachmentAny.mimeType?.startsWith("image/");
                                     const mimeType = attachmentAny.mimeType || (isImage ? "image/jpeg" : "application/octet-stream");
-                                    img.src = `data:${mimeType};base64,${cachedBase64}`;
+                                    img.src = `data:${mimeType};base64,${attachmentAny._base64}`;
                                   } else {
-                                    console.error("Image failed to load and no cache available:", message.id);
+                                    console.error("Image failed to load and no cache available:", message.id, attachment);
                                   }
                                 }
                               }}
                             />
-                          ) : attachment.type === "image" ? null : (
+                          ) : attachment.type === "image" ? (
+                            <div className="message-attachment-image-placeholder">
+                              <span className="message-attachment-icon">🖼️</span>
+                              <div className="message-attachment-info">
+                                <span className="message-attachment-name">{attachment.name}</span>
+                                <span className="message-attachment-size">Carregando imagem...</span>
+                              </div>
+                            </div>
+                          ) : (
                             <a
                               href={attachment.url}
                               target="_blank"

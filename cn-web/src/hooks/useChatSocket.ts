@@ -27,12 +27,25 @@ const saveAttachmentToCache = (
   base64: string
 ) => {
   try {
-    sessionStorage.setItem(
+    localStorage.setItem(
       getAttachmentCacheKey(serviceRequestId, messageId),
       base64
     );
   } catch (e) {
     console.warn("Erro ao salvar attachment no cache:", e);
+    try {
+      const keys = Object.keys(localStorage);
+      const chatKeys = keys.filter(k => k.startsWith('chat_attachment_'));
+      if (chatKeys.length > 100) {
+        chatKeys.sort().slice(0, 50).forEach(key => localStorage.removeItem(key));
+        localStorage.setItem(
+          getAttachmentCacheKey(serviceRequestId, messageId),
+          base64
+        );
+      }
+    } catch (e2) {
+      console.warn("Erro ao limpar cache antigo:", e2);
+    }
   }
 };
 
@@ -41,7 +54,7 @@ const getAttachmentFromCache = (
   messageId: number
 ): string | null => {
   try {
-    return sessionStorage.getItem(
+    return localStorage.getItem(
       getAttachmentCacheKey(serviceRequestId, messageId)
     );
   } catch (e) {
@@ -141,7 +154,7 @@ export const useChatSocket = ({
         const cacheKey = `chat_attachment_url_${serviceRequestId}_${msg.id}`;
         let cachedUrl: string | null = null;
         try {
-          cachedUrl = sessionStorage.getItem(cacheKey);
+          cachedUrl = localStorage.getItem(cacheKey);
         } catch (e) {
         }
         
@@ -271,6 +284,30 @@ export const useChatSocket = ({
           attachment._cachedUrl = `data:${mimeType};base64,${cachedBase64}`;
         }
         
+        if (attachment.base64 && !attachment._base64) {
+          attachment._base64 = attachment.base64;
+          const isImage = attachment.type === "image" || attachment.mimeType?.startsWith("image/");
+          const mimeType = attachment.mimeType || (isImage ? "image/jpeg" : "application/octet-stream");
+          attachment._cachedUrl = `data:${mimeType};base64,${attachment.base64}`;
+          if (!attachment.url || attachment.url.startsWith("http")) {
+            attachment.url = attachment._cachedUrl;
+          }
+          if (serviceRequestId) {
+            saveAttachmentToCache(serviceRequestId, msg.id, attachment.base64);
+          }
+        }
+        
+        if (attachment.url && attachment.url.startsWith("data:")) {
+          const base64Match = attachment.url.match(/data:[^;]+;base64,(.+)/);
+          if (base64Match && base64Match[1]) {
+            attachment._base64 = base64Match[1];
+            attachment._cachedUrl = attachment.url;
+            if (serviceRequestId) {
+              saveAttachmentToCache(serviceRequestId, msg.id, base64Match[1]);
+            }
+          }
+        }
+        
         if (
           !attachment.url ||
           attachment.url === "about:blank" ||
@@ -285,6 +322,19 @@ export const useChatSocket = ({
               (isImage ? "image/jpeg" : "application/octet-stream");
             attachment.url = `data:${mimeType};base64,${cachedBase64}`;
           }
+        } else if (attachment.url && !attachment._base64 && !cachedBase64) {
+          if (serviceRequestId && attachment.url.startsWith("http")) {
+            const cacheKey = `chat_attachment_url_${serviceRequestId}_${msg.id}`;
+            try {
+              localStorage.setItem(cacheKey, attachment.url);
+            } catch (e) {
+              console.warn("Erro ao salvar URL do attachment no cache:", e);
+            }
+          }
+        }
+
+        if (attachment._base64 && serviceRequestId) {
+          saveAttachmentToCache(serviceRequestId, msg.id, attachment._base64);
         }
 
         return {
@@ -335,22 +385,39 @@ export const useChatSocket = ({
             const realAttachment = newMessage.metadata.attachment as any;
             const optimisticAttachment = optimistic.metadata.attachment as any;
 
-            if (
-              !realAttachment.url ||
-              realAttachment.url === "about:blank" ||
-              realAttachment.url.includes("about:")
-            ) {
-              realAttachment.url = optimisticAttachment.url;
-            }
-
             if (optimisticAttachment._base64) {
               realAttachment._base64 = optimisticAttachment._base64;
+              const isImage = realAttachment.type === "image" || realAttachment.mimeType?.startsWith("image/");
+              const mimeType = realAttachment.mimeType || (isImage ? "image/jpeg" : "application/octet-stream");
+              realAttachment._cachedUrl = `data:${mimeType};base64,${optimisticAttachment._base64}`;
               if (serviceRequestId) {
                 saveAttachmentToCache(
                   serviceRequestId,
                   newMessage.id,
                   optimisticAttachment._base64
                 );
+                saveAttachmentToCache(
+                  serviceRequestId,
+                  optimistic.id,
+                  optimisticAttachment._base64
+                );
+              }
+            }
+
+            if (
+              !realAttachment.url ||
+              realAttachment.url === "about:blank" ||
+              realAttachment.url.includes("about:")
+            ) {
+              realAttachment.url = optimisticAttachment.url || realAttachment._cachedUrl;
+            } else if (realAttachment.url && realAttachment.url.startsWith("data:")) {
+              const base64Match = realAttachment.url.match(/data:[^;]+;base64,(.+)/);
+              if (base64Match && base64Match[1]) {
+                realAttachment._base64 = base64Match[1];
+                realAttachment._cachedUrl = realAttachment.url;
+                if (serviceRequestId) {
+                  saveAttachmentToCache(serviceRequestId, newMessage.id, base64Match[1]);
+                }
               }
             }
           }
@@ -362,6 +429,30 @@ export const useChatSocket = ({
 
         if (message.metadata?.attachment && serviceRequestId) {
           const attachment = message.metadata.attachment as any;
+
+          // Extrai base64 de URLs data: se disponível
+          if (attachment.url && attachment.url.startsWith("data:")) {
+            const base64Match = attachment.url.match(/data:[^;]+;base64,(.+)/);
+            if (base64Match && base64Match[1]) {
+              attachment._base64 = base64Match[1];
+              attachment._cachedUrl = attachment.url;
+              // Salva no cache imediatamente
+              saveAttachmentToCache(serviceRequestId, message.id, base64Match[1]);
+            }
+          }
+
+          // Verifica se o servidor enviou base64 diretamente no metadata
+          if (attachment.base64 && !attachment._base64) {
+            attachment._base64 = attachment.base64;
+            const isImage = attachment.type === "image" || attachment.mimeType?.startsWith("image/");
+            const mimeType = attachment.mimeType || (isImage ? "image/jpeg" : "application/octet-stream");
+            attachment._cachedUrl = `data:${mimeType};base64,${attachment.base64}`;
+            if (!attachment.url || attachment.url.startsWith("http")) {
+              // Se a URL é HTTP ou não existe, usa a data URL
+              attachment.url = attachment._cachedUrl;
+            }
+            saveAttachmentToCache(serviceRequestId, message.id, attachment.base64);
+          }
 
           if (
             !attachment.url ||
@@ -381,8 +472,10 @@ export const useChatSocket = ({
                 (isImage ? "image/jpeg" : "application/octet-stream");
               attachment.url = `data:${mimeType};base64,${cachedBase64}`;
               attachment._base64 = cachedBase64;
+              attachment._cachedUrl = attachment.url;
             }
           } else {
+            // Se temos URL válida, verifica se temos base64 no cache
             const cachedBase64 = getAttachmentFromCache(
               serviceRequestId,
               message.id
@@ -392,22 +485,24 @@ export const useChatSocket = ({
               const isImage = attachment.type === "image" || attachment.mimeType?.startsWith("image/");
               const mimeType = attachment.mimeType || (isImage ? "image/jpeg" : "application/octet-stream");
               attachment._cachedUrl = `data:${mimeType};base64,${cachedBase64}`;
+            } else if (attachment.url && attachment.url.startsWith("http") && !attachment._base64) {
+              // Se temos apenas URL HTTP sem base64, salva a URL como fallback
+              const cacheKey = `chat_attachment_url_${serviceRequestId}_${message.id}`;
+              try {
+                localStorage.setItem(cacheKey, attachment.url);
+              } catch (e) {
+                console.warn("Erro ao salvar URL do attachment no cache:", e);
+              }
             }
           }
 
-          if (attachment._base64) {
+          // Sempre garantir que base64 seja salvo quando disponível
+          if (attachment._base64 && serviceRequestId) {
             saveAttachmentToCache(
               serviceRequestId,
               message.id,
               attachment._base64
             );
-          } else if (attachment.url && attachment.url.startsWith("http")) {
-            const cacheKey = `chat_attachment_url_${serviceRequestId}_${message.id}`;
-            try {
-              sessionStorage.setItem(cacheKey, attachment.url);
-            } catch (e) {
-              console.warn("Erro ao salvar URL do attachment no cache:", e);
-            }
           }
 
           message.metadata.attachment = attachment;
