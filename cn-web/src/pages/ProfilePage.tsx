@@ -495,21 +495,6 @@ const ProfilePage: React.FC = () => {
       return;
     }
 
-    const maxSize = 20 * 1024 * 1024;
-    const recommendedMaxSize = 2 * 1024 * 1024;
-    
-    if (file.size > maxSize) {
-      setError("Arquivo muito grande. O tamanho máximo é 20MB.");
-      return;
-    }
-    
-    if (file.size > recommendedMaxSize) {
-      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-      if (!confirm(`O arquivo tem ${fileSizeMB}MB. Arquivos maiores que 2MB podem ser rejeitados pelo servidor. Deseja continuar mesmo assim?`)) {
-        return;
-      }
-    }
-
     if (file.size === 0) {
       setError("O arquivo está vazio. Por favor, selecione um arquivo válido.");
       return;
@@ -519,11 +504,12 @@ const ProfilePage: React.FC = () => {
       setIsUploadingMenu(true);
       setError("");
       
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
       console.log("Iniciando upload do cardápio:", {
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,
-        fileSizeMB: (file.size / (1024 * 1024)).toFixed(2),
+        fileSizeMB: fileSizeMB,
       });
       
       await chefService.uploadMenu(file);
@@ -1150,6 +1136,13 @@ const ProfilePage: React.FC = () => {
                             </button>
                           )}
                         </div>
+                        <p style={{ 
+                          marginTop: "0.5rem", 
+                          fontSize: "0.85rem", 
+                          color: theme === "dark" ? "#b0b3b8" : "#666666" 
+                        }}>
+                          Tamanho máximo: 20MB (PDF ou DOCX)
+                        </p>
                         {profile?.menuUrl && (
                           <div className="menu-info">
                             <div className="menu-thumbnail-container">

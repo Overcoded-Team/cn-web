@@ -389,20 +389,7 @@ export const chefService = {
           throw new Error("Tempo de espera excedido. O arquivo pode ser muito grande ou o servidor está lento.");
         }
         if (fetchError instanceof TypeError && fetchError.message.includes('fetch')) {
-          const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-          const errorMessage = String(fetchError.message || '');
-          const errorStack = String(fetchError.stack || '');
-          
-          if (errorMessage.includes('413') || errorMessage.includes('Request Entity Too Large') || 
-              errorStack.includes('413') || errorStack.includes('Request Entity Too Large')) {
-            throw new Error(`Arquivo muito grande (${fileSizeMB}MB). O servidor está rejeitando este arquivo. Tente comprimir o PDF ou usar um arquivo menor.`);
-          }
-          
-          if (errorMessage.includes('CORS') || errorMessage.includes('Access-Control-Allow-Origin')) {
-            throw new Error(`Erro de CORS ao enviar arquivo (${fileSizeMB}MB). O servidor pode estar rejeitando arquivos deste tamanho. Tente comprimir o PDF.`);
-          }
-          
-          throw new Error(`Erro de conexão ao enviar arquivo (${fileSizeMB}MB). Verifique se o servidor está acessível e tente novamente.`);
+          throw new Error("Erro de conexão. Verifique se o servidor está acessível e tente novamente.");
         }
         throw fetchError;
       }
@@ -410,10 +397,6 @@ export const chefService = {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        if (response.status === 413) {
-          throw new Error("Arquivo muito grande. O tamanho máximo permitido é 20MB para cardápios. Seu arquivo tem " + (file.size / (1024 * 1024)).toFixed(2) + "MB.");
-        }
-
         let errorData;
         try {
           errorData = await response.json();
@@ -429,29 +412,11 @@ export const chefService = {
           ? errorData.message.join(", ")
           : errorData.message || `Erro: ${response.status}`;
 
-        const errorLower = errorMessage.toLowerCase();
-
         if (response.status === 401 || response.status === 403) {
           errorMessage = "Você não tem permissão para fazer upload do cardápio. Faça login novamente.";
         } else if (response.status === 404) {
           errorMessage = "Perfil de chef não encontrado. Verifique se você está cadastrado como chef.";
-        } else if (
-          errorLower.includes("file too large") ||
-          errorLower.includes("file size exceeds") ||
-          response.status === 413
-        ) {
-          errorMessage =
-            "Arquivo muito grande. O tamanho máximo permitido é 20MB para cardápios.";
-        } else if (
-          errorLower.includes("invalid file type") ||
-          errorLower.includes("file type not allowed") ||
-          errorLower.includes("only pdf") ||
-          errorLower.includes("only doc")
-        ) {
-          errorMessage = "Tipo de arquivo inválido. Use apenas PDF ou DOCX.";
-        } else if (errorLower.includes("file is required")) {
-          errorMessage = "Nenhum arquivo foi selecionado.";
-        } else if (errorLower.includes("upload failed") || response.status >= 500) {
+        } else if (response.status >= 500) {
           errorMessage = "Falha no upload do cardápio. Tente novamente mais tarde.";
         }
 

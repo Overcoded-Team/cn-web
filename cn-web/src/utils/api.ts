@@ -31,6 +31,15 @@ export const api = {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('user');
+          if (window.location.pathname !== '/') {
+            window.location.href = '/';
+          }
+          throw new Error("Sessão expirada. Por favor, faça login novamente.");
+        }
+
         const errorData = await response.json().catch(() => ({
           message: "Erro na requisição",
           statusCode: response.status,
@@ -65,7 +74,7 @@ export const api = {
         else if (errorLower.includes("file too large") || errorLower.includes("file size exceeds")) errorMessage = "Arquivo muito grande. Verifique o tamanho máximo permitido.";
         else if (errorLower.includes("invalid file type") || errorLower.includes("file type not allowed")) errorMessage = "Tipo de arquivo inválido. Verifique os formatos permitidos.";
         else if (errorLower.includes("upload failed")) errorMessage = "Falha no upload do arquivo. Tente novamente.";
-        else if (errorLower.includes("unauthorized")) errorMessage = "Não autorizado";
+        else if (errorLower.includes("unauthorized")) errorMessage = "Sessão expirada. Por favor, faça login novamente.";
         else if (errorLower.includes("forbidden")) errorMessage = "Acesso negado";
         else if (errorLower.includes("not found")) errorMessage = "Não encontrado";
         else if (errorLower.includes("internal server error")) errorMessage = "Erro interno do servidor";
