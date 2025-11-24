@@ -524,7 +524,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                                             if (base64) {
                                               attachmentAny._base64 = base64;
                                               localStorage.setItem(cacheKey, base64);
-                                              const isImage = attachmentAny.mimeType?.startsWith("image/");
                                               const mimeType = attachmentAny.mimeType || "image/jpeg";
                                               attachmentAny._cachedUrl = `data:${mimeType};base64,${base64}`;
                                             }
@@ -548,7 +547,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                                             if (base64) {
                                               attachmentAny._base64 = base64;
                                               localStorage.setItem(cacheKey, base64);
-                                              const isImage = attachmentAny.mimeType?.startsWith("image/");
                                               const mimeType = attachmentAny.mimeType || "image/jpeg";
                                               attachmentAny._cachedUrl = `data:${mimeType};base64,${base64}`;
                                             }
