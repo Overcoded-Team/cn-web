@@ -1285,12 +1285,20 @@ const AppointmentsPage: React.FC = () => {
                     className="quote-form-input"
                     value={quoteAmount}
                     onChange={(e) => {
-                      const value = e.target.value
-                        .replace(/[^\d,]/g, "")
-                        .replace(",", ".");
-                      if (value === "" || !isNaN(parseFloat(value))) {
-                        setQuoteAmount(e.target.value.replace(/[^\d,]/g, ""));
+                      let inputValue = e.target.value;
+                      
+                      inputValue = inputValue.replace(/[^\d,]/g, "");
+                      
+                      const parts = inputValue.split(",");
+                      if (parts.length > 2) {
+                        inputValue = parts[0] + "," + parts.slice(1).join("");
                       }
+                      
+                      if (parts.length === 2 && parts[1].length > 2) {
+                        inputValue = parts[0] + "," + parts[1].substring(0, 2);
+                      }
+                      
+                      setQuoteAmount(inputValue);
                     }}
                     placeholder="0,00"
                     disabled={isSendingQuote}

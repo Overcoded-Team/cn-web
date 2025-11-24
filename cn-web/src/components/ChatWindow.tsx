@@ -322,12 +322,18 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         notes: editQuoteNotes.trim() || undefined,
       });
 
-      handleCloseEditQuoteModal();
-      if (onClose) {
-        setTimeout(() => {
-          window.location.reload();
-        }, 500);
+      const response = await serviceRequestService.listChefServiceRequests(
+        1,
+        1000
+      );
+      const updatedRequest = response.items.find(
+        (req) => req.id === serviceRequestId
+      );
+      if (updatedRequest) {
+        setServiceRequestDetails(updatedRequest);
       }
+
+      handleCloseEditQuoteModal();
     } catch (err: any) {
       setEditQuoteError(
         err?.response?.data?.message ||
@@ -811,14 +817,20 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                         className="chat-edit-quote-form-input"
                         value={editQuoteAmount}
                         onChange={(e) => {
-                          const value = e.target.value
-                            .replace(/[^\d,]/g, "")
-                            .replace(/,/g, ",")
-                            .replace(/(\d)(\d{2})$/, "$1,$2")
-                            .replace(/(?=(\d{3})+(\D))(,)/, "$1");
-                          if (value.split(",")[0].length <= 8) {
-                            setEditQuoteAmount(value);
+                          let inputValue = e.target.value;
+                          
+                          inputValue = inputValue.replace(/[^\d,]/g, "");
+                          
+                          const parts = inputValue.split(",");
+                          if (parts.length > 2) {
+                            inputValue = parts[0] + "," + parts.slice(1).join("");
                           }
+                          
+                          if (parts.length === 2 && parts[1].length > 2) {
+                            inputValue = parts[0] + "," + parts[1].substring(0, 2);
+                          }
+                          
+                          setEditQuoteAmount(inputValue);
                         }}
                         placeholder="0,00"
                         disabled={isUpdatingQuote}
