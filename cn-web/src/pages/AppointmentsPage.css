@@ -247,14 +247,13 @@
   color: #fff;
   font-weight: 700;
 }
-.cal-day.today:not(.has-appointment):not(.selected) {
-  background: #1a1d24;
-  border-color: #ff6b35;
+.cal-day.today:not(.has-appointment) {
+  background: rgba(255, 107, 53, 0.3);
   color: #fff;
   font-weight: 600;
 }
 .cal-day.today.selected:not(.has-appointment) {
-  background: #ff6b35;
+  background: rgba(255, 107, 53, 0.3);
   border-color: #ff6b35;
   color: #fff;
   font-weight: 600;
@@ -263,6 +262,7 @@
   background: #ff6b35;
   color: #fff;
   font-weight: 600;
+  border-color: #ff6b35;
 }
 .cal-day.has-appointment.selected {
   background: #ff6b35;
@@ -281,6 +281,7 @@
   border-color: #ff6b35;
   color: #fff;
   font-weight: 600;
+  border-color: #ff6b35;
 }
 .cal-day.empty {
   background: transparent;
@@ -1582,16 +1583,15 @@
   color: #fff;
   font-weight: 700;
 }
-.dashboard-light .cal-day.today:not(.has-appointment):not(.selected) {
-  background: #ffffff;
-  border-color: #ff6b35;
-  color: #333333;
+.dashboard-light .cal-day.today:not(.has-appointment) {
+  background: rgba(255, 107, 53, 0.3);
+  color: #333;
   font-weight: 600;
 }
 .dashboard-light .cal-day.today.selected:not(.has-appointment) {
-  background: #ff6b35;
+  background: rgba(255, 107, 53, 0.3);
   border-color: #ff6b35;
-  color: #fff;
+  color: #333;
   font-weight: 600;
 }
 .dashboard-light .cal-day.has-appointment {
