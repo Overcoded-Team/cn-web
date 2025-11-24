@@ -269,6 +269,23 @@ html::-webkit-scrollbar {
   color: #b0b3b8;
   font-weight: 600;
   border-bottom: 1px solid #2d3139;
+  min-height: 2.5rem;
+  vertical-align: middle;
+}
+
+.dashboard-dark-table th:first-child {
+  min-width: 150px;
+  width: 150px;
+}
+
+.dashboard-dark-table th:nth-child(2) {
+  min-width: 120px;
+  text-align: right;
+}
+
+.dashboard-dark-table th:nth-child(3) {
+  min-width: 80px;
+  text-align: center;
 }
 
 .dashboard-dark-table td {
@@ -276,6 +293,23 @@ html::-webkit-scrollbar {
   font-size: 0.9rem;
   color: #ffffff;
   border-bottom: 1px solid #2d3139;
+  min-height: 2.5rem;
+  vertical-align: middle;
+}
+
+.dashboard-dark-table td:first-child {
+  min-width: 150px;
+  width: 150px;
+}
+
+.dashboard-dark-table td:nth-child(2) {
+  min-width: 120px;
+  text-align: right;
+}
+
+.dashboard-dark-table td:nth-child(3) {
+  min-width: 80px;
+  text-align: center;
 }
 
 .dashboard-dark-table tr:hover {
@@ -292,6 +326,7 @@ html::-webkit-scrollbar {
 
 .dashboard-dark-summary-item {
   flex: 1;
+  min-width: 0;
 }
 
 .dashboard-dark-summary-value {
@@ -299,11 +334,21 @@ html::-webkit-scrollbar {
   font-weight: 700;
   color: #ff6b35;
   margin: 0.25rem 0;
+  min-height: 2rem;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dashboard-dark-summary-label {
   font-size: 0.85rem;
   color: #b0b3b8;
+  min-height: 1.2rem;
+  display: flex;
+  align-items: center;
 }
 
 .dashboard-dark-progress-card {

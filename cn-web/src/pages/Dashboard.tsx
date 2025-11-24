@@ -111,16 +111,16 @@ const Dashboard: React.FC = () => {
         let allRequests: ServiceRequest[] = [];
         let page = 1;
         let hasMore = true;
-        let maxPages = 10;
+        let maxPages = 3;
 
         try {
           while (hasMore && page <= maxPages) {
             const requestsData =
-              await serviceRequestService.listChefServiceRequests(page, 1000);
+              await serviceRequestService.listChefServiceRequests(page, 500);
             allRequests = [...allRequests, ...requestsData.items];
 
             if (
-              requestsData.items.length < 1000 ||
+              requestsData.items.length < 500 ||
               allRequests.length >= requestsData.total ||
               !requestsData.items ||
               requestsData.items.length === 0
@@ -207,15 +207,6 @@ const Dashboard: React.FC = () => {
         sr.status !== ServiceRequestStatus.REJECTED_BY_CHEF
     );
 
-    const paidRequests = serviceRequests.filter(
-      (sr) =>
-        sr.status === ServiceRequestStatus.PAYMENT_CONFIRMED ||
-        sr.status === ServiceRequestStatus.SCHEDULED ||
-        sr.status === ServiceRequestStatus.COMPLETED
-    );
-
-    const paidWithQuote = paidRequests.filter((sr) => sr.quote);
-
     const completedWithQuote = completedRequests.filter((sr) => sr.quote);
     const pendingWithQuote = pendingRequests.filter((sr) => sr.quote);
 
@@ -243,16 +234,10 @@ const Dashboard: React.FC = () => {
 
     const rejectedCount = rejectedByChef.length + rejectedByClient.length;
 
-    const totalEarnings = paidWithQuote.reduce((sum, sr) => {
-      if (!sr.quote) return sum;
-      return sum + (sr.quote.amount_cents || 0);
-    }, 0);
-
     const monthEarnings = serviceRequests
       .filter((sr) => {
         if (
-          (sr.status !== ServiceRequestStatus.PAYMENT_CONFIRMED &&
-            sr.status !== ServiceRequestStatus.COMPLETED) ||
+          sr.status !== ServiceRequestStatus.COMPLETED ||
           !sr.quote
         )
           return false;
@@ -269,6 +254,20 @@ const Dashboard: React.FC = () => {
       const srDate = new Date(sr.requested_date);
       return srDate.getFullYear() === selectedYear;
     });
+
+    const totalEarnings = yearRequests
+      .filter((sr) => {
+        if (
+          sr.status !== ServiceRequestStatus.COMPLETED ||
+          !sr.quote
+        )
+          return false;
+        return true;
+      })
+      .reduce((sum, sr) => {
+        if (!sr.quote) return sum;
+        return sum + (sr.quote.amount_cents || 0);
+      }, 0);
 
     const yearCompleted = yearRequests.filter(
       (sr) => sr.status === ServiceRequestStatus.COMPLETED
@@ -318,8 +317,7 @@ const Dashboard: React.FC = () => {
       return serviceRequests
         .filter((sr) => {
           if (
-            (sr.status !== ServiceRequestStatus.PAYMENT_CONFIRMED &&
-              sr.status !== ServiceRequestStatus.COMPLETED) ||
+            sr.status !== ServiceRequestStatus.COMPLETED ||
             !sr.quote
           )
             return false;
@@ -354,9 +352,7 @@ const Dashboard: React.FC = () => {
       return serviceRequests
         .filter((sr) => {
           if (
-            (sr.status !== ServiceRequestStatus.PAYMENT_CONFIRMED &&
-              sr.status !== ServiceRequestStatus.SCHEDULED &&
-              sr.status !== ServiceRequestStatus.COMPLETED) ||
+            sr.status !== ServiceRequestStatus.COMPLETED ||
             !sr.quote
           )
             return false;
@@ -1492,60 +1488,6 @@ const Dashboard: React.FC = () => {
                           strokeWidth="1"
                         />
                       ))}
-                      {showEarningsLine && (
-                        <>
-                          <polyline
-                            points={metrics.monthlyEarnings
-                              .map((earning, index) => {
-                                const x = 40 + (index / 11) * 720;
-                                const y = 160 - (earning / maxEarning) * 120;
-                                return `${x},${y}`;
-                              })
-                              .join(" ")}
-                            fill="none"
-                            stroke="#ff6b35"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <polygon
-                            points={`40,160 ${metrics.monthlyEarnings
-                              .map((earning, index) => {
-                                const x = 40 + (index / 11) * 720;
-                                const y = 160 - (earning / maxEarning) * 120;
-                                return `${x},${y}`;
-                              })
-                              .join(" ")} 760,160`}
-                            fill="url(#lineGradient)"
-                          />
-                          {metrics.monthlyEarnings.map((earning, index) => {
-                            const x = 40 + (index / 11) * 720;
-                            const y = 160 - (earning / maxEarning) * 120;
-                            const isSelected = selectedChartMonth === index;
-                            return (
-                              <circle
-                                key={`earning-${index}`}
-                                cx={x}
-                                cy={y}
-                                r={isSelected ? "7" : "4"}
-                                fill={isSelected ? "#ff6b35" : "#ff6b35"}
-                                stroke={isSelected ? "#ffffff" : "#1a1d24"}
-                                strokeWidth={isSelected ? "3" : "2"}
-                                style={{ cursor: "pointer", transition: "all 0.2s" }}
-                                onClick={() => {
-                                  setSelectedChartMonth(index);
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.setAttribute("r", "6");
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.setAttribute("r", isSelected ? "7" : "4");
-                                }}
-                              />
-                            );
-                          })}
-                        </>
-                      )}
                       {showEventsLine && (
                         <>
                           <polyline
@@ -1583,6 +1525,60 @@ const Dashboard: React.FC = () => {
                                 cy={y}
                                 r={isSelected ? "7" : "4"}
                                 fill={isSelected ? "#4A90E2" : "#4A90E2"}
+                                stroke={isSelected ? "#ffffff" : "#1a1d24"}
+                                strokeWidth={isSelected ? "3" : "2"}
+                                style={{ cursor: "pointer", transition: "all 0.2s" }}
+                                onClick={() => {
+                                  setSelectedChartMonth(index);
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.setAttribute("r", "6");
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.setAttribute("r", isSelected ? "7" : "4");
+                                }}
+                              />
+                            );
+                          })}
+                        </>
+                      )}
+                      {showEarningsLine && (
+                        <>
+                          <polyline
+                            points={metrics.monthlyEarnings
+                              .map((earning, index) => {
+                                const x = 40 + (index / 11) * 720;
+                                const y = 160 - (earning / maxEarning) * 120;
+                                return `${x},${y}`;
+                              })
+                              .join(" ")}
+                            fill="none"
+                            stroke="#ff6b35"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <polygon
+                            points={`40,160 ${metrics.monthlyEarnings
+                              .map((earning, index) => {
+                                const x = 40 + (index / 11) * 720;
+                                const y = 160 - (earning / maxEarning) * 120;
+                                return `${x},${y}`;
+                              })
+                              .join(" ")} 760,160`}
+                            fill="url(#lineGradient)"
+                          />
+                          {metrics.monthlyEarnings.map((earning, index) => {
+                            const x = 40 + (index / 11) * 720;
+                            const y = 160 - (earning / maxEarning) * 120;
+                            const isSelected = selectedChartMonth === index;
+                            return (
+                              <circle
+                                key={`earning-${index}`}
+                                cx={x}
+                                cy={y}
+                                r={isSelected ? "7" : "4"}
+                                fill={isSelected ? "#ff6b35" : "#ff6b35"}
                                 stroke={isSelected ? "#ffffff" : "#1a1d24"}
                                 strokeWidth={isSelected ? "3" : "2"}
                                 style={{ cursor: "pointer", transition: "all 0.2s" }}
@@ -1728,7 +1724,24 @@ const Dashboard: React.FC = () => {
               </thead>
               <tbody>
                  <tr>
-                   <td>Este Mês</td>
+                   <td>
+                     {(() => {
+                       const now = new Date();
+                       const chartMonth = selectedChartMonth !== null ? selectedChartMonth : now.getMonth();
+                       const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+                       const monthName = monthNames[chartMonth];
+                       const isCurrentMonth = chartMonth === now.getMonth() && selectedYear === now.getFullYear();
+                       const isCurrentYear = selectedYear === now.getFullYear();
+                       
+                       if (isCurrentMonth && isCurrentYear) {
+                         return "Este Mês";
+                       } else if (isCurrentYear) {
+                         return monthName;
+                       } else {
+                         return `${monthName} ${selectedYear}`;
+                       }
+                     })()}
+                   </td>
                    <td>
                      R${" "}
                      {metrics.monthEarnings.toLocaleString("pt-BR", {
@@ -1738,7 +1751,9 @@ const Dashboard: React.FC = () => {
                    <td>{metrics.monthCompleted}</td>
                  </tr>
                  <tr>
-                   <td>Este Ano</td>
+                   <td>
+                     {selectedYear === new Date().getFullYear() ? "Este Ano" : selectedYear}
+                   </td>
                    <td>
                      R${" "}
                      {metrics.totalEarnings.toLocaleString("pt-BR", {
