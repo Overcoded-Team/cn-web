@@ -450,7 +450,7 @@ export const chefService = {
   },
 
   async deleteMenu(): Promise<void> {
-    await api.delete<void>("/chefs/my-menu");
+    await api.delete<{ success: boolean }>("/chefs/my-menu");
   },
 
   async getMySalesGoal(month?: string): Promise<{
