@@ -558,7 +558,15 @@ const ProfilePage: React.FC = () => {
 
     try {
       setError("");
-      await chefService.deleteMenu();
+      try {
+        await chefService.deleteMenu();
+      } catch (deleteErr) {
+        if (deleteErr instanceof Error && (deleteErr.message.includes("404") || deleteErr.message.includes("Não encontrado") || deleteErr.message.includes("Menu not found"))) {
+          console.log("Cardápio já foi removido, atualizando perfil...");
+        } else {
+          throw deleteErr;
+        }
+      }
       const updatedProfile = await chefService.getMyProfile();
       setProfile(updatedProfile as ChefProfileResponse);
     } catch (err) {

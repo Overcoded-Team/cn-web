@@ -373,27 +373,39 @@ export const chefService = {
     const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutos de timeout
 
     try {
-      const response = await fetch(`${API_BASE_URL}/chefs/my-menu`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-        signal: controller.signal,
-      }).catch((fetchError) => {
+      let response;
+      try {
+        response = await fetch(`${API_BASE_URL}/chefs/my-menu`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+          signal: controller.signal,
+        });
+      } catch (fetchError: any) {
         clearTimeout(timeoutId);
         if (fetchError.name === 'AbortError') {
           throw new Error("Tempo de espera excedido. O arquivo pode ser muito grande ou o servidor está lento.");
         }
         if (fetchError instanceof TypeError && fetchError.message.includes('fetch')) {
+          const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+          const errorMessage = fetchError.message || '';
+          if (errorMessage.includes('413') || errorMessage.includes('Request Entity Too Large') || file.size > 3 * 1024 * 1024) {
+            throw new Error(`Arquivo muito grande (${fileSizeMB}MB). O servidor está rejeitando arquivos maiores que aproximadamente 3MB. Tente comprimir ou reduzir o tamanho do arquivo.`);
+          }
           throw new Error("Erro de conexão. Verifique se o servidor está acessível e tente novamente.");
         }
         throw fetchError;
-      });
+      }
 
       clearTimeout(timeoutId);
 
       if (!response.ok) {
+        if (response.status === 413) {
+          throw new Error("Arquivo muito grande. O tamanho máximo permitido é 20MB para cardápios. Seu arquivo tem " + (file.size / (1024 * 1024)).toFixed(2) + "MB.");
+        }
+
         let errorData;
         try {
           errorData = await response.json();
