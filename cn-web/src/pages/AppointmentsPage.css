@@ -241,9 +241,9 @@
 .cal-day:hover {
   background: #2d3139;
 }
-.cal-day.selected:not(.has-appointment) {
-  background: #ff6b35;
+.cal-day.selected:not(.has-appointment):not(.today) {
   border-color: #ff6b35;
+  background: #1a1d24;
   color: #fff;
   font-weight: 700;
 }
@@ -269,6 +269,7 @@
   border-color: #ff6b35;
   color: #fff;
   font-weight: 600;
+  border-color: #ff6b35;
 }
 .cal-day.today.has-appointment:not(.selected) {
   background: #1a1d24;
@@ -463,7 +464,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
@@ -1577,10 +1579,10 @@
   background: #e8e8e8;
 }
 
-.dashboard-light .cal-day.selected:not(.has-appointment) {
-  background: #ff6b35;
+.dashboard-light .cal-day.selected:not(.has-appointment):not(.today) {
   border-color: #ff6b35;
-  color: #fff;
+  background: #f5f7fa;
+  color: #333333;
   font-weight: 700;
 }
 .dashboard-light .cal-day.today:not(.has-appointment) {
