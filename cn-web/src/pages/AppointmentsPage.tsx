@@ -1093,11 +1093,7 @@ const AppointmentsPage: React.FC = () => {
                               </div>
                               {(a.status === ServiceRequestStatus.SCHEDULED ||
                                 a.status ===
-                                  ServiceRequestStatus.PAYMENT_CONFIRMED ||
-                                a.status ===
-                                  ServiceRequestStatus.QUOTE_ACCEPTED ||
-                                a.status ===
-                                  ServiceRequestStatus.PAYMENT_PENDING) && (
+                                  ServiceRequestStatus.PAYMENT_CONFIRMED) && (
                                 <button
                                   className="complete-service-button"
                                   onClick={(e) => {
