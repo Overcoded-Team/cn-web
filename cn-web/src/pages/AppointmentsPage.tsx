@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import "../App.css";
 import "./Dashboard.css";
 import "./DashboardDark.css";
@@ -77,7 +76,6 @@ const AppointmentsPage: React.FC = () => {
   const [quoteNotes, setQuoteNotes] = useState<string>("");
   const [isSendingQuote, setIsSendingQuote] = useState<boolean>(false);
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     const savedTheme = localStorage.getItem("dashboard-theme");
     return (savedTheme as "dark" | "light") || "dark";
@@ -149,9 +147,7 @@ const AppointmentsPage: React.FC = () => {
 
         const mappedAppointments: Appointment[] = filteredRequests.map(
           (req: ServiceRequest) => {
-            // Garante que a data seja tratada corretamente, normalizando para UTC
-            const requestedDateStr = req.requested_date;
-            // Se a string não tiver timezone, adiciona 'T00:00:00Z' para forçar UTC
+            const requestedDateStr = String(req.requested_date);
             let dateStr = requestedDateStr;
             if (!dateStr.includes('T')) {
               dateStr = dateStr + 'T00:00:00Z';
@@ -469,33 +465,6 @@ const AppointmentsPage: React.FC = () => {
     }
   }, [appointments, filterByDate, selectedDate]);
 
-  const monthlyEarnings = useMemo(() => {
-    const monthStart = new Date(Date.UTC(currentYear, currentMonth, 1));
-    const monthEnd = new Date(Date.UTC(currentYear, currentMonth + 1, 0, 23, 59, 59));
-    
-    return appointments
-      .filter((a) => {
-        const apptDate = new Date(a.requestedDate);
-        // Compara apenas a data (ignora hora) usando UTC
-        const apptDateUTC = new Date(Date.UTC(
-          apptDate.getUTCFullYear(),
-          apptDate.getUTCMonth(),
-          apptDate.getUTCDate()
-        ));
-        const startUTC = new Date(Date.UTC(
-          monthStart.getUTCFullYear(),
-          monthStart.getUTCMonth(),
-          monthStart.getUTCDate()
-        ));
-        const endUTC = new Date(Date.UTC(
-          monthEnd.getUTCFullYear(),
-          monthEnd.getUTCMonth(),
-          monthEnd.getUTCDate()
-        ));
-        return apptDateUTC >= startUTC && apptDateUTC <= endUTC;
-      })
-      .reduce((sum, a) => sum + a.priceBRL, 0);
-  }, [appointments, currentYear, currentMonth]);
 
   const handleAcceptRequest = async (requestId: number) => {
     if (!confirm("Tem certeza que deseja aceitar este pedido?")) {
@@ -538,9 +507,7 @@ const AppointmentsPage: React.FC = () => {
 
       const mappedAppointments: Appointment[] = filteredRequests.map(
         (req: ServiceRequest) => {
-          // Garante que a data seja tratada corretamente, normalizando para UTC
-          const requestedDateStr = req.requested_date;
-          // Se a string não tiver timezone, adiciona 'T00:00:00Z' para forçar UTC
+          const requestedDateStr = String(req.requested_date);
           let dateStr = requestedDateStr;
           if (!dateStr.includes('T')) {
             dateStr = dateStr + 'T00:00:00Z';
@@ -734,9 +701,7 @@ const AppointmentsPage: React.FC = () => {
 
       const mappedAppointments: Appointment[] = filteredRequests.map(
         (req: ServiceRequest) => {
-          // Garante que a data seja tratada corretamente, normalizando para UTC
-          const requestedDateStr = req.requested_date;
-          // Se a string não tiver timezone, adiciona 'T00:00:00Z' para forçar UTC
+          const requestedDateStr = String(req.requested_date);
           let dateStr = requestedDateStr;
           if (!dateStr.includes('T')) {
             dateStr = dateStr + 'T00:00:00Z';

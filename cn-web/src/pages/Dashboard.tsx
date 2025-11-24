@@ -264,13 +264,6 @@ const Dashboard: React.FC = () => {
         return sum + (sr.quote.amount_cents || 0);
       }, 0);
 
-    const monthPaidWithQuote = monthRequests.filter(
-      (sr) =>
-        (sr.status === ServiceRequestStatus.PAYMENT_CONFIRMED ||
-          sr.status === ServiceRequestStatus.SCHEDULED ||
-          sr.status === ServiceRequestStatus.COMPLETED) &&
-        sr.quote
-    );
 
     const yearRequests = serviceRequests.filter((sr) => {
       const srDate = new Date(sr.requested_date);
