@@ -34,9 +34,17 @@ type Appointment = {
 const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 const AppointmentsPage: React.FC = () => {
-  const today = useMemo(() => new Date(), []);
-  const [currentMonth, setCurrentMonth] = useState<number>(today.getMonth());
-  const [currentYear, setCurrentYear] = useState<number>(today.getFullYear());
+  const today = useMemo(() => {
+    const now = new Date();
+    // Normaliza para meia-noite UTC para comparação consistente
+    return new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate()
+    ));
+  }, []);
+  const [currentMonth, setCurrentMonth] = useState<number>(today.getUTCMonth());
+  const [currentYear, setCurrentYear] = useState<number>(today.getUTCFullYear());
   const [selectedDate, setSelectedDate] = useState<Date>(today);
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -89,10 +97,17 @@ const AppointmentsPage: React.FC = () => {
   const prevConfirmedCountRef = useRef<number>(-1);
   const isInitialLoadRef = useRef<boolean>(true);
 
-  const dateToISOString = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
+  const dateToISOString = (date: Date | string): string => {
+    let d: Date;
+    if (typeof date === "string") {
+      d = new Date(date);
+    } else {
+      d = date;
+    }
+    // Usa UTC para evitar problemas de timezone
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
@@ -134,7 +149,16 @@ const AppointmentsPage: React.FC = () => {
 
         const mappedAppointments: Appointment[] = filteredRequests.map(
           (req: ServiceRequest) => {
-            const requestedDate = new Date(req.requested_date);
+            // Garante que a data seja tratada corretamente, normalizando para UTC
+            const requestedDateStr = req.requested_date;
+            const requestedDate = new Date(requestedDateStr);
+            // Normaliza para meia-noite UTC para comparação consistente
+            const normalizedDate = new Date(Date.UTC(
+              requestedDate.getUTCFullYear(),
+              requestedDate.getUTCMonth(),
+              requestedDate.getUTCDate()
+            ));
+            
             const clientName = req.client_profile?.user?.name || "Cliente";
             const clientEmail = req.client_profile?.user?.email;
             const clientProfilePicture =
@@ -150,8 +174,8 @@ const AppointmentsPage: React.FC = () => {
               clientProfilePicture,
               address: req.location,
               serviceType: req.service_type,
-              dateISO: dateToISOString(requestedDate),
-              requestedDate,
+              dateISO: dateToISOString(normalizedDate),
+              requestedDate: normalizedDate,
               expectedDurationMinutes: req.expected_duration_minutes,
               priceBRL,
               observation: req.quote?.notes,
@@ -276,7 +300,8 @@ const AppointmentsPage: React.FC = () => {
   };
 
   const handleSelectDate = (day: number) => {
-    const newDate = new Date(currentYear, currentMonth, day);
+    // Usa UTC para garantir consistência
+    const newDate = new Date(Date.UTC(currentYear, currentMonth, day));
     const dateISO = dateToISOString(newDate);
     const selectedDateISO = dateToISOString(selectedDate);
 
@@ -369,6 +394,34 @@ const AppointmentsPage: React.FC = () => {
     });
   }, [appointments, filterByDate, selectedDate]);
 
+  const monthlyEarnings = useMemo(() => {
+    const monthStart = new Date(Date.UTC(currentYear, currentMonth, 1));
+    const monthEnd = new Date(Date.UTC(currentYear, currentMonth + 1, 0, 23, 59, 59));
+    
+    return appointments
+      .filter((a) => {
+        const apptDate = new Date(a.requestedDate);
+        // Compara apenas a data (ignora hora) usando UTC
+        const apptDateUTC = new Date(Date.UTC(
+          apptDate.getUTCFullYear(),
+          apptDate.getUTCMonth(),
+          apptDate.getUTCDate()
+        ));
+        const startUTC = new Date(Date.UTC(
+          monthStart.getUTCFullYear(),
+          monthStart.getUTCMonth(),
+          monthStart.getUTCDate()
+        ));
+        const endUTC = new Date(Date.UTC(
+          monthEnd.getUTCFullYear(),
+          monthEnd.getUTCMonth(),
+          monthEnd.getUTCDate()
+        ));
+        return apptDateUTC >= startUTC && apptDateUTC <= endUTC;
+      })
+      .reduce((sum, a) => sum + a.priceBRL, 0);
+  }, [appointments, currentYear, currentMonth]);
+
   const handleAcceptRequest = async (requestId: number) => {
     if (!confirm("Tem certeza que deseja aceitar este pedido?")) {
       return;
@@ -410,7 +463,16 @@ const AppointmentsPage: React.FC = () => {
 
       const mappedAppointments: Appointment[] = filteredRequests.map(
         (req: ServiceRequest) => {
-          const requestedDate = new Date(req.requested_date);
+          // Garante que a data seja tratada corretamente, normalizando para UTC
+          const requestedDateStr = req.requested_date;
+          const requestedDate = new Date(requestedDateStr);
+          // Normaliza para meia-noite UTC para comparação consistente
+          const normalizedDate = new Date(Date.UTC(
+            requestedDate.getUTCFullYear(),
+            requestedDate.getUTCMonth(),
+            requestedDate.getUTCDate()
+          ));
+          
           const clientName = req.client_profile?.user?.name || "Cliente";
           const clientEmail = req.client_profile?.user?.email;
           const clientProfilePicture =
@@ -426,8 +488,8 @@ const AppointmentsPage: React.FC = () => {
             clientProfilePicture,
             address: req.location,
             serviceType: req.service_type,
-            dateISO: dateToISOString(requestedDate),
-            requestedDate,
+            dateISO: dateToISOString(normalizedDate),
+            requestedDate: normalizedDate,
             expectedDurationMinutes: req.expected_duration_minutes,
             priceBRL,
             observation: req.quote?.notes,
@@ -1000,19 +1062,20 @@ const AppointmentsPage: React.FC = () => {
                         )}
                         {Array.from({ length: daysInMonth }).map((_, idx) => {
                           const day = idx + 1;
-                          const currentDate = new Date(
+                          // Usa UTC para garantir consistência na comparação
+                          const currentDate = new Date(Date.UTC(
                             currentYear,
                             currentMonth,
                             day
-                          );
+                          ));
                           const isSelected =
-                            selectedDate.getFullYear() === currentYear &&
-                            selectedDate.getMonth() === currentMonth &&
-                            selectedDate.getDate() === day;
+                            selectedDate.getUTCFullYear() === currentYear &&
+                            selectedDate.getUTCMonth() === currentMonth &&
+                            selectedDate.getUTCDate() === day;
                           const isToday =
-                            today.getFullYear() === currentYear &&
-                            today.getMonth() === currentMonth &&
-                            today.getDate() === day;
+                            today.getUTCFullYear() === currentYear &&
+                            today.getUTCMonth() === currentMonth &&
+                            today.getUTCDate() === day;
                           const dateISO = dateToISOString(currentDate);
                           const hasAppointment = appointments.some(
                             (a) => a.dateISO === dateISO
@@ -1031,6 +1094,15 @@ const AppointmentsPage: React.FC = () => {
                             </button>
                           );
                         })}
+                      </div>
+                      <div className="calendar-monthly-summary">
+                        <div className="calendar-summary-label">Ganhos do Mês</div>
+                        <div className="calendar-summary-value">
+                          R$ {monthlyEarnings.toLocaleString("pt-BR", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </div>
                       </div>
                     </div>
                   </section>

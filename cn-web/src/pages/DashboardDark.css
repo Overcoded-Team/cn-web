@@ -429,6 +429,13 @@ html::-webkit-scrollbar {
   display: block;
 }
 
+.progress-message-encouragement {
+  color: #ff6b35;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: block;
+}
+
 .dashboard-light .define-goal-button {
   background: rgba(255, 107, 53, 0.1);
   border: 1px solid rgba(255, 107, 53, 0.3);
@@ -1353,6 +1360,13 @@ body:has(.dashboard-light) {
   color: #666666;
   font-size: 0.85rem;
   font-weight: 500;
+  display: block;
+}
+
+.dashboard-light .progress-message-encouragement {
+  color: #ff6b35;
+  font-size: 0.9rem;
+  font-weight: 600;
   display: block;
 }
 
