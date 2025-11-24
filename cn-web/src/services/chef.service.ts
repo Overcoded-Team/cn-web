@@ -459,16 +459,7 @@ export const chefService = {
   },
 
   async deleteMenu(): Promise<void> {
-    try {
-      await api.delete<{ success: boolean }>("/chefs/my-menu");
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message.includes("404") || error.message.includes("Não encontrado") || error.message.includes("Menu not found")) {
-          throw new Error("Cardápio não encontrado ou já foi removido.");
-        }
-      }
-      throw error;
-    }
+    return api.delete<void>("/chefs/my-menu");
   },
 
   async getMySalesGoal(month?: string): Promise<{
