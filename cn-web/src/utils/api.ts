@@ -20,6 +20,14 @@ export const api = {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
         headers,
+      }).catch((fetchError) => {
+        if (fetchError.name === 'AbortError') {
+          throw new Error("Tempo de espera excedido. O servidor está demorando para responder.");
+        }
+        if (fetchError instanceof TypeError && (fetchError.message.includes('fetch') || fetchError.message.includes('Failed to fetch'))) {
+          throw new Error("Erro de conexão. Verifique se o servidor está acessível e tente novamente.");
+        }
+        throw fetchError;
       });
 
       if (!response.ok) {

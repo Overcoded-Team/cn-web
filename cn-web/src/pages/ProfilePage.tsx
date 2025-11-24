@@ -525,16 +525,20 @@ const ProfilePage: React.FC = () => {
       console.log("Upload do cardápio concluído com sucesso");
     } catch (err) {
       console.error("Erro no upload do cardápio:", err);
-      const errorMessage = err instanceof Error ? err.message : "Erro ao fazer upload do cardápio";
-      setError(errorMessage);
+      let errorMessage = err instanceof Error ? err.message : "Erro ao fazer upload do cardápio";
       
       if (err instanceof Error) {
+        if (errorMessage.includes("Erro de conexão") || errorMessage.includes("Failed to fetch") || errorMessage.includes("NetworkError")) {
+          errorMessage = "Erro de conexão. Verifique sua internet e se o servidor está acessível.";
+        }
         console.error("Detalhes do erro:", {
           name: err.name,
           message: err.message,
           stack: err.stack,
         });
       }
+      
+      setError(errorMessage);
     } finally {
       setIsUploadingMenu(false);
       if (menuFileInputRef.current) {

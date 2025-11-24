@@ -380,6 +380,15 @@ export const chefService = {
         },
         body: formData,
         signal: controller.signal,
+      }).catch((fetchError) => {
+        clearTimeout(timeoutId);
+        if (fetchError.name === 'AbortError') {
+          throw new Error("Tempo de espera excedido. O arquivo pode ser muito grande ou o servidor está lento.");
+        }
+        if (fetchError instanceof TypeError && fetchError.message.includes('fetch')) {
+          throw new Error("Erro de conexão. Verifique se o servidor está acessível e tente novamente.");
+        }
+        throw fetchError;
       });
 
       clearTimeout(timeoutId);
@@ -450,7 +459,16 @@ export const chefService = {
   },
 
   async deleteMenu(): Promise<void> {
-    await api.delete<{ success: boolean }>("/chefs/my-menu");
+    try {
+      await api.delete<{ success: boolean }>("/chefs/my-menu");
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes("404") || error.message.includes("Não encontrado") || error.message.includes("Menu not found")) {
+          throw new Error("Cardápio não encontrado ou já foi removido.");
+        }
+      }
+      throw error;
+    }
   },
 
   async getMySalesGoal(month?: string): Promise<{
