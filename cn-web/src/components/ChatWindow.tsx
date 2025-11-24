@@ -505,6 +505,66 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                                   });
                                 }
                               }}
+                              onLoad={async (e) => {
+                                const img = e.currentTarget;
+                                const messageId = message.id;
+                                
+                                if (!attachmentAny._base64 && img.src && img.src.startsWith('http')) {
+                                  try {
+                                    const cacheKey = `chat_attachment_${serviceRequestId}_${messageId}`;
+                                    
+                                    try {
+                                      const response = await fetch(img.src, { mode: 'cors' });
+                                      if (response.ok) {
+                                        const blob = await response.blob();
+                                        const reader = new FileReader();
+                                        reader.onloadend = () => {
+                                          try {
+                                            const base64 = (reader.result as string).split(',')[1];
+                                            if (base64) {
+                                              attachmentAny._base64 = base64;
+                                              localStorage.setItem(cacheKey, base64);
+                                              const isImage = attachmentAny.mimeType?.startsWith("image/");
+                                              const mimeType = attachmentAny.mimeType || "image/jpeg";
+                                              attachmentAny._cachedUrl = `data:${mimeType};base64,${base64}`;
+                                            }
+                                          } catch (saveError) {
+                                            console.warn("Erro ao salvar imagem no cache:", saveError);
+                                          }
+                                        };
+                                        reader.readAsDataURL(blob);
+                                      }
+                                    } catch (fetchError) {
+                                      try {
+                                        const canvas = document.createElement('canvas');
+                                        const ctx = canvas.getContext('2d');
+                                        if (ctx && img.complete && img.naturalWidth > 0) {
+                                          canvas.width = img.naturalWidth;
+                                          canvas.height = img.naturalHeight;
+                                          ctx.drawImage(img, 0, 0);
+                                          
+                                          try {
+                                            const base64 = canvas.toDataURL('image/jpeg', 0.9).split(',')[1];
+                                            if (base64) {
+                                              attachmentAny._base64 = base64;
+                                              localStorage.setItem(cacheKey, base64);
+                                              const isImage = attachmentAny.mimeType?.startsWith("image/");
+                                              const mimeType = attachmentAny.mimeType || "image/jpeg";
+                                              attachmentAny._cachedUrl = `data:${mimeType};base64,${base64}`;
+                                            }
+                                          } catch (canvasError) {
+                                            console.warn("Erro ao converter imagem para base64 via canvas:", canvasError);
+                                          }
+                                        }
+                                      } catch (canvasError) {
+                                        console.warn("Erro ao processar imagem carregada:", canvasError);
+                                      }
+                                    }
+                                  } catch (error) {
+                                    console.warn("Erro ao salvar imagem no cache:", error);
+                                  }
+                                }
+                              }}
                               onError={(e) => {
                                 const img = e.currentTarget;
                                 const messageId = message.id;

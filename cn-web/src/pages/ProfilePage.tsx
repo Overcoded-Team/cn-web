@@ -496,9 +496,18 @@ const ProfilePage: React.FC = () => {
     }
 
     const maxSize = 20 * 1024 * 1024;
+    const recommendedMaxSize = 2 * 1024 * 1024;
+    
     if (file.size > maxSize) {
       setError("Arquivo muito grande. O tamanho máximo é 20MB.");
       return;
+    }
+    
+    if (file.size > recommendedMaxSize) {
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      if (!confirm(`O arquivo tem ${fileSizeMB}MB. Arquivos maiores que 2MB podem ser rejeitados pelo servidor. Deseja continuar mesmo assim?`)) {
+        return;
+      }
     }
 
     if (file.size === 0) {

@@ -370,7 +370,7 @@ export const chefService = {
       import.meta.env.VITE_API_BASE_URL || "https://api.chefnow.cloud";
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutos de timeout
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
 
     try {
       let response;
@@ -390,11 +390,19 @@ export const chefService = {
         }
         if (fetchError instanceof TypeError && fetchError.message.includes('fetch')) {
           const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-          const errorMessage = fetchError.message || '';
-          if (errorMessage.includes('413') || errorMessage.includes('Request Entity Too Large') || file.size > 3 * 1024 * 1024) {
-            throw new Error(`Arquivo muito grande (${fileSizeMB}MB). O servidor está rejeitando arquivos maiores que aproximadamente 3MB. Tente comprimir ou reduzir o tamanho do arquivo.`);
+          const errorMessage = String(fetchError.message || '');
+          const errorStack = String(fetchError.stack || '');
+          
+          if (errorMessage.includes('413') || errorMessage.includes('Request Entity Too Large') || 
+              errorStack.includes('413') || errorStack.includes('Request Entity Too Large')) {
+            throw new Error(`Arquivo muito grande (${fileSizeMB}MB). O servidor está rejeitando este arquivo. Tente comprimir o PDF ou usar um arquivo menor.`);
           }
-          throw new Error("Erro de conexão. Verifique se o servidor está acessível e tente novamente.");
+          
+          if (errorMessage.includes('CORS') || errorMessage.includes('Access-Control-Allow-Origin')) {
+            throw new Error(`Erro de CORS ao enviar arquivo (${fileSizeMB}MB). O servidor pode estar rejeitando arquivos deste tamanho. Tente comprimir o PDF.`);
+          }
+          
+          throw new Error(`Erro de conexão ao enviar arquivo (${fileSizeMB}MB). Verifique se o servidor está acessível e tente novamente.`);
         }
         throw fetchError;
       }
