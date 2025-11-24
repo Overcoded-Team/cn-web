@@ -63,6 +63,25 @@ const getAttachmentFromCache = (
   }
 };
 
+const normalizeContent = (content: string): string => {
+  return content?.trim().toLowerCase().replace(/\s+/g, " ") || "";
+};
+
+const isSystemMessage = (msg: ChatMessage): boolean => {
+  if (msg.sender_type === "SYSTEM") return true;
+  const systemMessagePatterns = [
+    /^o chef enviou uma proposta de/i,
+    /^pix gerado para pagamento/i,
+    /^pagamento confirmado/i,
+    /^cliente aceitou o orçamento/i,
+    /^cliente rejeitou o orçamento/i,
+    /^o serviço está agendado/i,
+    /^serviço marcado como concluído/i,
+  ];
+  const content = normalizeContent(msg.content || "");
+  return systemMessagePatterns.some(pattern => pattern.test(content));
+};
+
 export const useChatSocket = ({
   serviceRequestId,
   enabled = true,
@@ -144,12 +163,21 @@ export const useChatSocket = ({
 
     socket.on("chat_history", (history: ChatMessage[]) => {
       if (!serviceRequestId) {
-        setMessages(history || []);
+        const filtered = (history || []).filter((msg) => {
+          if (msg.sender_type === "SYSTEM") return true;
+          return !isSystemMessage(msg);
+        });
+        setMessages(filtered);
         setIsLoading(false);
         return;
       }
 
-      const restoredHistory = (history || []).map((msg) => {
+      const filteredHistory = (history || []).filter((msg) => {
+        if (msg.sender_type === "SYSTEM") return true;
+        return !isSystemMessage(msg);
+      });
+
+      const restoredHistory = filteredHistory.map((msg) => {
         const cachedBase64 = getAttachmentFromCache(serviceRequestId, msg.id);
         const cacheKey = `chat_attachment_url_${serviceRequestId}_${msg.id}`;
         let cachedUrl: string | null = null;
@@ -349,6 +377,12 @@ export const useChatSocket = ({
 
     socket.on("message", (message: ChatMessage) => {
       setMessages((prev) => {
+        const isSystemMsg = isSystemMessage(message);
+        
+        if (isSystemMsg && message.sender_type !== "SYSTEM") {
+          return prev;
+        }
+        
         if (prev.some((m) => m.id === message.id)) {
           return prev;
         }
