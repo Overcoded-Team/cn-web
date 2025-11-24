@@ -53,7 +53,7 @@ const Dashboard: React.FC = () => {
   const [editingGoal, setEditingGoal] = useState<string>("");
   const [isLoadingGoal, setIsLoadingGoal] = useState<boolean>(false);
   const [showEarningsLine, setShowEarningsLine] = useState<boolean>(true);
-  const [showEventsLine, setShowEventsLine] = useState<boolean>(true);
+  const [showEventsLine, setShowEventsLine] = useState<boolean>(false);
 
   useEffect(() => {
     localStorage.setItem("dashboard-theme", theme);
@@ -185,8 +185,6 @@ const Dashboard: React.FC = () => {
     const startOfMonth = new Date(selectedYear, chartMonth, 1);
     const endOfMonth = new Date(selectedYear, chartMonth + 1, 0, 23, 59, 59);
 
-    // Filtra eventos do mês usando a data do agendamento (requested_date)
-    // Isso garante consistência com os ganhos mensais
     const monthRequests = serviceRequests.filter((sr) => {
       const srDate = new Date(sr.requested_date);
       return srDate >= startOfMonth && srDate <= endOfMonth;
@@ -250,10 +248,8 @@ const Dashboard: React.FC = () => {
       return sum + (sr.quote.amount_cents || 0);
     }, 0);
 
-    // Calcula ganhos do mês selecionado apenas de valores pagos (PAYMENT_CONFIRMED e COMPLETED)
     const monthEarnings = serviceRequests
       .filter((sr) => {
-        // Apenas valores pagos (removido SCHEDULED que ainda não foi pago)
         if (
           (sr.status !== ServiceRequestStatus.PAYMENT_CONFIRMED &&
             sr.status !== ServiceRequestStatus.COMPLETED) ||
@@ -268,7 +264,6 @@ const Dashboard: React.FC = () => {
         return sum + (sr.quote.amount_cents || 0);
       }, 0);
 
-    // Mantém monthPaidWithQuote para outras métricas que precisam de created_at
     const monthPaidWithQuote = monthRequests.filter(
       (sr) =>
         (sr.status === ServiceRequestStatus.PAYMENT_CONFIRMED ||
@@ -282,14 +277,10 @@ const Dashboard: React.FC = () => {
       return srDate.getFullYear() === selectedYear;
     });
 
-    // Conta eventos do ano que geram ganhos (pagamentos confirmados, agendados ou completados)
-    // Isso garante consistência com os ganhos anuais
-    // Conta apenas eventos concluídos do ano baseado na data do agendamento (requested_date)
     const yearCompleted = yearRequests.filter(
       (sr) => sr.status === ServiceRequestStatus.COMPLETED
     ).length;
 
-    // Conta apenas eventos concluídos do mês baseado na data do agendamento (requested_date)
     const monthCompleted = monthRequests.filter(
       (sr) => sr.status === ServiceRequestStatus.COMPLETED
     ).length;
@@ -327,21 +318,18 @@ const Dashboard: React.FC = () => {
         ? Math.round((totalCancelled / totalRequests) * 100)
         : 0;
 
-    // Calcula ganhos mensais apenas de valores pagos (PAYMENT_CONFIRMED e COMPLETED)
     const monthlyEarnings = Array.from({ length: 12 }, (_, monthIndex) => {
       const monthStart = new Date(selectedYear, monthIndex, 1);
       const monthEnd = new Date(selectedYear, monthIndex + 1, 0, 23, 59, 59);
       
       return serviceRequests
         .filter((sr) => {
-          // Apenas valores pagos (removido SCHEDULED que ainda não foi pago)
           if (
             (sr.status !== ServiceRequestStatus.PAYMENT_CONFIRMED &&
               sr.status !== ServiceRequestStatus.COMPLETED) ||
             !sr.quote
           )
             return false;
-          // Usa requested_date para consistência
           const serviceDate = new Date(sr.requested_date);
           return serviceDate >= monthStart && serviceDate <= monthEnd;
         })
@@ -351,7 +339,6 @@ const Dashboard: React.FC = () => {
         }, 0);
     });
 
-    // Conta a quantidade de atendimentos concluídos por mês para o gráfico
     const monthlyCounts = Array.from({ length: 12 }, (_, monthIndex) => {
       const monthStart = new Date(selectedYear, monthIndex, 1);
       const monthEnd = new Date(selectedYear, monthIndex + 1, 0, 23, 59, 59);
@@ -363,12 +350,11 @@ const Dashboard: React.FC = () => {
       }).length;
     });
 
-    // Calcula ganhos por dia da semana selecionada
     const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - now.getDay() + (selectedWeekOffset * 7)); // Domingo da semana selecionada
+    weekStart.setDate(now.getDate() - now.getDay() + (selectedWeekOffset * 7));
     weekStart.setHours(0, 0, 0, 0);
     const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6); // Sábado da semana selecionada
+    weekEnd.setDate(weekStart.getDate() + 6);
     weekEnd.setHours(23, 59, 59, 999);
 
     const dailyEarnings = Array.from({ length: 7 }, (_, dayIndex) => {
@@ -381,10 +367,7 @@ const Dashboard: React.FC = () => {
             !sr.quote
           )
             return false;
-          // Usa requested_date (data do agendamento) em vez de updated_at
-          // porque queremos ver quando os serviços foram realizados
           const serviceDate = new Date(sr.requested_date);
-          // Filtra apenas serviços da semana selecionada E que sejam do dia da semana correspondente
           return serviceDate >= weekStart && 
                  serviceDate <= weekEnd && 
                  serviceDate.getDay() === dayIndex;
@@ -431,11 +414,9 @@ const Dashboard: React.FC = () => {
       );
       const avgRating10 = totalRating / reviews.length;
       const rawRating5 = (avgRating10 / 10) * 5;
-      // Arredonda para o meio ponto mais próximo (0, 0.5, 1, 1.5, 2, 2.5, etc.)
       avgRating5 = Math.round(rawRating5 * 2) / 2;
     } else if (profile?.avgRating) {
       const rawRating5 = (Number(profile.avgRating) / 10) * 5;
-      // Arredonda para o meio ponto mais próximo
       avgRating5 = Math.round(rawRating5 * 2) / 2;
     }
 
@@ -518,7 +499,6 @@ const Dashboard: React.FC = () => {
               !sr.quote
             )
               return false;
-            // Usa requested_date para consistência com outros cálculos
             const serviceDate = new Date(sr.requested_date);
             return serviceDate >= lastMonthStart && serviceDate <= lastMonthEnd;
           })
@@ -751,7 +731,6 @@ const Dashboard: React.FC = () => {
         goalMonth: monthKey,
       });
       
-      // Atualiza a meta com o valor retornado pelo backend
       if (response && response.goal_set) {
         setMonthlyGoal(response.amount_cents);
       } else {
@@ -1504,9 +1483,7 @@ const Dashboard: React.FC = () => {
                   </linearGradient>
                 </defs>
                 {(() => {
-                  // Normalização para valores monetários (ganhos pagos)
                   const maxEarning = metrics.maxMonthlyEarning;
-                  // Normalização para quantidade de eventos
                   const maxCount = metrics.maxMonthlyCount;
                   
                   return (
@@ -1522,7 +1499,6 @@ const Dashboard: React.FC = () => {
                           strokeWidth="1"
                         />
                       ))}
-                      {/* Linha de ganhos pagos (laranja) */}
                       {showEarningsLine && (
                         <>
                           <polyline
@@ -1577,7 +1553,6 @@ const Dashboard: React.FC = () => {
                           })}
                         </>
                       )}
-                      {/* Linha de quantidade de eventos (azul) */}
                       {showEventsLine && (
                         <>
                           <polyline
