@@ -10,8 +10,8 @@ import whatsappIcon from "../assets/whatsapp.svg";
 import sairIcon from "../assets/sair.svg";
 import editIcon from "../assets/edit.svg";
 import { chefService, ChefSocialLink } from "../services/chef.service";
-import "../pages/Dashboard.css";
-import "../pages/DashboardDark.css";
+import "../pages/chef/Dashboard.css";
+import "../pages/chef/DashboardDark.css";
 
 interface DashboardSidebarProps {
   className?: string;
