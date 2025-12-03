@@ -2,14 +2,13 @@ import React, { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import "./App.css";
 import HomePage from "./pages/HomePage";
-import ChefsPage from "./pages/ChefsPage";
+import ChefsPage from "./pages/chef/ChefsPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Historico = lazy(() => import("./pages/Historico"));
-const Posts = lazy(() => import("./pages/Posts"));
+const Dashboard = lazy(() => import("./pages/chef/Dashboard"));
+const Historico = lazy(() => import("./pages/chef/Historico"));
 const AppointmentsPage = lazy(() => import("./pages/AppointmentsPage"));
-const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const ProfilePage = lazy(() => import("./pages/chef/ProfilePage"));
 
 const LoadingSpinner = () => (
   <div style={{ 
@@ -51,14 +50,6 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <Historico />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/posts"
-            element={
-              <ProtectedRoute>
-                <Posts />
               </ProtectedRoute>
             }
           />
