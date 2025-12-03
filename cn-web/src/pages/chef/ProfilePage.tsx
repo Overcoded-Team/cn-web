@@ -8,16 +8,16 @@ import {
   ChefGalleryPhoto,
   ChefSocialType,
   ChefSocialLink,
-} from "../services/chef.service";
-import { useAuth } from "../contexts/AuthContext";
-import { authService } from "../services/auth.service";
+} from "../../services/chef.service";
+import { useAuth } from "../../contexts/AuthContext";
+import { authService } from "../../services/auth.service";
 import editIcon from "../assets/edit.svg";
-import { DashboardSidebar } from "../components/DashboardSidebar";
+import { DashboardSidebar } from "../../components/DashboardSidebar";
 import {
   userAddressService,
   UserAddress,
   CreateUserAddressDTO,
-} from "../services/user-address.service";
+} from "../../services/user-address.service";
 
 interface ChefCuisineRelation {
   id: number;

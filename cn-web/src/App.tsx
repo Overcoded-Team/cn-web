@@ -1,14 +1,14 @@
 import React, { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import "./App.css";
-import HomePage from "./pages/HomePage";
-import ChefsPage from "./pages/ChefsPage";
+import HomePage from "./pages/chef/HomePage";
+import ChefsPage from "./pages/chef/ChefsPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Historico = lazy(() => import("./pages/Historico"));
-const AppointmentsPage = lazy(() => import("./pages/AppointmentsPage"));
-const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const Dashboard = lazy(() => import("./pages/chef/Dashboard"));
+const Historico = lazy(() => import("./pages/chef/Historico"));
+const AppointmentsPage = lazy(() => import("./pages/chef/AppointmentsPage"));
+const ProfilePage = lazy(() => import("./pages/chef/ProfilePage"));
 
 const LoadingSpinner = () => (
   <div style={{ 

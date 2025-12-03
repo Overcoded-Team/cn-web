@@ -5,16 +5,16 @@ import "./DashboardDark.css";
 import "./themes/AppointmentsPage.base.css";
 import "./themes/AppointmentsPage.dark.css";
 import "./themes/AppointmentsPage.light.css";
-import { ChatWindow } from "../components/ChatWindow";
-import { useAuth } from "../contexts/AuthContext";
+import { ChatWindow } from "../../components/ChatWindow";
+import { useAuth } from "../../contexts/AuthContext";
 import chatIcon from "../assets/chat.svg";
-import { DashboardSidebar } from "../components/DashboardSidebar";
+import { DashboardSidebar } from "../../components/DashboardSidebar";
 import {
   serviceRequestService,
   ServiceRequest,
   ServiceRequestStatus,
-} from "../services/serviceRequest.service";
-import { formatCurrency } from "../utils/dataUtils";
+} from "../../services/serviceRequest.service";
+import { formatCurrency } from "../../utils/dataUtils";
 
 type Appointment = {
   id: string;

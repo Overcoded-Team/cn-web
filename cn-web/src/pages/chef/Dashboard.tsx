@@ -6,20 +6,20 @@ import estrelaInteira from "../assets/estrelainteira.png";
 import meiaEstrela from "../assets/meiaestrela.png";
 import estrelaVazia from "../assets/estrelavazia.png";
 import logoBranco from "../assets/iconebranco.png";
-import { chefService, ChefReview } from "../services/chef.service";
-import { DashboardSidebar } from "../components/DashboardSidebar";
+import { chefService, ChefReview } from "../../services/chef.service";
+import { DashboardSidebar } from "../../components/DashboardSidebar";
 import {
   serviceRequestService,
   ServiceRequest,
   ServiceRequestStatus,
-} from "../services/serviceRequest.service";
+} from "../../services/serviceRequest.service";
 import {
   chefWalletService,
   WalletBalance,
   WalletEntry,
   ChefPayout,
-} from "../services/chef-wallet.service";
-import { formatCurrency, formatDate, calculatePercentage } from "../utils/dataUtils";
+} from "../../services/chef-wallet.service";
+import { formatCurrency, formatDate, calculatePercentage } from "../../utils/dataUtils";
 
 const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
