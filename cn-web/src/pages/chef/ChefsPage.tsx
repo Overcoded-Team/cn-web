@@ -1,15 +1,15 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import estrelaInteira from "../assets/estrelainteira.png";
-import meiaEstrela from "../assets/meiaestrela.png";
-import estrelaVazia from "../assets/estrelavazia.png";
-import perfilVazio from "../assets/perfilvazio.png";
-import facebookIcon from "../assets/facebook.svg";
-import instagramIcon from "../assets/instagram.svg";
-import youtubeIcon from "../assets/yt.svg";
-import tiktokIcon from "../assets/tiktok.svg";
-import whatsappIcon from "../assets/whatsapp.svg";
+import estrelaInteira from "../../assets/estrelainteira.png";
+import meiaEstrela from "../../assets/meiaestrela.png";
+import estrelaVazia from "../../assets/estrelavazia.png";
+import perfilVazio from "../../assets/perfilvazio.png";
+import facebookIcon from "../../assets/facebook.svg";
+import instagramIcon from "../../assets/instagram.svg";
+import youtubeIcon from "../../assets/yt.svg";
+import tiktokIcon from "../../assets/tiktok.svg";
+import whatsappIcon from "../../assets/whatsapp.svg";
 import { chefService, Chef, Cuisine, ChefSocialLink } from "../../services/chef.service";
 import "./ChefsPage.css";
 
