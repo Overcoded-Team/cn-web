@@ -9,7 +9,7 @@ import {
 } from "../../services/serviceRequest.service";
 import { useAuth } from "../../contexts/AuthContext";
 import { ChatWindow } from "../../components/ChatWindow";
-import chatIcon from "../assets/chat.svg";
+import chatIcon from "../../assets/chat.svg";
 import { DashboardSidebar } from "../../components/DashboardSidebar";
 
 interface HistoricoEntry {

@@ -2,10 +2,10 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import "./Dashboard.css";
 import "./DashboardDark.css";
 import "./themes/Dashboard.light.css";
-import estrelaInteira from "../assets/estrelainteira.png";
-import meiaEstrela from "../assets/meiaestrela.png";
-import estrelaVazia from "../assets/estrelavazia.png";
-import logoBranco from "../assets/iconebranco.png";
+import estrelaInteira from "../../assets/estrelainteira.png";
+import meiaEstrela from "../../assets/meiaestrela.png";
+import estrelaVazia from "../../assets/estrelavazia.png";
+import logoBranco from "../../assets/iconebranco.png";
 import { chefService, ChefReview } from "../../services/chef.service";
 import { DashboardSidebar } from "../../components/DashboardSidebar";
 import {

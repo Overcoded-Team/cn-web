@@ -7,7 +7,7 @@ import "./themes/AppointmentsPage.dark.css";
 import "./themes/AppointmentsPage.light.css";
 import { ChatWindow } from "../../components/ChatWindow";
 import { useAuth } from "../../contexts/AuthContext";
-import chatIcon from "../assets/chat.svg";
+import chatIcon from "../../assets/chat.svg";
 import { DashboardSidebar } from "../../components/DashboardSidebar";
 import {
   serviceRequestService,

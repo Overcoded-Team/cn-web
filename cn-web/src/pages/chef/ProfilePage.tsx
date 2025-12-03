@@ -11,7 +11,7 @@ import {
 } from "../../services/chef.service";
 import { useAuth } from "../../contexts/AuthContext";
 import { authService } from "../../services/auth.service";
-import editIcon from "../assets/edit.svg";
+import editIcon from "../../assets/edit.svg";
 import { DashboardSidebar } from "../../components/DashboardSidebar";
 import {
   userAddressService,
