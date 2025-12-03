@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
-import "../App.css";
+import "../../App.css";
 import "./Dashboard.css";
 import "./DashboardDark.css";
 import "./themes/AppointmentsPage.base.css";
