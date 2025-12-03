@@ -201,50 +201,11 @@ export const chefService = {
     const formData = new FormData();
     formData.append("file", file);
 
-    const token = localStorage.getItem("access_token");
-    const API_BASE_URL =
-      import.meta.env.VITE_API_BASE_URL || "https://api.chefnow.cloud";
-
-    const response = await fetch(`${API_BASE_URL}/user/profile/picture`, {
-      method: "PATCH",
+    return api.patch<{ url: string }>("/user/profile/picture", formData, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
       },
-      body: formData,
     });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({
-        message: "Erro ao fazer upload da foto",
-        statusCode: response.status,
-      }));
-
-      let errorMessage = Array.isArray(errorData.message)
-        ? errorData.message.join(", ")
-        : errorData.message || `Erro: ${response.status}`;
-
-      const errorLower = errorMessage.toLowerCase();
-
-      if (
-        errorLower.includes("file too large") ||
-        errorLower.includes("file size exceeds")
-      ) {
-        errorMessage =
-          "Arquivo muito grande. O tamanho máximo permitido é 50MB para fotos.";
-      } else if (
-        errorLower.includes("invalid file type") ||
-        errorLower.includes("file type not allowed")
-      ) {
-        errorMessage =
-          "Tipo de arquivo inválido. Use apenas imagens (JPEG, PNG, WebP ou AVIF).";
-      } else if (errorLower.includes("upload failed")) {
-        errorMessage = "Falha no upload da foto. Tente novamente.";
-      }
-
-      throw new Error(errorMessage);
-    }
-
-    return response.json();
   },
 
   async getMyGallery(): Promise<ChefGalleryPhoto[]> {
@@ -265,50 +226,11 @@ export const chefService = {
       formData.append("position", position.toString());
     }
 
-    const token = localStorage.getItem("access_token");
-    const API_BASE_URL =
-      import.meta.env.VITE_API_BASE_URL || "https://api.chefnow.cloud";
-
-    const response = await fetch(`${API_BASE_URL}/chefs/my-gallery`, {
-      method: "POST",
+    return api.post<ChefGalleryPhoto>("/chefs/my-gallery", formData, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
       },
-      body: formData,
     });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({
-        message: "Erro ao fazer upload da foto",
-        statusCode: response.status,
-      }));
-
-      let errorMessage = Array.isArray(errorData.message)
-        ? errorData.message.join(", ")
-        : errorData.message || `Erro: ${response.status}`;
-
-      const errorLower = errorMessage.toLowerCase();
-
-      if (
-        errorLower.includes("file too large") ||
-        errorLower.includes("file size exceeds")
-      ) {
-        errorMessage =
-          "Arquivo muito grande. O tamanho máximo permitido é 50MB para fotos.";
-      } else if (
-        errorLower.includes("invalid file type") ||
-        errorLower.includes("file type not allowed")
-      ) {
-        errorMessage =
-          "Tipo de arquivo inválido. Use apenas imagens (JPEG, PNG, WebP ou AVIF).";
-      } else if (errorLower.includes("upload failed")) {
-        errorMessage = "Falha no upload da foto. Tente novamente.";
-      }
-
-      throw new Error(errorMessage);
-    }
-
-    return response.json();
   },
 
   async deleteGalleryPhoto(photoId: number): Promise<void> {
@@ -361,86 +283,17 @@ export const chefService = {
     const formData = new FormData();
     formData.append("file", file);
 
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      throw new Error("Você precisa estar autenticado para fazer upload do cardápio.");
-    }
-
-    const API_BASE_URL =
-      import.meta.env.VITE_API_BASE_URL || "https://api.chefnow.cloud";
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000);
-
-    try {
-      let response;
-      try {
-        response = await fetch(`${API_BASE_URL}/chefs/my-menu`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-          signal: controller.signal,
-        });
-      } catch (fetchError: any) {
-        clearTimeout(timeoutId);
-        if (fetchError.name === 'AbortError') {
-          throw new Error("Tempo de espera excedido. O arquivo pode ser muito grande ou o servidor está lento.");
-        }
-        if (fetchError instanceof TypeError && fetchError.message.includes('fetch')) {
-          throw new Error("Erro de conexão. Verifique se o servidor está acessível e tente novamente.");
-        }
-        throw fetchError;
-      }
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch {
-          const textError = await response.text();
-          errorData = {
-            message: textError || `Erro ${response.status}: ${response.statusText}`,
-            statusCode: response.status,
-          };
-        }
-
-        let errorMessage = Array.isArray(errorData.message)
-          ? errorData.message.join(", ")
-          : errorData.message || `Erro: ${response.status}`;
-
-        if (response.status === 401 || response.status === 403) {
-          errorMessage = "Você não tem permissão para fazer upload do cardápio. Faça login novamente.";
-        } else if (response.status === 404) {
-          errorMessage = "Perfil de chef não encontrado. Verifique se você está cadastrado como chef.";
-        } else if (response.status >= 500) {
-          errorMessage = "Falha no upload do cardápio. Tente novamente mais tarde.";
-        }
-
-        throw new Error(errorMessage);
-      }
-
-      return await response.json();
-    } catch (err) {
-      clearTimeout(timeoutId);
-      
-      if (err instanceof Error && err.name === "AbortError") {
-        throw new Error("O upload demorou muito tempo. Verifique sua conexão e tente novamente com um arquivo menor.");
-      }
-      
-      if (err instanceof TypeError && (err.message.includes("fetch") || err.message.includes("Failed to fetch"))) {
-        throw new Error("Erro de conexão. Verifique sua internet e se o servidor está acessível.");
-      }
-      
-      if (err instanceof Error && (err.message.includes("NetworkError") || err.message.includes("network"))) {
-        throw new Error("Erro de rede. Verifique sua conexão com a internet.");
-      }
-      
-      throw err;
-    }
+    return api.post<{
+      url: string;
+      originalName: string;
+      mimeType: string;
+      sizeBytes: number;
+    }>("/chefs/my-menu", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      timeout: 120000,
+    });
   },
 
   async deleteMenu(): Promise<void> {

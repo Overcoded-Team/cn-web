@@ -1,145 +1,95 @@
+import axios, {
+  AxiosError,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from 'axios';
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "https://api.chefnow.cloud";
 
-export const api = {
+export interface AxiosErrorWithNormalized<T = any, D = any> extends AxiosError<T, D> {
+  normalized?: { status?: number; message: string };
+}
+
+const apiInstance = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 15000,
+  headers: {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  },
+});
 
-  async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const token = localStorage.getItem("access_token");
+apiInstance.interceptors.request.use(
+  async (config: InternalAxiosRequestConfig) => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers = config.headers ?? {};
+      if (!config.headers['Authorization']) {
+        (config.headers as any)['Authorization'] = `Bearer ${token}`;
+      }
+    }
+    return config;
+  }
+);
 
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      ...(options.headers as Record<string, string>),
+let handling401 = false;
+
+apiInstance.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  async (error: AxiosError) => {
+    const status = error.response?.status;
+
+    const raw = error.response?.data as { message?: string | string[] } | undefined;
+    const rawMsg = Array.isArray(raw?.message) ? raw?.message.join(', ') : raw?.message;
+    (error as AxiosErrorWithNormalized).normalized = {
+      status,
+      message: rawMsg ?? error.message ?? 'Erro inesperado',
     };
 
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+    if (status === 401 && !handling401) {
+      handling401 = true;
+      try {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user');
+        if (window.location.pathname !== '/') {
+          window.location.href = '/';
+        }
+      } finally {
+        setTimeout(() => { handling401 = false; }, 300);
+      }
     }
 
-    try {
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        ...options,
-        headers,
-      }).catch((fetchError) => {
-        if (fetchError.name === 'AbortError') {
-          throw new Error("Tempo de espera excedido. O servidor está demorando para responder.");
-        }
-        if (fetchError instanceof TypeError && (fetchError.message.includes('fetch') || fetchError.message.includes('Failed to fetch'))) {
-          throw new Error("Erro de conexão. Verifique se o servidor está acessível e tente novamente.");
-        }
-        throw fetchError;
-      });
+    return Promise.reject(error);
+  }
+);
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('user');
-          if (window.location.pathname !== '/') {
-            window.location.href = '/';
-          }
-          throw new Error("Sessão expirada. Por favor, faça login novamente.");
-        }
-
-        const errorData = await response.json().catch(() => ({
-          message: "Erro na requisição",
-          statusCode: response.status,
-        }));
-
-        let errorMessage = Array.isArray(errorData.message)
-          ? errorData.message.join(", ")
-          : errorData.message || `Erro: ${response.status}`;
-
-        const errorLower = errorMessage.toLowerCase();
-        
-        if (errorLower.includes("name is required")) errorMessage = "O nome é obrigatório";
-        else if (errorLower.includes("name can only have 100 characters")) errorMessage = "O nome pode ter no máximo 100 caracteres";
-        else if (errorLower.includes("name must have at least 3 characters")) errorMessage = "O nome deve ter pelo menos 3 caracteres";
-        else if (errorLower.includes("document is required")) errorMessage = "O documento é obrigatório";
-        else if (errorLower.includes("document can have at most 40 characters")) errorMessage = "O documento pode ter no máximo 40 caracteres";
-        else if (errorLower.includes("document must have at least 5 characters")) errorMessage = "O documento deve ter pelo menos 5 caracteres";
-        else if (errorLower.includes("document must be a valid")) errorMessage = "O documento deve ser um CPF, CNPJ ou ID estrangeiro válido";
-        else if (errorLower.includes("documenttype must be")) errorMessage = "O tipo de documento deve ser CPF, CNPJ ou ID_ESTRANGEIRO";
-        else if (errorLower.includes("invalid email format")) errorMessage = "Formato de e-mail inválido";
-        else if (errorLower.includes("email is required")) errorMessage = "O e-mail é obrigatório";
-        else if (errorLower.includes("email can only have 150")) errorMessage = "O e-mail pode ter no máximo 150 caracteres";
-        else if (errorLower.includes("email must be at least 3")) errorMessage = "O e-mail deve ter pelo menos 3 caracteres";
-        else if (errorLower.includes("role must be")) errorMessage = "O tipo de usuário deve ser CHEF ou CLIENT";
-        else if (errorLower.includes("password is required")) errorMessage = "A senha é obrigatória";
-        else if (errorLower.includes("password can only have 255")) errorMessage = "A senha pode ter no máximo 255 caracteres";
-        else if (errorLower.includes("password must be at least 7")) errorMessage = "A senha deve ter pelo menos 7 caracteres";
-        else if (errorLower.includes("you do not have permission")) errorMessage = "Você não tem permissão para realizar esta ação";
-        else if (errorLower.includes("invalid credentials")) errorMessage = "Credenciais inválidas";
-        else if (errorLower.includes("email already exists")) errorMessage = "Este e-mail já está cadastrado";
-        else if (errorLower.includes("user not found")) errorMessage = "Usuário não encontrado";
-        else if (errorLower.includes("file too large") || errorLower.includes("file size exceeds")) errorMessage = "Arquivo muito grande. Verifique o tamanho máximo permitido.";
-        else if (errorLower.includes("invalid file type") || errorLower.includes("file type not allowed")) errorMessage = "Tipo de arquivo inválido. Verifique os formatos permitidos.";
-        else if (errorLower.includes("upload failed")) errorMessage = "Falha no upload do arquivo. Tente novamente.";
-        else if (errorLower.includes("unauthorized")) errorMessage = "Sessão expirada. Por favor, faça login novamente.";
-        else if (errorLower.includes("forbidden")) errorMessage = "Acesso negado";
-        else if (errorLower.includes("not found")) errorMessage = "Não encontrado";
-        else if (errorLower.includes("internal server error")) errorMessage = "Erro interno do servidor";
-        else if (errorLower.includes("bad request")) errorMessage = "Requisição inválida";
-        else if (errorLower.includes("chef has another accepted") || errorLower.includes("scheduled job around this time") || (errorLower.includes("another") && errorLower.includes("accepted/scheduled job") && errorLower.includes("time"))) errorMessage = "Você já possui outro serviço aceito ou agendado próximo a este horário";
-
-        throw new Error(errorMessage);
-      }
-
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        return undefined as T;
-      }
-
-      const text = await response.text();
-      if (!text) {
-        return undefined as T;
-      }
-
-      return JSON.parse(text) as T;
-    } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("Erro desconhecido na requisição");
-    }
+export const apiRaw = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 15000,
+  headers: {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
   },
+});
 
-  get<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    return this.request<T>(endpoint, { ...options, method: "GET" });
+export const api = {
+  get baseURL() {
+    return API_BASE_URL;
   },
-
-  post<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
-    return this.request<T>(endpoint, {
-      ...options,
-      method: "POST",
-      body: data ? JSON.stringify(data) : undefined,
-    });
+  get<T>(endpoint: string, config?: any): Promise<T> {
+    return apiInstance.get<T>(endpoint, config).then(res => res.data);
   },
-
-  patch<T>(
-    endpoint: string,
-    data?: unknown,
-    options?: RequestInit
-  ): Promise<T> {
-    return this.request<T>(endpoint, {
-      ...options,
-      method: "PATCH",
-      body: data ? JSON.stringify(data) : undefined,
-    });
+  post<T>(endpoint: string, data?: any, config?: any): Promise<T> {
+    return apiInstance.post<T>(endpoint, data, config).then(res => res.data);
   },
-
-  put<T>(
-    endpoint: string,
-    data?: unknown,
-    options?: RequestInit
-  ): Promise<T> {
-    return this.request<T>(endpoint, {
-      ...options,
-      method: "PUT",
-      body: data ? JSON.stringify(data) : undefined,
-    });
+  patch<T>(endpoint: string, data?: any, config?: any): Promise<T> {
+    return apiInstance.patch<T>(endpoint, data, config).then(res => res.data);
   },
-
-  delete<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    return this.request<T>(endpoint, { ...options, method: "DELETE" });
+  put<T>(endpoint: string, data?: any, config?: any): Promise<T> {
+    return apiInstance.put<T>(endpoint, data, config).then(res => res.data);
+  },
+  delete<T>(endpoint: string, config?: any): Promise<T> {
+    return apiInstance.delete<T>(endpoint, config).then(res => res.data);
   },
 };
