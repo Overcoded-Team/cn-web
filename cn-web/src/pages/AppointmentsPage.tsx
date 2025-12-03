@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useState, useRef } from "react";
 import "../App.css";
 import "./Dashboard.css";
 import "./DashboardDark.css";
-import "./AppointmentsPage.css";
+import "./themes/AppointmentsPage.base.css";
+import "./themes/AppointmentsPage.dark.css";
+import "./themes/AppointmentsPage.light.css";
 import { ChatWindow } from "../components/ChatWindow";
 import { useAuth } from "../contexts/AuthContext";
 import chatIcon from "../assets/chat.svg";
@@ -12,6 +14,7 @@ import {
   ServiceRequest,
   ServiceRequestStatus,
 } from "../services/serviceRequest.service";
+import { formatCurrency } from "../utils/dataUtils";
 
 type Appointment = {
   id: string;
@@ -985,8 +988,7 @@ const AppointmentsPage: React.FC = () => {
                                 </div>
                                 {priceBRL > 0 && (
                                   <div className="pending-price">
-                                    Valor: R${" "}
-                                    {priceBRL.toFixed(2).replace(".", ",")}
+                                    Valor: {formatCurrency(priceCents)}
                                   </div>
                                 )}
                               </div>
@@ -1089,7 +1091,7 @@ const AppointmentsPage: React.FC = () => {
                                 {formatDateTimeBR(a.requestedDate)}
                               </div>
                               <div className="appt-price">
-                                R$ {a.priceBRL.toFixed(2).replace(".", ",")}
+                                {formatCurrency(a.priceBRL * 100)}
                               </div>
                               {(a.status === ServiceRequestStatus.SCHEDULED ||
                                 a.status ===

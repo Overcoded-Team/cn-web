@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import "./Dashboard.css";
 import "./DashboardDark.css";
+import "./themes/Dashboard.light.css";
 import estrelaInteira from "../assets/estrelainteira.png";
 import meiaEstrela from "../assets/meiaestrela.png";
 import estrelaVazia from "../assets/estrelavazia.png";
@@ -18,6 +19,7 @@ import {
   WalletEntry,
   ChefPayout,
 } from "../services/chef-wallet.service";
+import { formatCurrency, formatDate, calculatePercentage } from "../utils/dataUtils";
 
 const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -288,27 +290,13 @@ const Dashboard: React.FC = () => {
     const totalCancelled = cancelledRequests.length;
     const totalPending = pendingRequests.length;
 
-    const greenPercent =
-      totalRequests > 0
-        ? Math.round((totalCompleted / totalRequests) * 100)
-        : 0;
-    const orangePercent =
-      totalRequests > 0 ? Math.round((totalPending / totalRequests) * 100) : 0;
-    const redPercent =
-      totalRequests > 0
-        ? Math.round((totalCancelled / totalRequests) * 100)
-        : 0;
+    const greenPercent = calculatePercentage(totalCompleted, totalRequests);
+    const orangePercent = calculatePercentage(totalPending, totalRequests);
+    const redPercent = calculatePercentage(totalCancelled, totalRequests);
 
-    const progressAtendidos =
-      totalRequests > 0
-        ? Math.round((totalCompleted / totalRequests) * 100)
-        : 0;
-    const progressPendentes =
-      totalRequests > 0 ? Math.round((totalPending / totalRequests) * 100) : 0;
-    const progressCancelados =
-      totalRequests > 0
-        ? Math.round((totalCancelled / totalRequests) * 100)
-        : 0;
+    const progressAtendidos = calculatePercentage(totalCompleted, totalRequests);
+    const progressPendentes = calculatePercentage(totalPending, totalRequests);
+    const progressCancelados = calculatePercentage(totalCancelled, totalRequests);
 
     const monthlyEarnings = Array.from({ length: 12 }, (_, monthIndex) => {
       const monthStart = new Date(selectedYear, monthIndex, 1);
@@ -577,29 +565,8 @@ const Dashboard: React.FC = () => {
     loadWalletData();
   };
 
-  const formatCurrency = (cents: number): string => {
-    return `R$ ${(cents / 100).toLocaleString("pt-BR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  };
-
   const formatCurrencyFromReais = (reais: number): string => {
-    return `R$ ${reais.toLocaleString("pt-BR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  };
-
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return formatCurrency(reais * 100);
   };
 
   const getPayoutStatusLabel = (status: string): string => {
