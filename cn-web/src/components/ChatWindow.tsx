@@ -48,6 +48,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [sequentialNumber, setSequentialNumber] = useState<number | null>(null);
   const [showEditQuoteModal, setShowEditQuoteModal] = useState(false);
+  const [isSendingQuote, setIsSendingQuote] = useState(false);
   const [serviceRequestDetails, setServiceRequestDetails] =
     useState<ServiceRequest | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
@@ -111,7 +112,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     const loadServiceRequestDetails = async () => {
       if (
         showEditQuoteModal &&
-        status === ServiceRequestStatus.QUOTE_SENT &&
+        (status === ServiceRequestStatus.QUOTE_SENT ||
+          status === ServiceRequestStatus.ACCEPTED_BY_CHEF) &&
         currentUserRole === "CHEF"
       ) {
         setIsLoadingDetails(true);
@@ -131,6 +133,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 .replace(".", ",");
               setEditQuoteAmount(amountInReais);
               setEditQuoteNotes(request.quote.notes || "");
+            } else {
+              setEditQuoteAmount("");
+              setEditQuoteNotes("");
             }
           }
         } catch (err) {
@@ -249,6 +254,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const handleOpenEditQuoteModal = () => {
     setShowEditQuoteModal(true);
     setEditQuoteError("");
+    setIsSendingQuote(status === ServiceRequestStatus.ACCEPTED_BY_CHEF);
   };
 
   const handleCloseEditQuoteModal = () => {
@@ -257,6 +263,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     setEditQuoteAmount("");
     setEditQuoteNotes("");
     setEditQuoteError("");
+    setIsSendingQuote(false);
   };
 
   const formatDateTimeBR = (date: Date | string): string => {
@@ -383,14 +390,21 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           </div>
         </div>
         <div className="chat-header-actions">
-          {status === ServiceRequestStatus.QUOTE_SENT &&
-            currentUserRole === "CHEF" && (
+          {((status === ServiceRequestStatus.QUOTE_SENT ||
+            status === ServiceRequestStatus.ACCEPTED_BY_CHEF) &&
+            currentUserRole === "CHEF") && (
               <button
                 className="chat-edit-quote-button"
                 onClick={handleOpenEditQuoteModal}
-                title="Editar Orçamento"
+                title={
+                  status === ServiceRequestStatus.QUOTE_SENT
+                    ? "Editar Orçamento"
+                    : "Enviar Orçamento"
+                }
               >
-                Editar Orçamento
+                {status === ServiceRequestStatus.QUOTE_SENT
+                  ? "Editar Orçamento"
+                  : "Enviar Orçamento"}
               </button>
             )}
           {onClose && (
@@ -739,7 +753,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="chat-edit-quote-modal-header">
-              <h2 className="chat-edit-quote-modal-title">Editar Orçamento</h2>
+              <h2 className="chat-edit-quote-modal-title">
+                {isSendingQuote ? "Enviar Orçamento" : "Editar Orçamento"}
+              </h2>
               <button
                 className="chat-edit-quote-modal-close"
                 onClick={handleCloseEditQuoteModal}
@@ -885,7 +901,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   isUpdatingQuote || !editQuoteAmount || isLoadingDetails
                 }
               >
-                {isUpdatingQuote ? "Atualizando..." : "Atualizar Orçamento"}
+                {isUpdatingQuote
+                  ? isSendingQuote
+                    ? "Enviando..."
+                    : "Atualizando..."
+                  : isSendingQuote
+                  ? "Enviar Orçamento"
+                  : "Atualizar Orçamento"}
               </button>
             </div>
           </div>
