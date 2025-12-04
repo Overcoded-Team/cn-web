@@ -19,7 +19,7 @@ html::-webkit-scrollbar {
 body {
   font-family: "Inter", sans-serif;
   line-height: 1.6;
-  color: #333;
+  color: white;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -32,7 +32,7 @@ body::-webkit-scrollbar {
 body:has(.dashboard-dark-layout),
 body.dashboard-dark-layout,
 body.dashboard-dark {
-  background: #1a1d24 !important;
+  background: white !important;
 }
 
 section[id] {

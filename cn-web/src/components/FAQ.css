@@ -1,5 +1,6 @@
 .faq-section {
   background: #ffffff;
+  background-color: #ffffff;
   padding: 4rem 2rem;
   max-width: 1200px;
   margin: 0 auto;
@@ -57,7 +58,7 @@
 .faq-question {
   width: 100%;
   padding: 1.5rem;
-  background: transparent;
+  background: white;
   border: none;
   border-bottom: none;
   text-align: left;
