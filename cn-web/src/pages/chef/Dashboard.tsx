@@ -729,6 +729,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           <div
+            className="dashboard-cards-container"
             style={{
               display: "flex",
               gap: "1rem",

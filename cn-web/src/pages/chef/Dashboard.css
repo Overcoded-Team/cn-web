@@ -1699,3 +1699,37 @@
     width: 100%;
   }
 }
+
+/* Ajuste de responsividade para os cards do dashboard */
+.dashboard-cards-container {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Quando o card de meta vai para baixo (telas menores), os dois cards de cima se esticam */
+@media (max-width: 1200px) {
+  .dashboard-cards-container > .card.ganhos-card {
+    flex: 1 1 calc(50% - 0.5rem) !important;
+    max-width: none !important;
+  }
+  
+  .dashboard-cards-container > .dashboard-dark-card:not(.dashboard-dark-progress-card) {
+    flex: 1 1 calc(50% - 0.5rem) !important;
+    max-width: none !important;
+  }
+  
+  .dashboard-cards-container > .dashboard-dark-progress-card {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Para telas muito pequenas, todos os cards vão para baixo */
+@media (max-width: 768px) {
+  .dashboard-cards-container > .card.ganhos-card,
+  .dashboard-cards-container > .dashboard-dark-card {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+  }
+}

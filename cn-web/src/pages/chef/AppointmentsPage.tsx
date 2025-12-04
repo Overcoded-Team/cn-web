@@ -74,7 +74,7 @@ const AppointmentsPage: React.FC = () => {
   const [quoteNotes, setQuoteNotes] = useState<string>("");
   const [isSendingQuote, setIsSendingQuote] = useState<boolean>(false);
   const { user } = useAuth();
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
+  const [theme] = useState<"dark" | "light">(() => {
     const savedTheme = localStorage.getItem("dashboard-theme");
     return (savedTheme as "dark" | "light") || "dark";
   });
@@ -773,10 +773,6 @@ const AppointmentsPage: React.FC = () => {
     }
   };
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-  };
-
   useEffect(() => {
     localStorage.setItem("dashboard-theme", theme);
   }, [theme]);
@@ -803,30 +799,6 @@ const AppointmentsPage: React.FC = () => {
             >
               Agendamentos
             </h1>
-            <div className="theme-toggle-container">
-              <span className="theme-toggle-label">Tema</span>
-              <button
-                className={`theme-toggle-switch ${
-                  theme === "light" ? "theme-toggle-on" : "theme-toggle-off"
-                }`}
-                onClick={toggleTheme}
-                title={
-                  theme === "dark"
-                    ? "Alternar para tema claro"
-                    : "Alternar para tema escuro"
-                }
-                type="button"
-                role="switch"
-                aria-checked={theme === "light"}
-                aria-label={
-                  theme === "dark"
-                    ? "Alternar para tema claro"
-                    : "Alternar para tema escuro"
-                }
-              >
-                <span className="theme-toggle-slider"></span>
-              </button>
-            </div>
           </div>
           <div className="appointments-tabs">
             <div className="tabs-header">
