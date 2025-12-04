@@ -83,19 +83,13 @@ const AppointmentsPage: React.FC = () => {
     return (savedTheme as "dark" | "light") || "dark";
   });
   const [activeTab, setActiveTab] = useState<
-    "solicitacoes" | "pendentes" | "confirmados"
-  >("solicitacoes");
-  const [hasPendingNotification, setHasPendingNotification] =
-    useState<boolean>(false);
-  const [hasAwaitingClientNotification, setHasAwaitingClientNotification] =
-    useState<boolean>(false);
-  const [hasConfirmedNotification, setHasConfirmedNotification] =
-    useState<boolean>(false);
-
-  const prevPendingCountRef = useRef<number>(-1);
-  const prevAwaitingClientCountRef = useRef<number>(-1);
-  const prevConfirmedCountRef = useRef<number>(-1);
-  const isInitialLoadRef = useRef<boolean>(true);
+    | "todos"
+    | "solicitacoes"
+    | "em-andamento"
+    | "agendados"
+    | "concluidos"
+    | "cancelado"
+  >("todos");
 
   const dateToISOString = (date: Date | string): string => {
     let d: Date;
@@ -120,19 +114,8 @@ const AppointmentsPage: React.FC = () => {
           1000
         );
 
-        const confirmedStatuses = [
-          ServiceRequestStatus.SCHEDULED,
-          ServiceRequestStatus.PAYMENT_CONFIRMED,
-          ServiceRequestStatus.QUOTE_ACCEPTED,
-          ServiceRequestStatus.PAYMENT_PENDING,
-        ];
-
         const allRequests = response.items || [];
         setAllChefRequests(allRequests);
-
-        const filteredRequests = allRequests.filter((req: ServiceRequest) =>
-          confirmedStatuses.includes(req.status)
-        );
 
         const pending = allRequests.filter(
           (req: ServiceRequest) =>
@@ -146,7 +129,7 @@ const AppointmentsPage: React.FC = () => {
         );
         setPendingClientApproval(pendingApproval);
 
-        const mappedAppointments: Appointment[] = filteredRequests.map(
+        const mappedAppointments: Appointment[] = allRequests.map(
           (req: ServiceRequest) => {
             const requestedDateStr = String(req.requested_date);
             let dateStr = requestedDateStr;
@@ -216,70 +199,6 @@ const AppointmentsPage: React.FC = () => {
 
     loadAppointments();
   }, []);
-
-  useEffect(() => {
-    if (isInitialLoadRef.current) {
-      prevPendingCountRef.current = pendingRequests.length;
-      prevAwaitingClientCountRef.current = pendingClientApproval.length;
-      prevConfirmedCountRef.current = appointments.length;
-      isInitialLoadRef.current = false;
-      return;
-    }
-
-    const currentPendingCount = pendingRequests.length;
-    const currentAwaitingClientCount = pendingClientApproval.length;
-    const currentConfirmedCount = appointments.length;
-
-    if (
-      currentPendingCount > prevPendingCountRef.current &&
-      activeTab !== "solicitacoes" &&
-      prevPendingCountRef.current >= 0
-    ) {
-      setHasPendingNotification(true);
-    }
-    prevPendingCountRef.current = currentPendingCount;
-
-    if (
-      currentAwaitingClientCount > prevAwaitingClientCountRef.current &&
-      activeTab !== "pendentes" &&
-      prevAwaitingClientCountRef.current >= 0
-    ) {
-      setHasAwaitingClientNotification(true);
-    }
-    prevAwaitingClientCountRef.current = currentAwaitingClientCount;
-
-    if (
-      currentConfirmedCount > prevConfirmedCountRef.current &&
-      activeTab !== "confirmados" &&
-      prevConfirmedCountRef.current >= 0
-    ) {
-      setHasConfirmedNotification(true);
-    }
-    prevConfirmedCountRef.current = currentConfirmedCount;
-  }, [
-    pendingRequests.length,
-    pendingClientApproval.length,
-    appointments.length,
-    activeTab,
-  ]);
-
-  useEffect(() => {
-    if (activeTab === "solicitacoes") {
-      setHasPendingNotification(false);
-    }
-  }, [activeTab]);
-
-  useEffect(() => {
-    if (activeTab === "pendentes") {
-      setHasAwaitingClientNotification(false);
-    }
-  }, [activeTab]);
-
-  useEffect(() => {
-    if (activeTab === "confirmados") {
-      setHasConfirmedNotification(false);
-    }
-  }, [activeTab]);
 
   const monthName = useMemo(() => {
     return new Date(currentYear, currentMonth, 1).toLocaleString("pt-BR", {
@@ -399,32 +318,41 @@ const AppointmentsPage: React.FC = () => {
     return appointments.find((a) => a.dateISO === selectedDateISO) || null;
   }, [appointments, selectedDateISO, selectedAppointmentId]);
 
-  const sortedPendingRequests = useMemo(() => {
-    const now = new Date().getTime();
-    const sorted = [...pendingRequests].sort((a, b) => {
-      const dateA = new Date(a.requested_date).getTime();
-      const dateB = new Date(b.requested_date).getTime();
-      const diffA = Math.abs(dateA - now);
-      const diffB = Math.abs(dateB - now);
-      return diffA - diffB;
-    });
-    return sorted;
-  }, [pendingRequests]);
-
-  const sortedPendingClientApproval = useMemo(() => {
-    const now = new Date().getTime();
-    const sorted = [...pendingClientApproval].sort((a, b) => {
-      const dateA = new Date(a.requested_date).getTime();
-      const dateB = new Date(b.requested_date).getTime();
-      const diffA = Math.abs(dateA - now);
-      const diffB = Math.abs(dateB - now);
-      return diffA - diffB;
-    });
-    return sorted;
-  }, [pendingClientApproval]);
-
   const confirmedSorted = useMemo(() => {
     let filtered = [...appointments];
+
+    if (activeTab === "solicitacoes") {
+      filtered = filtered.filter(
+        (a) => a.status === ServiceRequestStatus.PENDING_CHEF_REVIEW
+      );
+    } else if (activeTab === "em-andamento") {
+      filtered = filtered.filter((a) =>
+        [
+          ServiceRequestStatus.ACCEPTED_BY_CHEF,
+          ServiceRequestStatus.QUOTE_SENT,
+          ServiceRequestStatus.QUOTE_ACCEPTED,
+          ServiceRequestStatus.PAYMENT_PENDING,
+        ].includes(a.status)
+      );
+    } else if (activeTab === "agendados") {
+      filtered = filtered.filter((a) =>
+        [
+          ServiceRequestStatus.SCHEDULED,
+          ServiceRequestStatus.PAYMENT_CONFIRMED,
+        ].includes(a.status)
+      );
+    } else if (activeTab === "concluidos") {
+      filtered = filtered.filter(
+        (a) => a.status === ServiceRequestStatus.COMPLETED
+      );
+    } else if (activeTab === "cancelado") {
+      filtered = filtered.filter((a) =>
+        [
+          ServiceRequestStatus.CANCELLED,
+          ServiceRequestStatus.REJECTED_BY_CHEF,
+        ].includes(a.status)
+      );
+    }
 
     if (filterByDate) {
       const dateISO = dateToISOString(selectedDate);
@@ -450,7 +378,7 @@ const AppointmentsPage: React.FC = () => {
         return diffA - diffB;
       });
     }
-  }, [appointments, filterByDate, selectedDate]);
+  }, [appointments, filterByDate, selectedDate, activeTab]);
 
   const handleAcceptRequest = async (requestId: number) => {
     if (!confirm("Tem certeza que deseja aceitar este pedido?")) {
@@ -468,17 +396,8 @@ const AppointmentsPage: React.FC = () => {
         1000
       );
 
-      const confirmedStatuses = [
-        ServiceRequestStatus.SCHEDULED,
-        ServiceRequestStatus.PAYMENT_CONFIRMED,
-        ServiceRequestStatus.QUOTE_ACCEPTED,
-        ServiceRequestStatus.PAYMENT_PENDING,
-      ];
-
       const allRequests = response.items || [];
-      const filteredRequests = allRequests.filter((req: ServiceRequest) =>
-        confirmedStatuses.includes(req.status)
-      );
+      setAllChefRequests(allRequests);
 
       const pending = allRequests.filter(
         (req: ServiceRequest) =>
@@ -491,7 +410,7 @@ const AppointmentsPage: React.FC = () => {
       );
       setPendingClientApproval(pendingApproval);
 
-      const mappedAppointments: Appointment[] = filteredRequests.map(
+      const mappedAppointments: Appointment[] = allRequests.map(
         (req: ServiceRequest) => {
           const requestedDateStr = String(req.requested_date);
           let dateStr = requestedDateStr;
@@ -505,11 +424,21 @@ const AppointmentsPage: React.FC = () => {
             dateStr = dateStr + "Z";
           }
           const requestedDate = new Date(dateStr);
-          const normalizedDate = new Date(
+          const normalizedDateForComparison = new Date(
             Date.UTC(
               requestedDate.getUTCFullYear(),
               requestedDate.getUTCMonth(),
               requestedDate.getUTCDate()
+            )
+          );
+          const requestedDateWithTime = new Date(
+            Date.UTC(
+              requestedDate.getUTCFullYear(),
+              requestedDate.getUTCMonth(),
+              requestedDate.getUTCDate(),
+              requestedDate.getUTCHours(),
+              requestedDate.getUTCMinutes(),
+              requestedDate.getUTCSeconds()
             )
           );
 
@@ -528,8 +457,8 @@ const AppointmentsPage: React.FC = () => {
             clientProfilePicture,
             address: req.location,
             serviceType: req.service_type,
-            dateISO: dateToISOString(normalizedDate),
-            requestedDate: normalizedDate,
+            dateISO: dateToISOString(normalizedDateForComparison),
+            requestedDate: requestedDateWithTime,
             expectedDurationMinutes: req.expected_duration_minutes,
             priceBRL,
             observation: req.quote?.notes,
@@ -540,8 +469,15 @@ const AppointmentsPage: React.FC = () => {
       );
 
       setAppointments(mappedAppointments);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao aceitar pedido");
+      alert("Pedido aceito com sucesso!");
+    } catch (err: any) {
+      const errorMessage =
+        err?.normalized?.message ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Erro ao aceitar pedido";
+      setError(errorMessage);
+      alert(`Erro: ${errorMessage}`);
     } finally {
       setIsProcessing(false);
     }
@@ -568,6 +504,8 @@ const AppointmentsPage: React.FC = () => {
       );
 
       const allRequests = response.items || [];
+      setAllChefRequests(allRequests);
+
       const pending = allRequests.filter(
         (req: ServiceRequest) =>
           req.status === ServiceRequestStatus.PENDING_CHEF_REVIEW
@@ -578,8 +516,75 @@ const AppointmentsPage: React.FC = () => {
         (req: ServiceRequest) => req.status === ServiceRequestStatus.QUOTE_SENT
       );
       setPendingClientApproval(pendingApproval);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao rejeitar pedido");
+
+      const mappedAppointments: Appointment[] = allRequests.map(
+        (req: ServiceRequest) => {
+          const requestedDateStr = String(req.requested_date);
+          let dateStr = requestedDateStr;
+          if (!dateStr.includes("T")) {
+            dateStr = dateStr + "T00:00:00Z";
+          } else if (
+            !dateStr.includes("Z") &&
+            !dateStr.includes("+") &&
+            !dateStr.includes("-", 10)
+          ) {
+            dateStr = dateStr + "Z";
+          }
+          const requestedDate = new Date(dateStr);
+          const normalizedDateForComparison = new Date(
+            Date.UTC(
+              requestedDate.getUTCFullYear(),
+              requestedDate.getUTCMonth(),
+              requestedDate.getUTCDate()
+            )
+          );
+          const requestedDateWithTime = new Date(
+            Date.UTC(
+              requestedDate.getUTCFullYear(),
+              requestedDate.getUTCMonth(),
+              requestedDate.getUTCDate(),
+              requestedDate.getUTCHours(),
+              requestedDate.getUTCMinutes(),
+              requestedDate.getUTCSeconds()
+            )
+          );
+
+          const clientName = req.client_profile?.user?.name || "Cliente";
+          const clientEmail = req.client_profile?.user?.email;
+          const clientProfilePicture =
+            req.client_profile?.user?.profilePictureUrl;
+          const priceCents = req.quote?.amount_cents || 0;
+          const priceBRL = priceCents / 100;
+
+          return {
+            id: `appt-${req.id}`,
+            serviceRequestId: req.id,
+            clientName,
+            clientEmail,
+            clientProfilePicture,
+            address: req.location,
+            serviceType: req.service_type,
+            dateISO: dateToISOString(normalizedDateForComparison),
+            requestedDate: requestedDateWithTime,
+            expectedDurationMinutes: req.expected_duration_minutes,
+            priceBRL,
+            observation: req.quote?.notes,
+            description: req.description,
+            status: req.status,
+          };
+        }
+      );
+
+      setAppointments(mappedAppointments);
+      alert("Pedido rejeitado com sucesso!");
+    } catch (err: any) {
+      const errorMessage =
+        err?.normalized?.message ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Erro ao rejeitar pedido";
+      setError(errorMessage);
+      alert(`Erro: ${errorMessage}`);
     } finally {
       setIsProcessing(false);
     }
@@ -675,21 +680,10 @@ const AppointmentsPage: React.FC = () => {
         1000
       );
 
-      const confirmedStatuses = [
-        ServiceRequestStatus.SCHEDULED,
-        ServiceRequestStatus.PAYMENT_CONFIRMED,
-        ServiceRequestStatus.QUOTE_ACCEPTED,
-        ServiceRequestStatus.PAYMENT_PENDING,
-      ];
-
       const allRequests = response.items || [];
       setAllChefRequests(allRequests);
 
-      const filteredRequests = allRequests.filter((req: ServiceRequest) =>
-        confirmedStatuses.includes(req.status)
-      );
-
-      const mappedAppointments: Appointment[] = filteredRequests.map(
+      const mappedAppointments: Appointment[] = allRequests.map(
         (req: ServiceRequest) => {
           const requestedDateStr = String(req.requested_date);
           let dateStr = requestedDateStr;
@@ -703,11 +697,21 @@ const AppointmentsPage: React.FC = () => {
             dateStr = dateStr + "Z";
           }
           const requestedDate = new Date(dateStr);
-          const normalizedDate = new Date(
+          const normalizedDateForComparison = new Date(
             Date.UTC(
               requestedDate.getUTCFullYear(),
               requestedDate.getUTCMonth(),
               requestedDate.getUTCDate()
+            )
+          );
+          const requestedDateWithTime = new Date(
+            Date.UTC(
+              requestedDate.getUTCFullYear(),
+              requestedDate.getUTCMonth(),
+              requestedDate.getUTCDate(),
+              requestedDate.getUTCHours(),
+              requestedDate.getUTCMinutes(),
+              requestedDate.getUTCSeconds()
             )
           );
 
@@ -726,8 +730,8 @@ const AppointmentsPage: React.FC = () => {
             clientProfilePicture,
             address: req.location,
             serviceType: req.service_type,
-            dateISO: dateToISOString(normalizedDate),
-            requestedDate: normalizedDate,
+            dateISO: dateToISOString(normalizedDateForComparison),
+            requestedDate: requestedDateWithTime,
             expectedDurationMinutes: req.expected_duration_minutes,
             priceBRL,
             observation: req.quote?.notes,
@@ -822,214 +826,61 @@ const AppointmentsPage: React.FC = () => {
             <div className="tabs-header">
               <button
                 className={`tab-button ${
+                  activeTab === "todos" ? "active" : ""
+                }`}
+                onClick={() => setActiveTab("todos")}
+              >
+                Todos
+              </button>
+              <button
+                className={`tab-button ${
                   activeTab === "solicitacoes" ? "active" : ""
                 }`}
                 onClick={() => setActiveTab("solicitacoes")}
               >
                 Solicitações
-                {hasPendingNotification && activeTab !== "solicitacoes" && (
-                  <span className="tab-notification-badge">
-                    <span className="notification-dot"></span>
-                  </span>
-                )}
               </button>
               <button
                 className={`tab-button ${
-                  activeTab === "pendentes" ? "active" : ""
+                  activeTab === "em-andamento" ? "active" : ""
                 }`}
-                onClick={() => setActiveTab("pendentes")}
+                onClick={() => setActiveTab("em-andamento")}
               >
-                Pendentes
-                {hasAwaitingClientNotification && activeTab !== "pendentes" && (
-                  <span className="tab-notification-badge">
-                    <span className="notification-dot"></span>
-                  </span>
-                )}
+                Em andamento
               </button>
               <button
                 className={`tab-button ${
-                  activeTab === "confirmados" ? "active" : ""
+                  activeTab === "agendados" ? "active" : ""
                 }`}
-                onClick={() => setActiveTab("confirmados")}
+                onClick={() => setActiveTab("agendados")}
               >
-                Confirmados
-                {hasConfirmedNotification && activeTab !== "confirmados" && (
-                  <span className="tab-notification-badge">
-                    <span className="notification-dot"></span>
-                  </span>
-                )}
+                Agendados
+              </button>
+              <button
+                className={`tab-button ${
+                  activeTab === "concluidos" ? "active" : ""
+                }`}
+                onClick={() => setActiveTab("concluidos")}
+              >
+                Concluídos
+              </button>
+              <button
+                className={`tab-button ${
+                  activeTab === "cancelado" ? "active" : ""
+                }`}
+                onClick={() => setActiveTab("cancelado")}
+              >
+                Cancelado
               </button>
             </div>
 
             <div className="tabs-content">
-              {activeTab === "solicitacoes" && (
-                <div className="tab-panel">
-                  {isLoading ? (
-                    <div className="empty-state">Carregando...</div>
-                  ) : pendingRequests.length === 0 ? (
-                    <div className="empty-state">Nenhum pedido pendente.</div>
-                  ) : (
-                    <div className="pending-requests-list">
-                      {sortedPendingRequests.map((req) => {
-                        const requestedDate = new Date(req.requested_date);
-                        const clientName =
-                          req.client_profile?.user?.name || "Cliente";
-                        const clientProfilePicture =
-                          req.client_profile?.user?.profilePictureUrl;
-
-                        return (
-                          <div key={req.id} className="pending-request-card">
-                            <div className="pending-card-left">
-                              {clientProfilePicture ? (
-                                <img
-                                  src={clientProfilePicture}
-                                  alt={clientName}
-                                  className="pending-client-avatar"
-                                />
-                              ) : (
-                                <div className="pending-client-avatar-placeholder">
-                                  {clientName.charAt(0).toUpperCase()}
-                                </div>
-                              )}
-                              <div className="pending-info">
-                                <div className="pending-code">
-                                  #
-                                  {requestSequentialNumbers.get(req.id) ||
-                                    req.id}
-                                </div>
-                                <div className="pending-client">
-                                  {clientName}
-                                </div>
-                                <div className="pending-service-type">
-                                  {req.service_type}
-                                </div>
-                                <div className="pending-date">
-                                  {formatDateTimeBR(requestedDate)}
-                                </div>
-                                <div className="pending-address">
-                                  {req.location}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="pending-card-actions">
-                              <button
-                                className="accept-button"
-                                onClick={() => handleAcceptRequest(req.id)}
-                                disabled={isProcessing}
-                              >
-                                Aceitar
-                              </button>
-                              <button
-                                className="reject-button"
-                                onClick={() => handleRejectRequest(req.id)}
-                                disabled={isProcessing}
-                              >
-                                Rejeitar
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === "pendentes" && (
-                <div className="tab-panel">
-                  {isLoading ? (
-                    <div className="empty-state">Carregando...</div>
-                  ) : sortedPendingClientApproval.length === 0 ? (
-                    <div className="empty-state">
-                      Nenhum pedido aguardando aprovação do cliente.
-                    </div>
-                  ) : (
-                    <div className="pending-requests-list">
-                      {sortedPendingClientApproval.map((req) => {
-                        const requestedDate = new Date(req.requested_date);
-                        const clientName =
-                          req.client_profile?.user?.name || "Cliente";
-                        const clientProfilePicture =
-                          req.client_profile?.user?.profilePictureUrl;
-                        const priceCents = req.quote?.amount_cents || 0;
-                        const priceBRL = priceCents / 100;
-
-                        return (
-                          <div key={req.id} className="pending-request-card">
-                            <div className="pending-card-left">
-                              {clientProfilePicture ? (
-                                <img
-                                  src={clientProfilePicture}
-                                  alt={clientName}
-                                  className="pending-client-avatar"
-                                />
-                              ) : (
-                                <div className="pending-client-avatar-placeholder">
-                                  {clientName.charAt(0).toUpperCase()}
-                                </div>
-                              )}
-                              <div className="pending-info">
-                                <div className="pending-code">
-                                  #
-                                  {requestSequentialNumbers.get(req.id) ||
-                                    req.id}
-                                </div>
-                                <div className="pending-client">
-                                  {clientName}
-                                </div>
-                                <div className="pending-service-type">
-                                  {req.service_type}
-                                </div>
-                                <div className="pending-date">
-                                  {formatDateTimeBR(requestedDate)}
-                                </div>
-                                <div className="pending-address">
-                                  {req.location}
-                                </div>
-                                {priceBRL > 0 && (
-                                  <div className="pending-price">
-                                    Valor: {formatCurrency(priceCents)}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            <div className="pending-card-actions">
-                              <button
-                                className="send-quote-button"
-                                onClick={() => handleOpenQuoteModal(req)}
-                                disabled={isProcessing || isSendingQuote}
-                              >
-                                Enviar Orçamento
-                              </button>
-                            </div>
-                            <button
-                              className="pending-chat-fab"
-                              aria-label="Abrir chat"
-                              onClick={() => {
-                                setChatContext({
-                                  serviceRequestId: req.id,
-                                  status: req.status,
-                                  participantName: clientName,
-                                  participantAvatarUrl: clientProfilePicture,
-                                });
-                                setShowChatModal(true);
-                              }}
-                            >
-                              <img
-                                src={chatIcon}
-                                alt=""
-                                className="chat-icon"
-                              />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === "confirmados" && (
+              {(activeTab === "todos" ||
+                activeTab === "solicitacoes" ||
+                activeTab === "em-andamento" ||
+                activeTab === "agendados" ||
+                activeTab === "concluidos" ||
+                activeTab === "cancelado") && (
                 <div className="appointments-grid">
                   <section className="appointments-list-section">
                     {isLoading ? (
@@ -1040,7 +891,7 @@ const AppointmentsPage: React.FC = () => {
                       <div className="empty-state">
                         {filterByDate
                           ? "Sem serviços agendados nesta data"
-                          : "Nenhum agendamento confirmado."}
+                          : "Nenhum agendamento encontrado."}
                       </div>
                     ) : (
                       <ul className="appointments-list">
@@ -1093,6 +944,48 @@ const AppointmentsPage: React.FC = () => {
                               <div className="appt-price">
                                 {formatCurrency(a.priceBRL * 100)}
                               </div>
+                              {a.status ===
+                                ServiceRequestStatus.PENDING_CHEF_REVIEW && (
+                                <>
+                                  <button
+                                    className="accept-button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAcceptRequest(a.serviceRequestId);
+                                    }}
+                                    disabled={isProcessing}
+                                  >
+                                    Aceitar
+                                  </button>
+                                  <button
+                                    className="reject-button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleRejectRequest(a.serviceRequestId);
+                                    }}
+                                    disabled={isProcessing}
+                                  >
+                                    Rejeitar
+                                  </button>
+                                </>
+                              )}
+                              {a.status === ServiceRequestStatus.QUOTE_SENT && (
+                                <button
+                                  className="send-quote-button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const req = allChefRequests.find(
+                                      (r) => r.id === a.serviceRequestId
+                                    );
+                                    if (req) {
+                                      handleOpenQuoteModal(req);
+                                    }
+                                  }}
+                                  disabled={isProcessing || isSendingQuote}
+                                >
+                                  Enviar Orçamento
+                                </button>
+                              )}
                               {(a.status === ServiceRequestStatus.SCHEDULED ||
                                 a.status ===
                                   ServiceRequestStatus.PAYMENT_CONFIRMED) && (
