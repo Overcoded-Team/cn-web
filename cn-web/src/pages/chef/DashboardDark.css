@@ -1,9 +1,20 @@
 @import url("https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap");
 
 body:has(.dashboard-dark-layout),
-body:has(.dashboard-light),
-body:has(.dashboard-dark) {
+body:has(.dashboard-dark),
+body.dashboard-dark-layout,
+body.dashboard-dark {
   background: #1a1d24 !important;
+  overflow-x: hidden !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+body:has(.dashboard-light),
+body.dashboard-light {
+  background: #f5f7fa !important;
   overflow-x: hidden !important;
   width: 100% !important;
   max-width: 100vw !important;
@@ -13,7 +24,12 @@ body:has(.dashboard-dark) {
 
 body:has(.dashboard-dark-layout)::-webkit-scrollbar,
 body:has(.dashboard-light)::-webkit-scrollbar,
-body:has(.dashboard-dark)::-webkit-scrollbar {
+body:has(.dashboard-dark)::-webkit-scrollbar,
+body.dashboard-dark-layout::-webkit-scrollbar,
+body.dashboard-light::-webkit-scrollbar,
+body.dashboard-dark::-webkit-scrollbar,
+body:has(.dashboard-light)::-webkit-scrollbar,
+body.dashboard-light::-webkit-scrollbar {
   display: none;
 }
 

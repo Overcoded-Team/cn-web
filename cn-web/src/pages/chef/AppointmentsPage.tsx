@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import "../../App.css";
 import "./Dashboard.css";
 import "./DashboardDark.css";
+import "./themes/Dashboard.light.css";
 import "./themes/AppointmentsPage.base.css";
 import "./themes/AppointmentsPage.dark.css";
 import "./themes/AppointmentsPage.light.css";
@@ -780,6 +780,7 @@ const AppointmentsPage: React.FC = () => {
   useEffect(() => {
     localStorage.setItem("dashboard-theme", theme);
   }, [theme]);
+
 
   return (
     <div

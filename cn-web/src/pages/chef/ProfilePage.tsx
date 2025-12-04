@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import "./Dashboard.css";
 import "./DashboardDark.css";
+import "./themes/Dashboard.light.css";
 import "./ProfilePage.css";
 import {
   chefService,

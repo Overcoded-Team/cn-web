@@ -8,6 +8,46 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lancelot&family=Krub:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      // Aplicar apenas a classe do tema - deixar o CSS fazer o resto
+      (function() {
+        try {
+          const savedTheme = localStorage.getItem('dashboard-theme') || 'dark';
+          const themeClass = savedTheme === 'light' ? 'dashboard-light' : 'dashboard-dark';
+          
+          // Função para aplicar apenas a classe
+          function applyThemeClass() {
+            if (document.body) {
+              document.body.classList.remove('dashboard-light', 'dashboard-dark', 'dashboard-dark-layout');
+              document.body.classList.add(themeClass);
+            }
+            
+            const rootElement = document.getElementById('root');
+            if (rootElement) {
+              rootElement.classList.remove('dashboard-light', 'dashboard-dark', 'dashboard-dark-layout');
+              rootElement.classList.add(themeClass);
+            }
+          }
+          
+          // Tentar aplicar imediatamente se o body já existir
+          if (document.body) {
+            applyThemeClass();
+          } else {
+            // Se o body ainda não existir, aguardar
+            if (document.addEventListener) {
+              document.addEventListener('DOMContentLoaded', applyThemeClass);
+            }
+          }
+          
+          // Aplicar também quando a página estiver totalmente carregada
+          if (window.addEventListener) {
+            window.addEventListener('load', applyThemeClass);
+          }
+        } catch (e) {
+          console.error('Erro ao aplicar tema:', e);
+        }
+      })();
+    </script>
 </head>
 <body>
     <div id="root"></div>

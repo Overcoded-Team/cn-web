@@ -1,6 +1,7 @@
 /* Tema Light - Estilos específicos do tema claro para Dashboard */
 
-body:has(.dashboard-light) {
+body:has(.dashboard-light),
+body.dashboard-light {
   background: #f5f7fa !important;
 }
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./Historico.css";
 import "./Dashboard.css";
 import "./DashboardDark.css";
+import "./themes/Dashboard.light.css";
 import {
   serviceRequestService,
   ServiceRequest,

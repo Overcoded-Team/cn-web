@@ -29,7 +29,9 @@ body::-webkit-scrollbar {
 }
 
 .App:has(.dashboard-dark-layout),
-body:has(.dashboard-dark-layout) {
+body:has(.dashboard-dark-layout),
+body.dashboard-dark-layout,
+body.dashboard-dark {
   background: #1a1d24 !important;
 }
 
