@@ -7,7 +7,7 @@ import meiaEstrela from "../../assets/meiaestrela.png";
 import estrelaVazia from "../../assets/estrelavazia.png";
 import logoBranco from "../../assets/iconebranco.png";
 import { chefService, ChefReview } from "../../services/chef.service";
-import { DashboardSidebar } from "../../components/DashboardSidebar";
+import { DashboardTopNav } from "../../components/DashboardTopNav";
 import {
   serviceRequestService,
   ServiceRequest,
@@ -45,18 +45,10 @@ const Dashboard: React.FC = () => {
   const [isSubmittingPayout, setIsSubmittingPayout] = useState<boolean>(false);
   const [payoutError, setPayoutError] = useState<string>("");
   const previousCompletedCountRef = useRef<number>(0);
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
-    const savedTheme = localStorage.getItem("dashboard-theme");
-    return (savedTheme as "dark" | "light") || "dark";
-  });
   const [monthlyGoal, setMonthlyGoal] = useState<number>(0);
   const [showGoalModal, setShowGoalModal] = useState<boolean>(false);
   const [editingGoal, setEditingGoal] = useState<string>("");
   const [isLoadingGoal, setIsLoadingGoal] = useState<boolean>(false);
-
-  useEffect(() => {
-    localStorage.setItem("dashboard-theme", theme);
-  }, [theme]);
 
   useEffect(() => {
     const loadGoalForMonth = async () => {
@@ -557,9 +549,10 @@ const Dashboard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className={`dashboard-layout ${theme === "light" ? "dashboard-light" : "dashboard-dark"}`}>
-        <main className={`dashboard-main ${theme === "light" ? "dashboard-light-main" : "dashboard-dark-main"}`} style={{ marginLeft: 0, width: '100vw' }}>
-          <div className={`dashboard-content ${theme === "light" ? "dashboard-light-content" : "dashboard-dark-content"}`}>
+      <div className="dashboard-layout dashboard-light">
+        <DashboardTopNav />
+        <main className="dashboard-main dashboard-light-main" style={{ marginLeft: 0, width: '100vw' }}>
+          <div className="dashboard-content dashboard-light-content">
             <div className="dashboard-loading-container">
               <div className="dashboard-loading-logo">
                 <img
@@ -617,10 +610,6 @@ const Dashboard: React.FC = () => {
     }
 
     return stars;
-  };
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
   const handleOpenGoalModal = () => {
@@ -731,26 +720,12 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className={`dashboard-layout ${theme === "light" ? "dashboard-light" : "dashboard-dark"}`}>
-      <DashboardSidebar />
-      <main className={`dashboard-main ${theme === "light" ? "dashboard-light-main" : "dashboard-dark-main"}`}>
-        <div className={`dashboard-content ${theme === "light" ? "dashboard-light-content" : "dashboard-dark-content"}`}>
-          <div className={`dashboard-header ${theme === "light" ? "dashboard-light-header" : "dashboard-dark-header"}`}>
-            <h1 className={`dashboard-title ${theme === "light" ? "dashboard-light-title" : "dashboard-dark-title"}`}>Dashboard</h1>
-            <div className="theme-toggle-container">
-              <span className="theme-toggle-label">Tema</span>
-              <button
-                className={`theme-toggle-switch ${theme === "light" ? "theme-toggle-on" : "theme-toggle-off"}`}
-                onClick={toggleTheme}
-                title={theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro"}
-                type="button"
-                role="switch"
-                aria-checked={theme === "light"}
-                aria-label={theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro"}
-              >
-                <span className="theme-toggle-slider"></span>
-              </button>
-            </div>
+    <div className="dashboard-layout dashboard-light">
+      <DashboardTopNav />
+      <main className="dashboard-main dashboard-light-main">
+        <div className="dashboard-content dashboard-light-content">
+          <div className="dashboard-header dashboard-light-header">
+            <h1 className="dashboard-title dashboard-light-title">Dashboard</h1>
           </div>
 
           <div
@@ -1013,7 +988,7 @@ const Dashboard: React.FC = () => {
                   style={{
                     width: "190px",
                     height: "150px",
-                    filter: theme === "light" ? "brightness(0) saturate(100%)" : "brightness(0) invert(1)",
+                    filter: "brightness(0) saturate(100%)",
                     objectFit: "contain",
                     opacity: 0.3,
                   }}

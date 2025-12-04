@@ -16,13 +16,14 @@ body.dashboard-light {
 
 .dashboard-light-main {
   background: #f5f7fa !important;
-  margin-left: 280px !important;
-  width: calc(100vw - 280px) !important;
-  max-width: calc(100vw - 280px) !important;
+  margin-left: 0 !important;
+  margin-top: 80px !important;
+  width: 100vw !important;
+  max-width: 100vw !important;
   box-sizing: border-box;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  min-height: 100vh;
+  min-height: calc(100vh - 80px);
   padding: 1.5rem;
   position: relative;
   overflow-x: hidden;
@@ -45,8 +46,8 @@ body.dashboard-light {
   overflow-x: hidden;
   transform: scale(0.8);
   transform-origin: top center;
-  width: calc((100vw - 280px) / 0.8) !important;
-  max-width: calc((100vw - 280px) / 0.8) !important;
+  width: calc(100vw / 0.8) !important;
+  max-width: calc(100vw / 0.8) !important;
 }
 
 .dashboard-light-header {

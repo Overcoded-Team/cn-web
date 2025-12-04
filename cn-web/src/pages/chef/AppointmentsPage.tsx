@@ -8,7 +8,7 @@ import "./themes/AppointmentsPage.light.css";
 import { ChatWindow } from "../../components/ChatWindow";
 import { useAuth } from "../../contexts/AuthContext";
 import chatIcon from "../../assets/chat.svg";
-import { DashboardSidebar } from "../../components/DashboardSidebar";
+import { DashboardTopNav } from "../../components/DashboardTopNav";
 import {
   serviceRequestService,
   ServiceRequest,
@@ -783,24 +783,10 @@ const AppointmentsPage: React.FC = () => {
 
 
   return (
-    <div
-      className={`dashboard-layout ${
-        theme === "light" ? "dashboard-light" : "dashboard-dark"
-      }`}
-    >
-      <DashboardSidebar />
-      <main
-        className={`dashboard-main ${
-          theme === "light" ? "dashboard-light-main" : "dashboard-dark-main"
-        }`}
-      >
-        <div
-          className={`dashboard-content ${
-            theme === "light"
-              ? "dashboard-light-content"
-              : "dashboard-dark-content"
-          }`}
-        >
+    <div className="dashboard-layout dashboard-light">
+      <DashboardTopNav />
+      <main className="dashboard-main dashboard-light-main">
+        <div className="dashboard-content dashboard-light-content">
           <div
             className={`dashboard-header ${
               theme === "light"
@@ -876,23 +862,23 @@ const AppointmentsPage: React.FC = () => {
               >
                 Agendados
               </button>
-              <button
+                              <button
                 className={`tab-button ${
                   activeTab === "concluidos" ? "active" : ""
                 }`}
                 onClick={() => setActiveTab("concluidos")}
               >
                 Concluídos
-              </button>
-              <button
+                              </button>
+                              <button
                 className={`tab-button ${
                   activeTab === "cancelado" ? "active" : ""
                 }`}
                 onClick={() => setActiveTab("cancelado")}
               >
                 Cancelado
-              </button>
-            </div>
+                              </button>
+                            </div>
 
             <div className="tabs-content">
               {(activeTab === "todos" ||
@@ -1026,26 +1012,26 @@ const AppointmentsPage: React.FC = () => {
                             {!(activeTab === "solicitacoes" &&
                               a.status ===
                                 ServiceRequestStatus.PENDING_CHEF_REVIEW) && (
-                              <button
-                                className="pending-chat-fab"
-                                aria-label="Abrir chat"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setChatContext({
-                                    serviceRequestId: a.serviceRequestId,
-                                    status: a.status,
-                                    participantName: a.clientName,
-                                    participantAvatarUrl: a.clientProfilePicture,
-                                  });
-                                  setShowChatModal(true);
-                                }}
-                              >
-                                <img
-                                  src={chatIcon}
-                                  alt=""
-                                  className="chat-icon"
-                                />
-                              </button>
+                            <button
+                              className="pending-chat-fab"
+                              aria-label="Abrir chat"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setChatContext({
+                                  serviceRequestId: a.serviceRequestId,
+                                  status: a.status,
+                                  participantName: a.clientName,
+                                  participantAvatarUrl: a.clientProfilePicture,
+                                });
+                                setShowChatModal(true);
+                              }}
+                            >
+                              <img
+                                src={chatIcon}
+                                alt=""
+                                className="chat-icon"
+                              />
+                            </button>
                             )}
                           </li>
                         ))}

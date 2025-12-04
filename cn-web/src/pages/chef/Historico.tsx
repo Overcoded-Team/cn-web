@@ -11,7 +11,7 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import { ChatWindow } from "../../components/ChatWindow";
 import chatIcon from "../../assets/chat.svg";
-import { DashboardSidebar } from "../../components/DashboardSidebar";
+import { DashboardTopNav } from "../../components/DashboardTopNav";
 
 interface HistoricoEntry {
   valor: number;
@@ -104,26 +104,12 @@ const Historico: React.FC = () => {
   }, [theme]);
 
   return (
-    <div className={`dashboard-layout ${theme === "light" ? "dashboard-light" : "dashboard-dark"}`}>
-      <DashboardSidebar />
-      <main className={`dashboard-main ${theme === "light" ? "dashboard-light-main" : "dashboard-dark-main"}`}>
-        <div className={`dashboard-content ${theme === "light" ? "dashboard-light-content" : "dashboard-dark-content"}`}>
-          <div className={`dashboard-header ${theme === "light" ? "dashboard-light-header" : "dashboard-dark-header"}`}>
-            <h1 className={`dashboard-title ${theme === "light" ? "dashboard-light-title" : "dashboard-dark-title"}`}>Histórico</h1>
-            <div className="theme-toggle-container">
-              <span className="theme-toggle-label">Tema</span>
-              <button
-                className={`theme-toggle-switch ${theme === "light" ? "theme-toggle-on" : "theme-toggle-off"}`}
-                onClick={toggleTheme}
-                title={theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro"}
-                type="button"
-                role="switch"
-                aria-checked={theme === "light"}
-                aria-label={theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro"}
-              >
-                <span className="theme-toggle-slider"></span>
-              </button>
-            </div>
+    <div className="dashboard-layout dashboard-light">
+      <DashboardTopNav />
+      <main className="dashboard-main dashboard-light-main">
+        <div className="dashboard-content dashboard-light-content">
+          <div className="dashboard-header dashboard-light-header">
+            <h1 className="dashboard-title dashboard-light-title">Histórico</h1>
           </div>
 
           {isLoading ? (
