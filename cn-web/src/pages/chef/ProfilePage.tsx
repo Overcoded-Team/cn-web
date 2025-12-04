@@ -91,7 +91,7 @@ const ProfilePage: React.FC = () => {
   const [showProfilePicturePreview, setShowProfilePicturePreview] = useState<boolean>(false);
   const [previewProfilePicture, setPreviewProfilePicture] = useState<string | null>(null);
   const [selectedProfilePictureFile, setSelectedProfilePictureFile] = useState<File | null>(null);
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
+  const [theme] = useState<"dark" | "light">(() => {
     const savedTheme = localStorage.getItem("dashboard-theme");
     return (savedTheme as "dark" | "light") || "dark";
   });

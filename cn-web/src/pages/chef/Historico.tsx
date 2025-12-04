@@ -32,10 +32,6 @@ const Historico: React.FC = () => {
   const [error, setError] = useState<string>("");
   const [showChatModal, setShowChatModal] = useState<boolean>(false);
   const [selectedServiceRequestId, setSelectedServiceRequestId] = useState<number | null>(null);
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
-    const savedTheme = localStorage.getItem("dashboard-theme");
-    return (savedTheme as "dark" | "light") || "dark";
-  });
 
   useEffect(() => {
     const loadHistorico = async () => {
@@ -94,10 +90,6 @@ const Historico: React.FC = () => {
 
     loadHistorico();
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem("dashboard-theme", theme);
-  }, [theme]);
 
   return (
     <div className="dashboard-layout dashboard-light">
