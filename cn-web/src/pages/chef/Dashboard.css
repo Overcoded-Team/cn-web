@@ -1707,29 +1707,63 @@
   flex-wrap: wrap;
 }
 
+/* Comportamento padrão: garantir que os cards não quebrem */
+.dashboard-cards-container > .card.ganhos-card,
+.dashboard-cards-container > .dashboard-dark-card:not(.dashboard-dark-progress-card),
+.dashboard-cards-container > .dashboard-dark-progress-card {
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Comportamento padrão: 3 cards lado a lado quando couber - distribuição igual */
+.dashboard-cards-container > .card.ganhos-card,
+.dashboard-cards-container > .dashboard-dark-card:not(.dashboard-dark-progress-card),
+.dashboard-cards-container > .dashboard-dark-progress-card {
+  flex: 1 1 0;
+  min-width: 320px;
+  max-width: none;
+}
+
+/* Garantir que em telas grandes os 3 cards fiquem lado a lado sem quebrar */
+@media (min-width: 1200px) {
+  .dashboard-cards-container > .card.ganhos-card,
+  .dashboard-cards-container > .dashboard-dark-card:not(.dashboard-dark-progress-card),
+  .dashboard-cards-container > .dashboard-dark-progress-card {
+    flex: 1 1 0;
+    min-width: 320px;
+    max-width: none;
+  }
+}
+
 /* Quando o card de meta vai para baixo (telas menores), os dois cards de cima se esticam */
-@media (max-width: 1200px) {
+/* Breakpoint ajustado para garantir que os cards não quebrem */
+@media (max-width: 1199px) and (min-width: 950px) {
   .dashboard-cards-container > .card.ganhos-card {
     flex: 1 1 calc(50% - 0.5rem) !important;
     max-width: none !important;
+    min-width: calc(50% - 0.5rem) !important;
   }
   
   .dashboard-cards-container > .dashboard-dark-card:not(.dashboard-dark-progress-card) {
     flex: 1 1 calc(50% - 0.5rem) !important;
     max-width: none !important;
+    min-width: calc(50% - 0.5rem) !important;
   }
   
   .dashboard-cards-container > .dashboard-dark-progress-card {
     flex: 1 1 100% !important;
     max-width: 100% !important;
+    min-width: 100% !important;
   }
 }
 
-/* Para telas muito pequenas, todos os cards vão para baixo */
-@media (max-width: 768px) {
+/* Para telas pequenas onde os cards podem quebrar, todos os cards descem */
+@media (max-width: 949px) {
   .dashboard-cards-container > .card.ganhos-card,
-  .dashboard-cards-container > .dashboard-dark-card {
+  .dashboard-cards-container > .dashboard-dark-card:not(.dashboard-dark-progress-card),
+  .dashboard-cards-container > .dashboard-dark-progress-card {
     flex: 1 1 100% !important;
     max-width: 100% !important;
+    min-width: 100% !important;
   }
 }

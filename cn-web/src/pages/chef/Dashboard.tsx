@@ -742,9 +742,7 @@ const Dashboard: React.FC = () => {
             <div
               className="card ganhos-card"
               style={{
-                maxWidth: "380px",
                 width: "100%",
-                flex: "1 1 350px",
                 maxHeight: "320px",
                 height: "320px",
                 position: "relative",
@@ -855,9 +853,7 @@ const Dashboard: React.FC = () => {
             <div
               className="dashboard-dark-card"
               style={{
-                maxWidth: "380px",
                 width: "100%",
-                flex: "1 1 350px",
                 position: "relative",
                 overflow: "hidden",
                 maxHeight: "320px",
@@ -1000,15 +996,16 @@ const Dashboard: React.FC = () => {
             <div
               className="dashboard-dark-progress-card"
               style={{
+                width: "100%",
                 maxHeight: "320px",
                 height: "320px",
-                flex: "1",
                 display: "flex",
                 flexDirection: "row",
                 alignItems: "flex-start",
                 justifyContent: "space-between",
                 gap: "2rem",
-                overflow: "visible",
+                overflow: "hidden",
+                boxSizing: "border-box",
               }}
             >
               <div
