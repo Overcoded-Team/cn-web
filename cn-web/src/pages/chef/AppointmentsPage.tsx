@@ -876,7 +876,11 @@ const AppointmentsPage: React.FC = () => {
                         {confirmedSorted.map((a) => (
                           <li
                             key={a.id}
-                            className="appointment-card"
+                            className={`appointment-card ${
+                              a.status === ServiceRequestStatus.PENDING_CHEF_REVIEW
+                                ? "no-chat"
+                                : ""
+                            }`}
                             onClick={() => {
                               setSelectedAppointmentId(a.id);
                               setShowAppointmentModal(true);
@@ -981,9 +985,7 @@ const AppointmentsPage: React.FC = () => {
                                 </button>
                               )}
                             </div>
-                            {!(activeTab === "solicitacoes" &&
-                              a.status ===
-                                ServiceRequestStatus.PENDING_CHEF_REVIEW) && (
+                            {a.status !== ServiceRequestStatus.PENDING_CHEF_REVIEW && (
                             <button
                               className="pending-chat-fab"
                               aria-label="Abrir chat"

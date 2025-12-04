@@ -148,17 +148,24 @@
   padding: 0.5rem 1rem;
   border-radius: 8px;
   transition: all 0.2s;
+  display: inline-block;
+  text-align: center;
+  min-width: 160px;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .top-nav-link:hover {
   color: #ff6b35;
   background: rgba(255, 107, 53, 0.1);
+  width: 160px;
 }
 
 .top-nav-link.active {
   color: #ff6b35;
   background: rgba(255, 107, 53, 0.15);
   font-weight: 600;
+  width: 160px;
 }
 
 .top-nav-right {
@@ -1700,14 +1707,12 @@
   }
 }
 
-/* Ajuste de responsividade para os cards do dashboard */
 .dashboard-cards-container {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
 }
 
-/* Comportamento padrão: garantir que os cards não quebrem */
 .dashboard-cards-container > .card.ganhos-card,
 .dashboard-cards-container > .dashboard-dark-card:not(.dashboard-dark-progress-card),
 .dashboard-cards-container > .dashboard-dark-progress-card {
@@ -1715,7 +1720,6 @@
   box-sizing: border-box;
 }
 
-/* Comportamento padrão: 3 cards lado a lado quando couber - distribuição igual */
 .dashboard-cards-container > .card.ganhos-card,
 .dashboard-cards-container > .dashboard-dark-card:not(.dashboard-dark-progress-card),
 .dashboard-cards-container > .dashboard-dark-progress-card {
@@ -1724,7 +1728,6 @@
   max-width: none;
 }
 
-/* Garantir que em telas grandes os 3 cards fiquem lado a lado sem quebrar */
 @media (min-width: 1200px) {
   .dashboard-cards-container > .card.ganhos-card,
   .dashboard-cards-container > .dashboard-dark-card:not(.dashboard-dark-progress-card),
@@ -1735,8 +1738,6 @@
   }
 }
 
-/* Quando o card de meta vai para baixo (telas menores), os dois cards de cima se esticam */
-/* Breakpoint ajustado para garantir que os cards não quebrem */
 @media (max-width: 1199px) and (min-width: 950px) {
   .dashboard-cards-container > .card.ganhos-card {
     flex: 1 1 calc(50% - 0.5rem) !important;
@@ -1757,7 +1758,6 @@
   }
 }
 
-/* Para telas pequenas onde os cards podem quebrar, todos os cards descem */
 @media (max-width: 949px) {
   .dashboard-cards-container > .card.ganhos-card,
   .dashboard-cards-container > .dashboard-dark-card:not(.dashboard-dark-progress-card),

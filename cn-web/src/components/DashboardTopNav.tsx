@@ -51,7 +51,7 @@ export const DashboardTopNav: React.FC<DashboardTopNavProps> = ({
     <nav className="dashboard-top-nav">
       <div className="top-nav-content">
         <div className="top-nav-left">
-          <Link to="/dashboard" className="top-nav-logo">
+          <Link to="/perfil" className="top-nav-logo">
             <div className="top-nav-profile-photo-wrapper">
               <div className="top-nav-profile-photo">
                 <img
@@ -88,7 +88,13 @@ export const DashboardTopNav: React.FC<DashboardTopNavProps> = ({
                   <button
                     type="button"
                     className="top-nav-change-picture-button"
-                    onClick={onPictureButtonClick}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (onPictureButtonClick) {
+                        onPictureButtonClick();
+                      }
+                    }}
                     disabled={isUploadingPicture}
                     aria-label="Alterar foto de perfil"
                   >
