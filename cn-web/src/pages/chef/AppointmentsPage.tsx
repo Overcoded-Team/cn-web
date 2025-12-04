@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "../../App.css";
 import "./Dashboard.css";
 import "./DashboardDark.css";
@@ -49,10 +49,6 @@ const AppointmentsPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(today);
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [pendingRequests, setPendingRequests] = useState<ServiceRequest[]>([]);
-  const [pendingClientApproval, setPendingClientApproval] = useState<
-    ServiceRequest[]
-  >([]);
   const [allChefRequests, setAllChefRequests] = useState<ServiceRequest[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -116,18 +112,6 @@ const AppointmentsPage: React.FC = () => {
 
         const allRequests = response.items || [];
         setAllChefRequests(allRequests);
-
-        const pending = allRequests.filter(
-          (req: ServiceRequest) =>
-            req.status === ServiceRequestStatus.PENDING_CHEF_REVIEW
-        );
-        setPendingRequests(pending);
-
-        const pendingApproval = allRequests.filter(
-          (req: ServiceRequest) =>
-            req.status === ServiceRequestStatus.QUOTE_SENT
-        );
-        setPendingClientApproval(pendingApproval);
 
         const mappedAppointments: Appointment[] = allRequests.map(
           (req: ServiceRequest) => {
@@ -399,17 +383,6 @@ const AppointmentsPage: React.FC = () => {
       const allRequests = response.items || [];
       setAllChefRequests(allRequests);
 
-      const pending = allRequests.filter(
-        (req: ServiceRequest) =>
-          req.status === ServiceRequestStatus.PENDING_CHEF_REVIEW
-      );
-      setPendingRequests(pending);
-
-      const pendingApproval = allRequests.filter(
-        (req: ServiceRequest) => req.status === ServiceRequestStatus.QUOTE_SENT
-      );
-      setPendingClientApproval(pendingApproval);
-
       const mappedAppointments: Appointment[] = allRequests.map(
         (req: ServiceRequest) => {
           const requestedDateStr = String(req.requested_date);
@@ -505,17 +478,6 @@ const AppointmentsPage: React.FC = () => {
 
       const allRequests = response.items || [];
       setAllChefRequests(allRequests);
-
-      const pending = allRequests.filter(
-        (req: ServiceRequest) =>
-          req.status === ServiceRequestStatus.PENDING_CHEF_REVIEW
-      );
-      setPendingRequests(pending);
-
-      const pendingApproval = allRequests.filter(
-        (req: ServiceRequest) => req.status === ServiceRequestStatus.QUOTE_SENT
-      );
-      setPendingClientApproval(pendingApproval);
 
       const mappedAppointments: Appointment[] = allRequests.map(
         (req: ServiceRequest) => {
@@ -643,10 +605,67 @@ const AppointmentsPage: React.FC = () => {
       );
 
       const allRequests = response.items || [];
-      const pendingApproval = allRequests.filter(
-        (req: ServiceRequest) => req.status === ServiceRequestStatus.QUOTE_SENT
+      setAllChefRequests(allRequests);
+
+      const mappedAppointments: Appointment[] = allRequests.map(
+        (req: ServiceRequest) => {
+          const requestedDateStr = String(req.requested_date);
+          let dateStr = requestedDateStr;
+          if (!dateStr.includes("T")) {
+            dateStr = dateStr + "T00:00:00Z";
+          } else if (
+            !dateStr.includes("Z") &&
+            !dateStr.includes("+") &&
+            !dateStr.includes("-", 10)
+          ) {
+            dateStr = dateStr + "Z";
+          }
+          const requestedDate = new Date(dateStr);
+          const normalizedDateForComparison = new Date(
+            Date.UTC(
+              requestedDate.getUTCFullYear(),
+              requestedDate.getUTCMonth(),
+              requestedDate.getUTCDate()
+            )
+          );
+          const requestedDateWithTime = new Date(
+            Date.UTC(
+              requestedDate.getUTCFullYear(),
+              requestedDate.getUTCMonth(),
+              requestedDate.getUTCDate(),
+              requestedDate.getUTCHours(),
+              requestedDate.getUTCMinutes(),
+              requestedDate.getUTCSeconds()
+            )
+          );
+
+          const clientName = req.client_profile?.user?.name || "Cliente";
+          const clientEmail = req.client_profile?.user?.email;
+          const clientProfilePicture =
+            req.client_profile?.user?.profilePictureUrl;
+          const priceCents = req.quote?.amount_cents || 0;
+          const priceBRL = priceCents / 100;
+
+          return {
+            id: `appt-${req.id}`,
+            serviceRequestId: req.id,
+            clientName,
+            clientEmail,
+            clientProfilePicture,
+            address: req.location,
+            serviceType: req.service_type,
+            dateISO: dateToISOString(normalizedDateForComparison),
+            requestedDate: requestedDateWithTime,
+            expectedDurationMinutes: req.expected_duration_minutes,
+            priceBRL,
+            observation: req.quote?.notes,
+            description: req.description,
+            status: req.status,
+          };
+        }
       );
-      setPendingClientApproval(pendingApproval);
+
+      setAppointments(mappedAppointments);
 
       handleCloseQuoteModal();
     } catch (err) {
