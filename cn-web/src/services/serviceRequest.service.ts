@@ -150,11 +150,17 @@ export const serviceRequestService = {
   },
 
   async acceptRequest(requestId: number): Promise<ServiceRequest> {
-    return api.patch<ServiceRequest>(`/service-requests/${requestId}/accept`);
+    return api.patch<ServiceRequest>(
+      `/service-requests/${requestId}/accept`,
+      {}
+    );
   },
 
   async rejectRequest(requestId: number): Promise<ServiceRequest> {
-    return api.patch<ServiceRequest>(`/service-requests/${requestId}/reject`);
+    return api.patch<ServiceRequest>(
+      `/service-requests/${requestId}/reject`,
+      {}
+    );
   },
 
   async sendQuote(

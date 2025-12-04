@@ -1290,6 +1290,37 @@
   font-weight: 600;
 }
 
+.status-filter-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.status-filter-button {
+  padding: 8px 16px;
+  border: 1px solid #3a3f47;
+  border-radius: 8px;
+  background: transparent;
+  color: #e0e0e0;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.status-filter-button:hover {
+  background: #3a3f47;
+  border-color: #4a4f57;
+}
+
+.status-filter-button.active {
+  background: #ff6b35;
+  border-color: #ff6b35;
+  color: #fff;
+  font-weight: 600;
+}
+
 .tab-notification-badge {
   position: absolute;
   top: 8px;
@@ -1429,4 +1460,3 @@
     max-height: 95vh;
   }
 }
-
