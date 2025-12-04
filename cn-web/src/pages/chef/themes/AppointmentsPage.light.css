@@ -20,12 +20,12 @@
 }
 
 .dashboard-light .complete-service-button {
-  background: #4caf50;
+  background: #ff6b35;
   color: white;
 }
 
 .dashboard-light .complete-service-button:hover:not(:disabled) {
-  background: #45a049;
+  background: #e65100;
 }
 
 .dashboard-light .appt-client-avatar {
