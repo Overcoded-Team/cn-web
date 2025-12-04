@@ -19,7 +19,11 @@ import {
   WalletEntry,
   ChefPayout,
 } from "../../services/chef-wallet.service";
-import { formatCurrency, formatDate, calculatePercentage } from "../../utils/dataUtils";
+import {
+  formatCurrency,
+  formatDate,
+  calculatePercentage,
+} from "../../utils/dataUtils";
 
 const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -41,7 +45,9 @@ const Dashboard: React.FC = () => {
   const [showPayoutModal, setShowPayoutModal] = useState<boolean>(false);
   const [payoutAmount, setPayoutAmount] = useState<string>("");
   const [pixKey, setPixKey] = useState<string>("");
-  const [pixKeyType, setPixKeyType] = useState<"EMAIL" | "CPF" | "CNPJ" | "PHONE" | "EVP">("EMAIL");
+  const [pixKeyType, setPixKeyType] = useState<
+    "EMAIL" | "CPF" | "CNPJ" | "PHONE" | "EVP"
+  >("EMAIL");
   const [isSubmittingPayout, setIsSubmittingPayout] = useState<boolean>(false);
   const [payoutError, setPayoutError] = useState<string>("");
   const previousCompletedCountRef = useRef<number>(0);
@@ -53,12 +59,16 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const loadGoalForMonth = async () => {
       if (selectedChartMonth === null) return;
-      
+
       try {
         const selectedYear = new Date().getFullYear();
-        const monthKey = `${selectedYear}-${String(selectedChartMonth + 1).padStart(2, '0')}`;
-        const goalData = await chefService.getMySalesGoal(monthKey).catch(() => null);
-        
+        const monthKey = `${selectedYear}-${String(
+          selectedChartMonth + 1
+        ).padStart(2, "0")}`;
+        const goalData = await chefService
+          .getMySalesGoal(monthKey)
+          .catch(() => null);
+
         if (goalData && goalData.goal_set) {
           setMonthlyGoal(goalData.amount_cents);
         } else {
@@ -82,14 +92,17 @@ const Dashboard: React.FC = () => {
         }, 5000);
 
         const now = new Date();
-        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const currentMonth = `${now.getFullYear()}-${String(
+          now.getMonth() + 1
+        ).padStart(2, "0")}`;
 
-        const [profileData, reviewsData, balanceData, goalData] = await Promise.all([
-          chefService.getMyProfile().catch(() => null),
-          chefService.getMyReviews(1, 1000).catch(() => ({ items: [] })),
-          chefWalletService.getBalance().catch(() => null),
-          chefService.getMySalesGoal(currentMonth).catch(() => null),
-        ]);
+        const [profileData, reviewsData, balanceData, goalData] =
+          await Promise.all([
+            chefService.getMyProfile().catch(() => null),
+            chefService.getMyReviews(1, 1000).catch(() => ({ items: [] })),
+            chefWalletService.getBalance().catch(() => null),
+            chefService.getMySalesGoal(currentMonth).catch(() => null),
+          ]);
 
         setProfile(profileData);
         setReviews(reviewsData.items || []);
@@ -197,23 +210,30 @@ const Dashboard: React.FC = () => {
       (sr) =>
         sr.status !== ServiceRequestStatus.COMPLETED &&
         sr.status !== ServiceRequestStatus.CANCELLED &&
-        sr.status !== ServiceRequestStatus.REJECTED_BY_CHEF
+        sr.status !== ServiceRequestStatus.REJECTED_BY_CHEF &&
+        sr.status !== ServiceRequestStatus.PAYMENT_CONFIRMED &&
+        sr.status !== ServiceRequestStatus.SCHEDULED
     );
 
     const completedWithQuote = completedRequests.filter((sr) => sr.quote);
     const pendingWithQuote = pendingRequests.filter((sr) => sr.quote);
 
-    const completedEarnings = completedWithQuote.reduce(
-      (sum, sr) => sum + (sr.quote?.amount_cents || 0),
-      0
-    );
+    const completedWithQuoteYear = completedWithQuote.filter((sr) => {
+      const srDate = new Date(sr.requested_date);
+      return srDate.getFullYear() === selectedYear;
+    });
 
-    const pendingEarnings = pendingWithQuote.reduce(
-      (sum, sr) => sum + (sr.quote?.amount_cents || 0),
-      0
-    );
+    const completedEarnings = completedWithQuoteYear.reduce((sum, sr) => {
+      const amount = sr.quote?.amount_cents || 0;
+      return sum + amount;
+    }, 0);
 
-    const completedCount = completedWithQuote.length;
+    const pendingEarnings = pendingWithQuote.reduce((sum, sr) => {
+      const amount = sr.quote?.amount_cents || 0;
+      return sum + amount;
+    }, 0);
+
+    const completedCount = completedWithQuoteYear.length;
     const pendingCount = pendingWithQuote.length;
 
     const rejectedByChef = serviceRequests.filter(
@@ -221,27 +241,26 @@ const Dashboard: React.FC = () => {
     );
 
     const rejectedByClient = serviceRequests.filter(
-      (sr) =>
-        sr.status === ServiceRequestStatus.CANCELLED && sr.quote
+      (sr) => sr.status === ServiceRequestStatus.CANCELLED && sr.quote
     );
 
     const rejectedCount = rejectedByChef.length + rejectedByClient.length;
 
     const monthEarnings = serviceRequests
       .filter((sr) => {
+        if (!sr.quote) return false;
         if (
-          sr.status !== ServiceRequestStatus.COMPLETED ||
-          !sr.quote
+          sr.status !== ServiceRequestStatus.PAYMENT_CONFIRMED &&
+          sr.status !== ServiceRequestStatus.SCHEDULED &&
+          sr.status !== ServiceRequestStatus.COMPLETED
         )
           return false;
         const serviceDate = new Date(sr.requested_date);
         return serviceDate >= startOfMonth && serviceDate <= endOfMonth;
       })
       .reduce((sum, sr) => {
-        if (!sr.quote) return sum;
-        return sum + (sr.quote.amount_cents || 0);
+        return sum + (sr.quote?.amount_cents || 0);
       }, 0);
-
 
     const yearRequests = serviceRequests.filter((sr) => {
       const srDate = new Date(sr.requested_date);
@@ -250,16 +269,15 @@ const Dashboard: React.FC = () => {
 
     const totalEarnings = yearRequests
       .filter((sr) => {
-        if (
-          sr.status !== ServiceRequestStatus.COMPLETED ||
-          !sr.quote
-        )
-          return false;
-        return true;
+        if (!sr.quote) return false;
+        return (
+          sr.status === ServiceRequestStatus.PAYMENT_CONFIRMED ||
+          sr.status === ServiceRequestStatus.SCHEDULED ||
+          sr.status === ServiceRequestStatus.COMPLETED
+        );
       })
       .reduce((sum, sr) => {
-        if (!sr.quote) return sum;
-        return sum + (sr.quote.amount_cents || 0);
+        return sum + (sr.quote?.amount_cents || 0);
       }, 0);
 
     const yearCompleted = yearRequests.filter(
@@ -285,13 +303,18 @@ const Dashboard: React.FC = () => {
     const orangePercent = calculatePercentage(totalPending, totalRequests);
     const redPercent = calculatePercentage(totalCancelled, totalRequests);
 
-    const progressAtendidos = calculatePercentage(totalCompleted, totalRequests);
+    const progressAtendidos = calculatePercentage(
+      totalCompleted,
+      totalRequests
+    );
     const progressPendentes = calculatePercentage(totalPending, totalRequests);
-    const progressCancelados = calculatePercentage(totalCancelled, totalRequests);
-
+    const progressCancelados = calculatePercentage(
+      totalCancelled,
+      totalRequests
+    );
 
     const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - now.getDay() + (selectedWeekOffset * 7));
+    weekStart.setDate(now.getDate() - now.getDay() + selectedWeekOffset * 7);
     weekStart.setHours(0, 0, 0, 0);
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6);
@@ -301,21 +324,24 @@ const Dashboard: React.FC = () => {
       return serviceRequests
         .filter((sr) => {
           if (
-            sr.status !== ServiceRequestStatus.COMPLETED ||
+            (sr.status !== ServiceRequestStatus.PAYMENT_CONFIRMED &&
+              sr.status !== ServiceRequestStatus.SCHEDULED &&
+              sr.status !== ServiceRequestStatus.COMPLETED) ||
             !sr.quote
           )
             return false;
           const serviceDate = new Date(sr.requested_date);
-          return serviceDate >= weekStart && 
-                 serviceDate <= weekEnd && 
-                 serviceDate.getDay() === dayIndex;
+          return (
+            serviceDate >= weekStart &&
+            serviceDate <= weekEnd &&
+            serviceDate.getDay() === dayIndex
+          );
         })
         .reduce((sum, sr) => {
           if (!sr.quote) return sum;
           return sum + (sr.quote.amount_cents || 0);
         }, 0);
     });
-
 
     const formatPeriod = () => {
       const monthNames = [
@@ -455,9 +481,12 @@ const Dashboard: React.FC = () => {
         ? 100
         : 0;
 
-    const salesProgress = monthlyGoal > 0
-      ? Math.min(Math.round((monthEarnings / monthlyGoal) * 100), 100)
-      : (monthEarnings > 0 ? 100 : 0);
+    const salesProgress =
+      monthlyGoal > 0
+        ? Math.min(Math.round((monthEarnings / monthlyGoal) * 100), 100)
+        : monthEarnings > 0
+        ? 100
+        : 0;
 
     return {
       avgRating: avgRating5,
@@ -493,7 +522,14 @@ const Dashboard: React.FC = () => {
       rejectedCount,
       dailyEarnings: dailyEarnings.map((e) => e / 100),
     };
-  }, [serviceRequests, profile, selectedChartMonth, reviews, monthlyGoal, selectedWeekOffset]);
+  }, [
+    serviceRequests,
+    profile,
+    selectedChartMonth,
+    reviews,
+    monthlyGoal,
+    selectedWeekOffset,
+  ]);
 
   const loadWalletData = async () => {
     try {
@@ -551,7 +587,10 @@ const Dashboard: React.FC = () => {
     return (
       <div className="dashboard-layout dashboard-light">
         <DashboardTopNav />
-        <main className="dashboard-main dashboard-light-main" style={{ marginLeft: 0, width: '100vw' }}>
+        <main
+          className="dashboard-main dashboard-light-main"
+          style={{ marginLeft: 0, width: "100vw" }}
+        >
           <div className="dashboard-content dashboard-light-content">
             <div className="dashboard-loading-container">
               <div className="dashboard-loading-logo">
@@ -624,36 +663,45 @@ const Dashboard: React.FC = () => {
       return;
     }
     const goalInCents = Math.round(goalValue * 100);
-    
+
     if (goalInCents < 100) {
       alert("A meta mínima é de R$ 1,00");
       return;
     }
-    
+
     try {
       setIsLoadingGoal(true);
       const now = new Date();
       const selectedYear = now.getFullYear();
-      const monthToSave = selectedChartMonth !== null ? selectedChartMonth : now.getMonth();
-      const monthKey = `${selectedYear}-${String(monthToSave + 1).padStart(2, '0')}`;
-      
+      const monthToSave =
+        selectedChartMonth !== null ? selectedChartMonth : now.getMonth();
+      const monthKey = `${selectedYear}-${String(monthToSave + 1).padStart(
+        2,
+        "0"
+      )}`;
+
       const response = await chefService.setMySalesGoal({
         amount_cents: goalInCents,
         goalMonth: monthKey,
       });
-      
+
       if (response && response.goal_set) {
         setMonthlyGoal(response.amount_cents);
       } else {
         setMonthlyGoal(goalInCents);
       }
-      
+
       setShowGoalModal(false);
       setEditingGoal("");
     } catch (error: any) {
       console.error("Erro ao salvar meta:", error);
-      const errorMessage = error?.response?.data?.message || error?.message || "Erro ao salvar meta. Tente novamente.";
-      alert(Array.isArray(errorMessage) ? errorMessage.join(", ") : errorMessage);
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Erro ao salvar meta. Tente novamente.";
+      alert(
+        Array.isArray(errorMessage) ? errorMessage.join(", ") : errorMessage
+      );
     } finally {
       setIsLoadingGoal(false);
     }
@@ -684,7 +732,7 @@ const Dashboard: React.FC = () => {
     try {
       setIsSubmittingPayout(true);
       setPayoutError("");
-      
+
       const amountCents = Math.round(amountValue * 100);
       await chefWalletService.requestPayout({
         amount_cents: amountCents,
@@ -693,18 +741,20 @@ const Dashboard: React.FC = () => {
       });
 
       await loadWalletData();
-      
+
       setShowPayoutModal(false);
       setPayoutAmount("");
       setPixKey("");
       setPixKeyType("EMAIL");
       setPayoutError("");
-      
+
       alert(`Saque de ${formatCurrency(amountCents)} solicitado com sucesso!`);
     } catch (error) {
       console.error("Erro ao solicitar saque:", error);
       setPayoutError(
-        error instanceof Error ? error.message : "Erro ao solicitar saque. Tente novamente."
+        error instanceof Error
+          ? error.message
+          : "Erro ao solicitar saque. Tente novamente."
       );
     } finally {
       setIsSubmittingPayout(false);
@@ -732,264 +782,314 @@ const Dashboard: React.FC = () => {
             className="dashboard-cards-container"
             style={{
               display: "flex",
-              gap: "1rem",
+              flexDirection: "column",
+              gap: "1.5rem",
               marginBottom: "1.5rem",
-              flexWrap: "wrap",
               width: "100%",
               boxSizing: "border-box",
             }}
           >
             <div
-              className="card ganhos-card"
               style={{
-                width: "100%",
-                maxHeight: "320px",
-                height: "320px",
-                position: "relative",
-                padding: "1.5rem 1.75rem 1.75rem 1.75rem",
                 display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
+                gap: "1.5rem",
+                width: "100%",
+                boxSizing: "border-box",
+                flexWrap: "wrap",
               }}
             >
-              <button
-                className="ver-carteira-button"
-                onClick={handleOpenWallet}
-                style={{
-                  position: "absolute",
-                  top: "1.25rem",
-                  right: "1.25rem",
-                  background: "rgba(255, 255, 255, 0.25)",
-                  border: "1px solid rgba(255, 255, 255, 0.4)",
-                  color: "white",
-                  padding: "0.6rem 1.2rem",
-                  borderRadius: "24px",
-                  cursor: "pointer",
-                  fontSize: "0.85rem",
-                  fontWeight: "700",
-                  transition: "all 0.3s",
-                  fontFamily: '"Comfortaa", sans-serif',
-                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.35)";
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.2)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.25)";
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.15)";
-                }}
-              >
-                Ver Carteira
-              </button>
-              <h3
-                className="saldo-disponivel-label"
-                style={{ 
-                  fontSize: "1.2rem", 
-                  color: "#ffffff",
-                  marginBottom: "1.5rem", 
-                  letterSpacing: "0.3px",
-                  fontWeight: "700",
-                  marginTop: "0",
-                  marginLeft: "0",
-                  marginRight: "0",
-                  padding: "0",
-                  fontFamily: '"Comfortaa", sans-serif'
-                }}
-              >
-                Saldo Disponível
-              </h3>
               <div
-                className="saldo-disponivel-section"
-                style={{ borderTop: "none", paddingTop: "0", marginTop: "0", flex: "1" }}
-              >
-                <p
-                  className="saldo-disponivel-value"
-                  style={{ 
-                    fontSize: "3rem", 
-                    fontWeight: "800", 
-                    lineHeight: "1", 
-                    marginBottom: "1.5rem", 
-                    marginTop: "0", 
-                    fontFamily: '"Comfortaa", sans-serif',
-                    color: "white",
-                    letterSpacing: "0"
-                  }}
-                >
-                  R${" "}
-                  {(walletBalance?.available_cents &&
-                  walletBalance.available_cents > 0
-                    ? walletBalance.available_cents / 100
-                    : metrics.totalEarnings
-                  ).toLocaleString("pt-BR", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </p>
-              </div>
-              <div
+                className="card ganhos-card"
                 style={{
-                  borderTop: "1px solid rgba(255, 255, 255, 0.25)",
-                  marginTop: "auto",
-                  paddingTop: "1.25rem",
-                  paddingBottom: "0",
-                }}
-              >
-                <h3 className="card-title-white" style={{ fontSize: "1rem", opacity: 0.95, marginBottom: "0.5rem", fontWeight: "500", fontFamily: '"Comfortaa", sans-serif', color: "rgba(255, 255, 255, 0.9)" }}>
-                  Ganhos do Mês
-                </h3>
-                <p className="card-value-white" style={{ fontSize: "1.75rem", fontWeight: "700", lineHeight: "1.2", fontFamily: '"Comfortaa", sans-serif' }}>
-                  R${" "}
-                  {metrics.monthEarnings.toLocaleString("pt-BR", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </p>
-              </div>
-            </div>
-
-            <div
-              className="dashboard-dark-card"
-              style={{
-                width: "100%",
-                position: "relative",
-                overflow: "hidden",
-                maxHeight: "320px",
-                height: "320px",
-                display: "flex",
-                flexDirection: "column",
-                padding: "1.5rem 1.75rem",
-              }}
-            >
-              <button
-                className="ver-avaliacoes-button"
-                onClick={() => setShowReviewsModal(true)}
-                style={{
-                  position: "absolute",
-                  top: "1.25rem",
-                  right: "1.25rem",
-                  padding: "0.6rem 1.2rem",
-                  background: "#ff6b35",
-                  color: "#ffffff",
-                  border: "none",
-                  borderRadius: "24px",
-                  fontSize: "0.85rem",
-                  fontWeight: "700",
-                  cursor: "pointer",
-                  transition: "all 0.3s",
-                  fontFamily: '"Comfortaa", sans-serif',
-                  zIndex: 10,
-                  boxShadow: "0 2px 8px rgba(255, 107, 53, 0.3)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#ff8c00";
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(255, 107, 53, 0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#ff6b35";
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(255, 107, 53, 0.3)";
-                }}
-              >
-                Ver Avaliações
-              </button>
-              <h3 className="dashboard-dark-card-title" style={{ 
-                fontSize: "1.2rem", 
-                marginBottom: "1.5rem", 
-                letterSpacing: "0.3px",
-                fontWeight: "700",
-                marginTop: "0",
-                marginLeft: "0",
-                marginRight: "0",
-                padding: "0",
-                fontFamily: '"Comfortaa", sans-serif'
-              }}>
-                Avaliações
-              </h3>
-
-              <div
-                style={{
+                  flex: "1 1 calc(50% - 0.75rem)",
+                  minWidth: "300px",
+                  maxHeight: "320px",
+                  height: "320px",
+                  position: "relative",
+                  padding: "1.5rem 1.75rem 1.75rem 1.75rem",
                   display: "flex",
                   flexDirection: "column",
-                  gap: "1rem",
-                  flex: "1",
-                  justifyContent: "center",
-                  alignItems: "flex-start",
-                  paddingTop: "0.5rem",
+                  justifyContent: "space-between",
                 }}
               >
+                <button
+                  className="ver-carteira-button"
+                  onClick={handleOpenWallet}
+                  style={{
+                    position: "absolute",
+                    top: "1.25rem",
+                    right: "1.25rem",
+                    background: "rgba(255, 255, 255, 0.25)",
+                    border: "1px solid rgba(255, 255, 255, 0.4)",
+                    color: "white",
+                    padding: "0.6rem 1.2rem",
+                    borderRadius: "24px",
+                    cursor: "pointer",
+                    fontSize: "0.85rem",
+                    fontWeight: "700",
+                    transition: "all 0.3s",
+                    fontFamily: '"Comfortaa", sans-serif',
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background =
+                      "rgba(255, 255, 255, 0.35)";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.boxShadow =
+                      "0 4px 12px rgba(0, 0, 0, 0.2)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background =
+                      "rgba(255, 255, 255, 0.25)";
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow =
+                      "0 2px 8px rgba(0, 0, 0, 0.15)";
+                  }}
+                >
+                  Ver Carteira
+                </button>
+                <h3
+                  className="saldo-disponivel-label"
+                  style={{
+                    fontSize: "1.2rem",
+                    color: "#ffffff",
+                    marginBottom: "1.5rem",
+                    letterSpacing: "0.3px",
+                    fontWeight: "700",
+                    marginTop: "0",
+                    marginLeft: "0",
+                    marginRight: "0",
+                    padding: "0",
+                    fontFamily: '"Comfortaa", sans-serif',
+                  }}
+                >
+                  Saldo Disponível
+                </h3>
+                <div
+                  className="saldo-disponivel-section"
+                  style={{
+                    borderTop: "none",
+                    paddingTop: "0",
+                    marginTop: "0",
+                    flex: "1",
+                  }}
+                >
+                  <p
+                    className="saldo-disponivel-value"
+                    style={{
+                      fontSize: "3rem",
+                      fontWeight: "800",
+                      lineHeight: "1",
+                      marginBottom: "1.5rem",
+                      marginTop: "0",
+                      fontFamily: '"Comfortaa", sans-serif',
+                      color: "white",
+                      letterSpacing: "0",
+                    }}
+                  >
+                    R${" "}
+                    {(walletBalance?.available_cents &&
+                    walletBalance.available_cents > 0
+                      ? walletBalance.available_cents / 100
+                      : metrics.totalEarnings
+                    ).toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </p>
+                </div>
+                <div
+                  style={{
+                    borderTop: "1px solid rgba(255, 255, 255, 0.25)",
+                    marginTop: "auto",
+                    paddingTop: "1.25rem",
+                    paddingBottom: "0",
+                  }}
+                >
+                  <h3
+                    className="card-title-white"
+                    style={{
+                      fontSize: "1rem",
+                      opacity: 0.95,
+                      marginBottom: "0.5rem",
+                      fontWeight: "500",
+                      fontFamily: '"Comfortaa", sans-serif',
+                      color: "rgba(255, 255, 255, 0.9)",
+                    }}
+                  >
+                    Ganhos do Mês
+                  </h3>
+                  <p
+                    className="card-value-white"
+                    style={{
+                      fontSize: "1.75rem",
+                      fontWeight: "700",
+                      lineHeight: "1.2",
+                      fontFamily: '"Comfortaa", sans-serif',
+                    }}
+                  >
+                    R${" "}
+                    {metrics.monthEarnings.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </p>
+                </div>
+              </div>
+
+              <div
+                className="dashboard-dark-card"
+                style={{
+                  flex: "1 1 calc(50% - 0.75rem)",
+                  minWidth: "300px",
+                  position: "relative",
+                  overflow: "hidden",
+                  maxHeight: "320px",
+                  height: "320px",
+                  display: "flex",
+                  flexDirection: "column",
+                  padding: "1.5rem 1.75rem",
+                }}
+              >
+                <button
+                  className="ver-avaliacoes-button"
+                  onClick={() => setShowReviewsModal(true)}
+                  style={{
+                    position: "absolute",
+                    top: "1.25rem",
+                    right: "1.25rem",
+                    padding: "0.6rem 1.2rem",
+                    background: "#ff6b35",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "24px",
+                    fontSize: "0.85rem",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    transition: "all 0.3s",
+                    fontFamily: '"Comfortaa", sans-serif',
+                    zIndex: 10,
+                    boxShadow: "0 2px 8px rgba(255, 107, 53, 0.3)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "#ff8c00";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.boxShadow =
+                      "0 4px 12px rgba(255, 107, 53, 0.4)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "#ff6b35";
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow =
+                      "0 2px 8px rgba(255, 107, 53, 0.3)";
+                  }}
+                >
+                  Ver Avaliações
+                </button>
+                <h3
+                  className="dashboard-dark-card-title"
+                  style={{
+                    fontSize: "1.2rem",
+                    marginBottom: "1.5rem",
+                    letterSpacing: "0.3px",
+                    fontWeight: "700",
+                    marginTop: "0",
+                    marginLeft: "0",
+                    marginRight: "0",
+                    padding: "0",
+                    fontFamily: '"Comfortaa", sans-serif',
+                  }}
+                >
+                  Avaliações
+                </h3>
+
                 <div
                   style={{
                     display: "flex",
-                    alignItems: "center",
+                    flexDirection: "column",
                     gap: "1rem",
-                    width: "100%",
+                    flex: "1",
+                    justifyContent: "center",
+                    alignItems: "flex-start",
+                    paddingTop: "0.5rem",
                   }}
                 >
                   <div
-                    className="dashboard-dark-metric-large"
-                    style={{ 
-                      margin: 0, 
-                      fontSize: "3rem", 
-                      fontWeight: "800", 
-                      lineHeight: "1", 
-                      color: "#ff6b35", 
-                      fontFamily: '"Comfortaa", sans-serif',
-                      letterSpacing: "0"
-                    }}
-                  >
-                    {metrics.avgRating % 1 === 0 
-                      ? metrics.avgRating.toLocaleString("pt-BR", {
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 0,
-                        })
-                      : metrics.avgRating.toLocaleString("pt-BR", {
-                          minimumFractionDigits: 1,
-                          maximumFractionDigits: 1,
-                        })}
-                  </div>
-                  <div
-                    className="review-stars-top"
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: "0.3rem",
-                      flex: "1",
+                      gap: "1rem",
+                      width: "100%",
                     }}
                   >
-                    {renderStars(metrics.avgRating)}
+                    <div
+                      className="dashboard-dark-metric-large"
+                      style={{
+                        margin: 0,
+                        fontSize: "3rem",
+                        fontWeight: "800",
+                        lineHeight: "1",
+                        color: "#ff6b35",
+                        fontFamily: '"Comfortaa", sans-serif',
+                        letterSpacing: "0",
+                      }}
+                    >
+                      {metrics.avgRating % 1 === 0
+                        ? metrics.avgRating.toLocaleString("pt-BR", {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          })
+                        : metrics.avgRating.toLocaleString("pt-BR", {
+                            minimumFractionDigits: 1,
+                            maximumFractionDigits: 1,
+                          })}
+                    </div>
+                    <div
+                      className="review-stars-top"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.3rem",
+                        flex: "1",
+                      }}
+                    >
+                      {renderStars(metrics.avgRating)}
+                    </div>
+                  </div>
+                  <div
+                    className="dashboard-dark-metric-label"
+                    style={{
+                      margin: 0,
+                      opacity: 1,
+                      fontSize: "1rem",
+                      fontWeight: "500",
+                      fontFamily: '"Comfortaa", sans-serif',
+                    }}
+                  >
+                    {reviews.length}{" "}
+                    {reviews.length === 1 ? "avaliação" : "avaliações"}
                   </div>
                 </div>
-                <div
-                  className="dashboard-dark-metric-label"
-                  style={{ margin: 0, opacity: 1, fontSize: "1rem", fontWeight: "500", fontFamily: '"Comfortaa", sans-serif' }}
-                >
-                  {reviews.length}{" "}
-                  {reviews.length === 1 ? "avaliação" : "avaliações"}
-                </div>
-              </div>
 
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: "-1rem",
-                  right: "-3rem",
-                }}
-              >
-                <img
-                  src={logoBranco}
-                  alt="Logo"
+                <div
                   style={{
-                    width: "190px",
-                    height: "150px",
-                    filter: "brightness(0) saturate(100%)",
-                    objectFit: "contain",
-                    opacity: 0.3,
+                    position: "absolute",
+                    bottom: "-1rem",
+                    right: "-3rem",
                   }}
-                />
+                >
+                  <img
+                    src={logoBranco}
+                    alt="Logo"
+                    style={{
+                      width: "190px",
+                      height: "150px",
+                      filter: "brightness(0) saturate(100%)",
+                      objectFit: "contain",
+                      opacity: 0.3,
+                    }}
+                  />
+                </div>
               </div>
             </div>
 
@@ -997,6 +1097,7 @@ const Dashboard: React.FC = () => {
               className="dashboard-dark-progress-card"
               style={{
                 width: "100%",
+                maxWidth: "100%",
                 maxHeight: "320px",
                 height: "320px",
                 display: "flex",
@@ -1006,12 +1107,17 @@ const Dashboard: React.FC = () => {
                 gap: "2rem",
                 overflow: "hidden",
                 boxSizing: "border-box",
+                flex: "0 0 100%",
+                minWidth: "100%",
               }}
             >
               <div
                 style={{ display: "flex", flexDirection: "column", flex: "1" }}
               >
-                <h3 className="dashboard-dark-progress-title" style={{ marginTop: "0", marginBottom: "0.5rem" }}>
+                <h3
+                  className="dashboard-dark-progress-title"
+                  style={{ marginTop: "0", marginBottom: "0.5rem" }}
+                >
                   Meta de Ganhos Mensal
                 </h3>
                 <p className="dashboard-dark-progress-subtitle">
@@ -1019,10 +1125,17 @@ const Dashboard: React.FC = () => {
                     ? (() => {
                         const now = new Date();
                         const selectedYear = now.getFullYear();
-                        const monthName = new Date(selectedYear, selectedChartMonth).toLocaleDateString("pt-BR", {
+                        const monthName = new Date(
+                          selectedYear,
+                          selectedChartMonth
+                        ).toLocaleDateString("pt-BR", {
                           month: "long",
                         });
-                        return monthName.charAt(0).toUpperCase() + monthName.slice(1) + ` ${selectedYear}`;
+                        return (
+                          monthName.charAt(0).toUpperCase() +
+                          monthName.slice(1) +
+                          ` ${selectedYear}`
+                        );
                       })()
                     : "Mês atual"}
                 </p>
@@ -1063,7 +1176,11 @@ const Dashboard: React.FC = () => {
               >
                 <svg
                   viewBox="0 0 200 100"
-                  style={{ width: "100%", height: "160px", overflow: "visible" }}
+                  style={{
+                    width: "100%",
+                    height: "160px",
+                    overflow: "visible",
+                  }}
                 >
                   <defs>
                     <path
@@ -1085,17 +1202,22 @@ const Dashboard: React.FC = () => {
                 </svg>
                 {monthlyGoal > 0 && (
                   <div className="dashboard-dark-progress-message">
-                    {metrics.monthEarnings >= (monthlyGoal / 100) ? (
+                    {metrics.monthEarnings >= monthlyGoal / 100 ? (
                       <span className="progress-message-success">
-                         Parabéns! Meta atingida!
+                        Parabéns! Meta atingida!
                       </span>
-                    ) : metrics.salesProgress >= 50 && metrics.salesProgress < 100 ? (
+                    ) : metrics.salesProgress >= 50 &&
+                      metrics.salesProgress < 100 ? (
                       <span className="progress-message-encouragement">
-                         Você está na metade! Continue assim!
+                        Você está na metade! Continue assim!
                       </span>
                     ) : (
                       <span className="progress-message-remaining">
-                        Faltam {formatCurrency((monthlyGoal / 100 - metrics.monthEarnings) * 100)} para atingir a meta
+                        Faltam{" "}
+                        {formatCurrency(
+                          (monthlyGoal / 100 - metrics.monthEarnings) * 100
+                        )}{" "}
+                        para atingir a meta
                       </span>
                     )}
                   </div>
@@ -1168,11 +1290,31 @@ const Dashboard: React.FC = () => {
 
             <div>
               <div className="dashboard-dark-card">
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                  <h3 className="dashboard-dark-card-title" style={{ margin: 0 }}>Ganhos por Dia</h3>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  <h3
+                    className="dashboard-dark-card-title"
+                    style={{ margin: 0 }}
+                  >
+                    Ganhos por Dia
+                  </h3>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                    }}
+                  >
                     <button
-                      onClick={() => setSelectedWeekOffset(selectedWeekOffset - 1)}
+                      onClick={() =>
+                        setSelectedWeekOffset(selectedWeekOffset - 1)
+                      }
                       style={{
                         background: "transparent",
                         border: "1px solid rgba(255, 255, 255, 0.3)",
@@ -1184,7 +1326,8 @@ const Dashboard: React.FC = () => {
                         fontFamily: '"Comfortaa", sans-serif',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+                        e.currentTarget.style.background =
+                          "rgba(255, 255, 255, 0.1)";
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.background = "transparent";
@@ -1192,16 +1335,32 @@ const Dashboard: React.FC = () => {
                     >
                       ‹
                     </button>
-                    <span style={{ color: "#b0b3b8", fontSize: "0.9rem", minWidth: "120px", textAlign: "center" }}>
+                    <span
+                      style={{
+                        color: "#b0b3b8",
+                        fontSize: "0.9rem",
+                        minWidth: "120px",
+                        textAlign: "center",
+                      }}
+                    >
                       {(() => {
                         const weekStart = new Date();
-                        weekStart.setDate(weekStart.getDate() - weekStart.getDay() + (selectedWeekOffset * 7));
+                        weekStart.setDate(
+                          weekStart.getDate() -
+                            weekStart.getDay() +
+                            selectedWeekOffset * 7
+                        );
                         const weekEnd = new Date(weekStart);
                         weekEnd.setDate(weekStart.getDate() + 6);
                         const startDay = weekStart.getDate();
-                        const startMonth = weekStart.toLocaleDateString("pt-BR", { month: "short" });
+                        const startMonth = weekStart.toLocaleDateString(
+                          "pt-BR",
+                          { month: "short" }
+                        );
                         const endDay = weekEnd.getDate();
-                        const endMonth = weekEnd.toLocaleDateString("pt-BR", { month: "short" });
+                        const endMonth = weekEnd.toLocaleDateString("pt-BR", {
+                          month: "short",
+                        });
                         if (selectedWeekOffset === 0) {
                           return "Semana Atual";
                         }
@@ -1209,7 +1368,9 @@ const Dashboard: React.FC = () => {
                       })()}
                     </span>
                     <button
-                      onClick={() => setSelectedWeekOffset(selectedWeekOffset + 1)}
+                      onClick={() =>
+                        setSelectedWeekOffset(selectedWeekOffset + 1)
+                      }
                       style={{
                         background: "transparent",
                         border: "1px solid rgba(255, 255, 255, 0.3)",
@@ -1221,7 +1382,8 @@ const Dashboard: React.FC = () => {
                         fontFamily: '"Comfortaa", sans-serif',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+                        e.currentTarget.style.background =
+                          "rgba(255, 255, 255, 0.1)";
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.background = "transparent";
@@ -1244,7 +1406,8 @@ const Dashboard: React.FC = () => {
                           marginLeft: "0.5rem",
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "rgba(255, 107, 53, 0.1)";
+                          e.currentTarget.style.background =
+                            "rgba(255, 107, 53, 0.1)";
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.background = "transparent";
@@ -1293,7 +1456,6 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           </div>
-
         </div>
       </main>
 
@@ -1345,7 +1507,9 @@ const Dashboard: React.FC = () => {
                               />
                             ) : (
                               <div className="review-client-avatar-placeholder">
-                                {(review.client.name || "Cliente").charAt(0).toUpperCase()}
+                                {(review.client.name || "Cliente")
+                                  .charAt(0)
+                                  .toUpperCase()}
                               </div>
                             )}
                             <p className="review-client">
@@ -1435,7 +1599,9 @@ const Dashboard: React.FC = () => {
                         setPayoutError("");
                         setShowPayoutModal(true);
                       }}
-                      disabled={!walletBalance || walletBalance.available_cents <= 0}
+                      disabled={
+                        !walletBalance || walletBalance.available_cents <= 0
+                      }
                     >
                       Solicitar Saque
                     </button>
@@ -1538,7 +1704,13 @@ const Dashboard: React.FC = () => {
                 value={editingGoal}
                 onChange={(e) => setEditingGoal(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && !isLoadingGoal && editingGoal && !isNaN(parseFloat(editingGoal)) && parseFloat(editingGoal) >= 1) {
+                  if (
+                    e.key === "Enter" &&
+                    !isLoadingGoal &&
+                    editingGoal &&
+                    !isNaN(parseFloat(editingGoal)) &&
+                    parseFloat(editingGoal) >= 1
+                  ) {
                     handleSaveGoal();
                   }
                 }}
@@ -1558,7 +1730,12 @@ const Dashboard: React.FC = () => {
                 <button
                   className="goal-modal-save"
                   onClick={handleSaveGoal}
-                  disabled={isLoadingGoal || !editingGoal || isNaN(parseFloat(editingGoal)) || parseFloat(editingGoal) < 1}
+                  disabled={
+                    isLoadingGoal ||
+                    !editingGoal ||
+                    isNaN(parseFloat(editingGoal)) ||
+                    parseFloat(editingGoal) < 1
+                  }
                 >
                   {isLoadingGoal ? "Salvando..." : "Salvar"}
                 </button>
@@ -1583,11 +1760,18 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="goal-modal-content">
               {payoutError && (
-                <div className="wallet-error" style={{ marginBottom: "1rem", padding: "0.75rem", borderRadius: "8px" }}>
+                <div
+                  className="wallet-error"
+                  style={{
+                    marginBottom: "1rem",
+                    padding: "0.75rem",
+                    borderRadius: "8px",
+                  }}
+                >
                   <p style={{ margin: 0, color: "#f44336" }}>{payoutError}</p>
                 </div>
               )}
-              
+
               <label className="goal-modal-label">
                 Valor do saque (em reais):
               </label>
@@ -1601,14 +1785,16 @@ const Dashboard: React.FC = () => {
                 step="0.01"
                 disabled={isSubmittingPayout}
               />
-              
+
               <label className="goal-modal-label" style={{ marginTop: "1rem" }}>
                 Tipo de chave PIX:
               </label>
               <select
                 className="goal-modal-input"
                 value={pixKeyType}
-                onChange={(e) => setPixKeyType(e.target.value as typeof pixKeyType)}
+                onChange={(e) =>
+                  setPixKeyType(e.target.value as typeof pixKeyType)
+                }
                 disabled={isSubmittingPayout}
               >
                 <option value="EMAIL">E-mail</option>
@@ -1617,7 +1803,7 @@ const Dashboard: React.FC = () => {
                 <option value="PHONE">Telefone</option>
                 <option value="EVP">Chave Aleatória</option>
               </select>
-              
+
               <label className="goal-modal-label" style={{ marginTop: "1rem" }}>
                 Chave PIX:
               </label>
@@ -1627,26 +1813,33 @@ const Dashboard: React.FC = () => {
                 value={pixKey}
                 onChange={(e) => setPixKey(e.target.value)}
                 placeholder={
-                  pixKeyType === "EMAIL" ? "exemplo@email.com" :
-                  pixKeyType === "CPF" ? "000.000.000-00" :
-                  pixKeyType === "CNPJ" ? "00.000.000/0000-00" :
-                  pixKeyType === "PHONE" ? "(00) 00000-0000" :
-                  "Chave aleatória"
+                  pixKeyType === "EMAIL"
+                    ? "exemplo@email.com"
+                    : pixKeyType === "CPF"
+                    ? "000.000.000-00"
+                    : pixKeyType === "CNPJ"
+                    ? "00.000.000/0000-00"
+                    : pixKeyType === "PHONE"
+                    ? "(00) 00000-0000"
+                    : "Chave aleatória"
                 }
                 disabled={isSubmittingPayout}
               />
-              
+
               {walletBalance && (
-                <p style={{ 
-                  fontSize: "0.85rem", 
-                  color: "#b0b3b8", 
-                  marginTop: "0.5rem",
-                  marginBottom: "0"
-                }}>
-                  Saldo disponível: {formatCurrency(walletBalance.available_cents)}
+                <p
+                  style={{
+                    fontSize: "0.85rem",
+                    color: "#b0b3b8",
+                    marginTop: "0.5rem",
+                    marginBottom: "0",
+                  }}
+                >
+                  Saldo disponível:{" "}
+                  {formatCurrency(walletBalance.available_cents)}
                 </p>
               )}
-              
+
               <div className="goal-modal-actions">
                 <button
                   className="goal-modal-cancel"
@@ -1659,10 +1852,10 @@ const Dashboard: React.FC = () => {
                   className="goal-modal-save"
                   onClick={handleRequestPayout}
                   disabled={
-                    isSubmittingPayout || 
-                    !payoutAmount || 
-                    !pixKey || 
-                    isNaN(parseFloat(payoutAmount)) || 
+                    isSubmittingPayout ||
+                    !payoutAmount ||
+                    !pixKey ||
+                    isNaN(parseFloat(payoutAmount)) ||
                     parseFloat(payoutAmount) <= 0
                   }
                 >
