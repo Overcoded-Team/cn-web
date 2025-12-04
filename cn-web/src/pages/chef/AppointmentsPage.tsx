@@ -966,7 +966,7 @@ const AppointmentsPage: React.FC = () => {
                               </div>
                               {a.status ===
                                 ServiceRequestStatus.PENDING_CHEF_REVIEW && (
-                                <>
+                                <div className="pending-request-actions">
                                   <button
                                     className="accept-button"
                                     onClick={(e) => {
@@ -987,7 +987,7 @@ const AppointmentsPage: React.FC = () => {
                                   >
                                     Rejeitar
                                   </button>
-                                </>
+                                </div>
                               )}
                               {a.status === ServiceRequestStatus.QUOTE_SENT && (
                                 <button
@@ -1021,26 +1021,30 @@ const AppointmentsPage: React.FC = () => {
                                 </button>
                               )}
                             </div>
-                            <button
-                              className="pending-chat-fab"
-                              aria-label="Abrir chat"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setChatContext({
-                                  serviceRequestId: a.serviceRequestId,
-                                  status: a.status,
-                                  participantName: a.clientName,
-                                  participantAvatarUrl: a.clientProfilePicture,
-                                });
-                                setShowChatModal(true);
-                              }}
-                            >
-                              <img
-                                src={chatIcon}
-                                alt=""
-                                className="chat-icon"
-                              />
-                            </button>
+                            {!(activeTab === "solicitacoes" &&
+                              a.status ===
+                                ServiceRequestStatus.PENDING_CHEF_REVIEW) && (
+                              <button
+                                className="pending-chat-fab"
+                                aria-label="Abrir chat"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setChatContext({
+                                    serviceRequestId: a.serviceRequestId,
+                                    status: a.status,
+                                    participantName: a.clientName,
+                                    participantAvatarUrl: a.clientProfilePicture,
+                                  });
+                                  setShowChatModal(true);
+                                }}
+                              >
+                                <img
+                                  src={chatIcon}
+                                  alt=""
+                                  className="chat-icon"
+                                />
+                              </button>
+                            )}
                           </li>
                         ))}
                       </ul>
