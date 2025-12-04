@@ -989,7 +989,9 @@ const AppointmentsPage: React.FC = () => {
                                   </button>
                                 </div>
                               )}
-                              {a.status === ServiceRequestStatus.QUOTE_SENT && (
+                              {activeTab === "em-andamento" &&
+                                (a.status === ServiceRequestStatus.QUOTE_SENT ||
+                                  a.status === ServiceRequestStatus.ACCEPTED_BY_CHEF) && (
                                 <button
                                   className="send-quote-button"
                                   onClick={(e) => {
