@@ -26,7 +26,7 @@ const Dashboard: React.FC = () => {
   const [profile, setProfile] = useState<any>(null);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [reviews, setReviews] = useState<ChefReview[]>([]);
-  const [selectedChartMonth, setSelectedChartMonth] = useState<number | null>(new Date().getMonth());
+  const [selectedChartMonth] = useState<number | null>(new Date().getMonth());
   const [selectedWeekOffset, setSelectedWeekOffset] = useState<number>(0); // 0 = semana atual, -1 = semana anterior, 1 = próxima semana
 
   const [walletBalance, setWalletBalance] = useState<WalletBalance | null>(
@@ -63,6 +63,7 @@ const Dashboard: React.FC = () => {
       if (selectedChartMonth === null) return;
       
       try {
+        const selectedYear = new Date().getFullYear();
         const monthKey = `${selectedYear}-${String(selectedChartMonth + 1).padStart(2, '0')}`;
         const goalData = await chefService.getMySalesGoal(monthKey).catch(() => null);
         
@@ -77,7 +78,7 @@ const Dashboard: React.FC = () => {
     };
 
     loadGoalForMonth();
-  }, [selectedYear, selectedChartMonth]);
+  }, [selectedChartMonth]);
 
   useEffect(() => {
     const loadData = async () => {
