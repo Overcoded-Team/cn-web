@@ -26,7 +26,6 @@ const Dashboard: React.FC = () => {
   const [profile, setProfile] = useState<any>(null);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [reviews, setReviews] = useState<ChefReview[]>([]);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedChartMonth, setSelectedChartMonth] = useState<number | null>(new Date().getMonth());
   const [selectedWeekOffset, setSelectedWeekOffset] = useState<number>(0); // 0 = semana atual, -1 = semana anterior, 1 = próxima semana
 
@@ -54,8 +53,6 @@ const Dashboard: React.FC = () => {
   const [showGoalModal, setShowGoalModal] = useState<boolean>(false);
   const [editingGoal, setEditingGoal] = useState<string>("");
   const [isLoadingGoal, setIsLoadingGoal] = useState<boolean>(false);
-  const [showEarningsLine, setShowEarningsLine] = useState<boolean>(true);
-  const [showEventsLine, setShowEventsLine] = useState<boolean>(false);
 
   useEffect(() => {
     localStorage.setItem("dashboard-theme", theme);
@@ -184,6 +181,7 @@ const Dashboard: React.FC = () => {
     const now = new Date();
     const chartMonth =
       selectedChartMonth !== null ? selectedChartMonth : now.getMonth();
+    const selectedYear = now.getFullYear();
     const startOfMonth = new Date(selectedYear, chartMonth, 1);
     const endOfMonth = new Date(selectedYear, chartMonth + 1, 0, 23, 59, 59);
 
@@ -298,36 +296,6 @@ const Dashboard: React.FC = () => {
     const progressPendentes = calculatePercentage(totalPending, totalRequests);
     const progressCancelados = calculatePercentage(totalCancelled, totalRequests);
 
-    const monthlyEarnings = Array.from({ length: 12 }, (_, monthIndex) => {
-      const monthStart = new Date(selectedYear, monthIndex, 1);
-      const monthEnd = new Date(selectedYear, monthIndex + 1, 0, 23, 59, 59);
-      
-      return serviceRequests
-        .filter((sr) => {
-          if (
-            sr.status !== ServiceRequestStatus.COMPLETED ||
-            !sr.quote
-          )
-            return false;
-          const serviceDate = new Date(sr.requested_date);
-          return serviceDate >= monthStart && serviceDate <= monthEnd;
-        })
-        .reduce((sum, sr) => {
-          if (!sr.quote) return sum;
-          return sum + (sr.quote.amount_cents || 0);
-        }, 0);
-    });
-
-    const monthlyCounts = Array.from({ length: 12 }, (_, monthIndex) => {
-      const monthStart = new Date(selectedYear, monthIndex, 1);
-      const monthEnd = new Date(selectedYear, monthIndex + 1, 0, 23, 59, 59);
-      
-      return serviceRequests.filter((sr) => {
-        if (sr.status !== ServiceRequestStatus.COMPLETED) return false;
-        const serviceDate = new Date(sr.requested_date);
-        return serviceDate >= monthStart && serviceDate <= monthEnd;
-      }).length;
-    });
 
     const weekStart = new Date(now);
     weekStart.setDate(now.getDate() - now.getDay() + (selectedWeekOffset * 7));
@@ -355,7 +323,6 @@ const Dashboard: React.FC = () => {
         }, 0);
     });
 
-    const maxMonthlyEarning = Math.max(...monthlyEarnings, 1);
 
     const formatPeriod = () => {
       const monthNames = [
@@ -517,10 +484,6 @@ const Dashboard: React.FC = () => {
       progressPendentes,
       progressCancelados,
       salesProgress,
-      monthlyEarnings: monthlyEarnings.map((e) => e / 100),
-      maxMonthlyEarning: maxMonthlyEarning / 100,
-      monthlyCounts, // Quantidade de atendimentos por mês para o gráfico
-      maxMonthlyCount: Math.max(...monthlyCounts, 1), // Máximo de atendimentos para normalização
       yearTotal: yearRequests.length,
       monthCompleted,
       pendingApprovals: pendingApprovals.length,
@@ -537,7 +500,7 @@ const Dashboard: React.FC = () => {
       rejectedCount,
       dailyEarnings: dailyEarnings.map((e) => e / 100),
     };
-  }, [serviceRequests, profile, selectedYear, selectedChartMonth, reviews, monthlyGoal, selectedWeekOffset]);
+  }, [serviceRequests, profile, selectedChartMonth, reviews, monthlyGoal, selectedWeekOffset]);
 
   const loadWalletData = async () => {
     try {
@@ -679,7 +642,9 @@ const Dashboard: React.FC = () => {
     
     try {
       setIsLoadingGoal(true);
-      const monthToSave = selectedChartMonth !== null ? selectedChartMonth : new Date().getMonth();
+      const now = new Date();
+      const selectedYear = now.getFullYear();
+      const monthToSave = selectedChartMonth !== null ? selectedChartMonth : now.getMonth();
       const monthKey = `${selectedYear}-${String(monthToSave + 1).padStart(2, '0')}`;
       
       const response = await chefService.setMySalesGoal({
@@ -1078,6 +1043,8 @@ const Dashboard: React.FC = () => {
                 <p className="dashboard-dark-progress-subtitle">
                   {selectedChartMonth !== null
                     ? (() => {
+                        const now = new Date();
+                        const selectedYear = now.getFullYear();
                         const monthName = new Date(selectedYear, selectedChartMonth).toLocaleDateString("pt-BR", {
                           month: "long",
                         });
@@ -1353,385 +1320,6 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          <div
-            className="dashboard-dark-card"
-            style={{ marginTop: "1.5rem", gridColumn: "1 / -1" }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "0.5rem", position: "relative" }}>
-              <h3 className="dashboard-dark-card-title" style={{ margin: 0, position: "absolute", left: 0 }}>Ganhos Mensais</h3>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <button
-                  onClick={() => setSelectedYear(selectedYear - 1)}
-                  style={{
-                    background: "transparent",
-                    border: "1px solid rgba(255, 255, 255, 0.3)",
-                    color: "#b0b3b8",
-                    padding: "0.25rem 0.5rem",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    fontSize: "0.9rem",
-                    fontFamily: '"Comfortaa", sans-serif',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "transparent";
-                  }}
-                >
-                  &lt;
-                </button>
-                <span style={{ color: "#b0b3b8", fontSize: "0.9rem", minWidth: "60px", textAlign: "center" }}>
-                  {selectedYear}
-                </span>
-                <button
-                  onClick={() => setSelectedYear(selectedYear + 1)}
-                  style={{
-                    background: "transparent",
-                    border: "1px solid rgba(255, 255, 255, 0.3)",
-                    color: "#b0b3b8",
-                    padding: "0.25rem 0.5rem",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    fontSize: "0.9rem",
-                    fontFamily: '"Comfortaa", sans-serif',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "transparent";
-                  }}
-                >
-                  &gt;
-                </button>
-              </div>
-            </div>
-            <p className="dashboard-dark-card-description">
-              Descrição dos ganhos do período selecionado
-            </p>
-
-            <div className="dashboard-dark-chart-container">
-              <svg
-                viewBox="0 0 800 200"
-                style={{ width: "100%", height: "100%" }}
-              >
-                <defs>
-                  <linearGradient
-                    id="lineGradient"
-                    x1="0%"
-                    y1="0%"
-                    x2="0%"
-                    y2="100%"
-                  >
-                    <stop offset="0%" stopColor="#ff6b35" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#ff6b35" stopOpacity="0" />
-                  </linearGradient>
-                  <linearGradient
-                    id="eventsGradient"
-                    x1="0%"
-                    y1="0%"
-                    x2="0%"
-                    y2="100%"
-                  >
-                    <stop offset="0%" stopColor="#4A90E2" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#4A90E2" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                {(() => {
-                  const maxEarning = metrics.maxMonthlyEarning;
-                  const maxCount = metrics.maxMonthlyCount;
-                  
-                  return (
-                    <>
-                      {[0, 25, 50, 75, 100].map((y) => (
-                        <line
-                          key={y}
-                          x1="40"
-                          y1={40 + (y / 100) * 120}
-                          x2="760"
-                          y2={40 + (y / 100) * 120}
-                          stroke="#2d3139"
-                          strokeWidth="1"
-                        />
-                      ))}
-                      {showEventsLine && (
-                        <>
-                          <polyline
-                            points={metrics.monthlyCounts
-                              .map((count, index) => {
-                                const x = 40 + (index / 11) * 720;
-                                const y = 160 - (count / maxCount) * 120;
-                                return `${x},${y}`;
-                              })
-                              .join(" ")}
-                            fill="none"
-                            stroke="#4A90E2"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <polygon
-                            points={`40,160 ${metrics.monthlyCounts
-                              .map((count, index) => {
-                                const x = 40 + (index / 11) * 720;
-                                const y = 160 - (count / maxCount) * 120;
-                                return `${x},${y}`;
-                              })
-                              .join(" ")} 760,160`}
-                            fill="url(#eventsGradient)"
-                          />
-                          {metrics.monthlyCounts.map((count, index) => {
-                            const x = 40 + (index / 11) * 720;
-                            const y = 160 - (count / maxCount) * 120;
-                            const isSelected = selectedChartMonth === index;
-                            return (
-                              <circle
-                                key={`count-${index}`}
-                                cx={x}
-                                cy={y}
-                                r={isSelected ? "7" : "4"}
-                                fill={isSelected ? "#4A90E2" : "#4A90E2"}
-                                stroke={isSelected ? "#ffffff" : "#1a1d24"}
-                                strokeWidth={isSelected ? "3" : "2"}
-                                style={{ cursor: "pointer", transition: "all 0.2s" }}
-                                onClick={() => {
-                                  setSelectedChartMonth(index);
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.setAttribute("r", "6");
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.setAttribute("r", isSelected ? "7" : "4");
-                                }}
-                              />
-                            );
-                          })}
-                        </>
-                      )}
-                      {showEarningsLine && (
-                        <>
-                          <polyline
-                            points={metrics.monthlyEarnings
-                              .map((earning, index) => {
-                                const x = 40 + (index / 11) * 720;
-                                const y = 160 - (earning / maxEarning) * 120;
-                                return `${x},${y}`;
-                              })
-                              .join(" ")}
-                            fill="none"
-                            stroke="#ff6b35"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <polygon
-                            points={`40,160 ${metrics.monthlyEarnings
-                              .map((earning, index) => {
-                                const x = 40 + (index / 11) * 720;
-                                const y = 160 - (earning / maxEarning) * 120;
-                                return `${x},${y}`;
-                              })
-                              .join(" ")} 760,160`}
-                            fill="url(#lineGradient)"
-                          />
-                          {metrics.monthlyEarnings.map((earning, index) => {
-                            const x = 40 + (index / 11) * 720;
-                            const y = 160 - (earning / maxEarning) * 120;
-                            const isSelected = selectedChartMonth === index;
-                            return (
-                              <circle
-                                key={`earning-${index}`}
-                                cx={x}
-                                cy={y}
-                                r={isSelected ? "7" : "4"}
-                                fill={isSelected ? "#ff6b35" : "#ff6b35"}
-                                stroke={isSelected ? "#ffffff" : "#1a1d24"}
-                                strokeWidth={isSelected ? "3" : "2"}
-                                style={{ cursor: "pointer", transition: "all 0.2s" }}
-                                onClick={() => {
-                                  setSelectedChartMonth(index);
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.setAttribute("r", "6");
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.setAttribute("r", isSelected ? "7" : "4");
-                                }}
-                              />
-                            );
-                          })}
-                        </>
-                      )}
-                    </>
-                  );
-                })()}
-                {[
-                  "Jan",
-                  "Fev",
-                  "Mar",
-                  "Abr",
-                  "Mai",
-                  "Jun",
-                  "Jul",
-                  "Ago",
-                  "Set",
-                  "Out",
-                  "Nov",
-                  "Dez",
-                ].map((month, index) => {
-                  const x = 40 + (index / 11) * 720;
-                  return (
-                    <text
-                      key={month}
-                      x={x}
-                      y="190"
-                      fill="#b0b3b8"
-                      fontSize="10"
-                      textAnchor="middle"
-                    >
-                      {month}
-                    </text>
-                  );
-                })}
-              </svg>
-            </div>
-
-            {/* Controles de visibilidade das linhas - discreto na parte inferior */}
-            <div style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: "1.5rem",
-              marginTop: "0.75rem",
-              marginBottom: "0.5rem",
-              flexWrap: "wrap"
-            }}>
-              <label style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.4rem",
-                cursor: "pointer",
-                color: "#8a8d91",
-                fontSize: "0.75rem",
-                fontFamily: '"Comfortaa", sans-serif'
-              }}>
-                <input
-                  type="checkbox"
-                  checked={showEarningsLine}
-                  onChange={(e) => setShowEarningsLine(e.target.checked)}
-                  className="custom-checkbox-orange"
-                />
-                <span style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                  <span style={{
-                    width: "16px",
-                    height: "2px",
-                    backgroundColor: "#ff6b35",
-                    borderRadius: "1px"
-                  }}></span>
-                  Ganhos
-                </span>
-              </label>
-              <label style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.4rem",
-                cursor: "pointer",
-                color: "#8a8d91",
-                fontSize: "0.75rem",
-                fontFamily: '"Comfortaa", sans-serif'
-              }}>
-                <input
-                  type="checkbox"
-                  checked={showEventsLine}
-                  onChange={(e) => setShowEventsLine(e.target.checked)}
-                  className="custom-checkbox-blue"
-                />
-                <span style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                  <span style={{
-                    width: "16px",
-                    height: "2px",
-                    backgroundColor: "#4A90E2",
-                    borderRadius: "1px"
-                  }}></span>
-                  Eventos
-                </span>
-              </label>
-            </div>
-
-            <div className="dashboard-dark-summary-row">
-              <div className="dashboard-dark-summary-item">
-                <div className="dashboard-dark-summary-label">Ganhos</div>
-                <div className="dashboard-dark-summary-value">
-                  R${" "}
-                  {metrics.monthEarnings.toLocaleString("pt-BR", {
-                    minimumFractionDigits: 2,
-                  })}
-                </div>
-              </div>
-              <div className="dashboard-dark-summary-item">
-                <div className="dashboard-dark-summary-label">
-                  Ganhos Totais
-                </div>
-                <div className="dashboard-dark-summary-value">
-                  R${" "}
-                  {metrics.totalEarnings.toLocaleString("pt-BR", {
-                    minimumFractionDigits: 2,
-                  })}
-                </div>
-              </div>
-            </div>
-
-            <table className="dashboard-dark-table">
-              <thead>
-                <tr>
-                  <th>Período</th>
-                  <th>Ganhos</th>
-                  <th>Eventos</th>
-                </tr>
-              </thead>
-              <tbody>
-                 <tr>
-                   <td>
-                     {(() => {
-                       const now = new Date();
-                       const chartMonth = selectedChartMonth !== null ? selectedChartMonth : now.getMonth();
-                       const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-                       const monthName = monthNames[chartMonth];
-                       const isCurrentMonth = chartMonth === now.getMonth() && selectedYear === now.getFullYear();
-                       const isCurrentYear = selectedYear === now.getFullYear();
-                       
-                       if (isCurrentMonth && isCurrentYear) {
-                         return "Este Mês";
-                       } else if (isCurrentYear) {
-                         return monthName;
-                       } else {
-                         return `${monthName} ${selectedYear}`;
-                       }
-                     })()}
-                   </td>
-                   <td>
-                     R${" "}
-                     {metrics.monthEarnings.toLocaleString("pt-BR", {
-                       minimumFractionDigits: 2,
-                     })}
-                   </td>
-                   <td>{metrics.monthCompleted}</td>
-                 </tr>
-                 <tr>
-                   <td>
-                     {selectedYear === new Date().getFullYear() ? "Este Ano" : selectedYear}
-                   </td>
-                   <td>
-                     R${" "}
-                     {metrics.totalEarnings.toLocaleString("pt-BR", {
-                       minimumFractionDigits: 2,
-                     })}
-                   </td>
-                   <td>{metrics.yearCompleted}</td>
-                 </tr>
-              </tbody>
-            </table>
-          </div>
         </div>
       </main>
 
