@@ -603,10 +603,6 @@ const ProfilePage: React.FC = () => {
       title: cc.cuisine.title,
     })) || [];
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-  };
-
   useEffect(() => {
     localStorage.setItem("dashboard-theme", theme);
   }, [theme]);

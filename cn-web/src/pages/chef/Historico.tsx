@@ -95,10 +95,6 @@ const Historico: React.FC = () => {
     loadHistorico();
   }, []);
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-  };
-
   useEffect(() => {
     localStorage.setItem("dashboard-theme", theme);
   }, [theme]);
